@@ -105,12 +105,12 @@ namespace RpaParser
         /// embed their index take its position and key from the header line; only version 1
         /// looks elsewhere.
         /// </summary>
-        public virtual IndexLocation LocateIndex(string archivePath, string firstLine, string indexPath)
+        public virtual IndexLocation LocateIndex(ArchiveFileInfo files)
         {
-            var headerFields = firstLine.Split(' ');
+            var headerFields = files.FirstLine.Split(' ');
 
             return new IndexLocation(
-                archivePath,
+                files.ArchivePath,
                 Convert.ToInt64(headerFields[1], 16),
                 ReadObfuscationKey(headerFields));
         }
@@ -128,6 +128,10 @@ namespace RpaParser
         /// </summary>
         public static ArchiveFormat Detect(string firstLine, bool indexPairExists) =>
             All.FirstOrDefault(format => format.Matches(firstLine ?? string.Empty, indexPairExists));
+
+        /// <summary>The format of an archive whose files have been resolved.</summary>
+        public static ArchiveFormat Detect(ArchiveFileInfo files) =>
+            Detect(files.FirstLine, files.IndexPairExists);
 
         /// <summary>The format for a numeric version, or null when it is not supported.</summary>
         public static ArchiveFormat ForVersion(double version) =>
@@ -166,19 +170,19 @@ namespace RpaParser
         /// The index is the whole of the sibling .rpi file, so there is no offset to seek to
         /// and no key to undo.
         /// </summary>
-        public override IndexLocation LocateIndex(string archivePath, string firstLine, string indexPath)
+        public override IndexLocation LocateIndex(ArchiveFileInfo files)
         {
-            if (string.IsNullOrEmpty(indexPath))
+            if (string.IsNullOrEmpty(files.IndexPath))
             {
                 throw new Exception("No index file provided.");
             }
 
-            if (!File.Exists(indexPath))
+            if (!files.IndexPairExists)
             {
                 throw new Exception("Index file does not exist.");
             }
 
-            return new IndexLocation(indexPath, 0, 0) { IsSeparateFile = true };
+            return new IndexLocation(files.IndexPath, 0, 0) { IsSeparateFile = true };
         }
     }
 

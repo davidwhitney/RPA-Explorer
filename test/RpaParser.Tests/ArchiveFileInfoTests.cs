@@ -107,12 +107,12 @@ public class ArchiveFileInfoTests
     }
 
     [Fact]
-    public void ReadFirstLine_HeaderLine_IsReturnedWithoutItsNewline()
+    public void FirstLine_HeaderLine_IsReadWithoutItsNewline()
     {
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", "RPA-3.0 0000000000000022 deadbeef\nrest of file");
 
-        new ArchiveFileInfo(archivePath).ReadFirstLine()
+        new ArchiveFileInfo(archivePath).FirstLine
             .ShouldBe("RPA-3.0 0000000000000022 deadbeef");
     }
 }

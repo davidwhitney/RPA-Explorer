@@ -39,6 +39,7 @@ namespace RpaParser
             IndexPath = indexPath;
             Archive = new FileInfo(archivePath);
             IndexPairExists = !string.IsNullOrEmpty(indexPath) && File.Exists(indexPath);
+            FirstLine = ReadFirstLine(archivePath);
         }
 
         /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>
@@ -58,10 +59,15 @@ namespace RpaParser
         /// </summary>
         public bool IndexPairExists { get; }
 
-        /// <summary>The archive's header line, which is what identifies its format.</summary>
-        public string ReadFirstLine()
+        /// <summary>
+        /// The archive's header line, which is what identifies its format. Null for an
+        /// empty file.
+        /// </summary>
+        public string FirstLine { get; }
+
+        private static string ReadFirstLine(string archivePath)
         {
-            using var reader = new StreamReader(ArchivePath, Encoding.UTF8);
+            using var reader = new StreamReader(archivePath, Encoding.UTF8);
             return reader.ReadLine();
         }
 

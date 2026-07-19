@@ -157,11 +157,12 @@ public class ArchiveFormatTests
     [MemberData(nameof(FormatsWithHeaders))]
     public void LocateIndex_EmbeddedIndex_PointsAtTheArchiveItself(ArchiveFormat format)
     {
-        string header = format.BuildHeader(4096, 0xDEADBEEF).TrimEnd('\n');
+        using var workspace = new TempWorkspace();
+        var archivePath = workspace.WriteFile("game.rpa", format.BuildHeader(4096, 0xDEADBEEF));
 
-        IndexLocation location = format.LocateIndex("game.rpa", header, "game.rpi");
+        IndexLocation location = format.LocateIndex(new ArchiveFileInfo(archivePath));
 
-        location.FilePath.ShouldBe("game.rpa");
+        location.FilePath.ShouldBe(archivePath);
         location.Offset.ShouldBe(4096);
         location.IsSeparateFile.ShouldBeFalse();
     }
@@ -170,9 +171,10 @@ public class ArchiveFormatTests
     [MemberData(nameof(ObfuscatedFormats))]
     public void LocateIndex_ObfuscatedFormat_CarriesTheKeyFromTheHeader(ArchiveFormat format)
     {
-        string header = format.BuildHeader(4096, 0xDEADBEEF).TrimEnd('\n');
+        using var workspace = new TempWorkspace();
+        var archivePath = workspace.WriteFile("game.rpa", format.BuildHeader(4096, 0xDEADBEEF));
 
-        IndexLocation location = format.LocateIndex("game.rpa", header, null);
+        IndexLocation location = format.LocateIndex(new ArchiveFileInfo(archivePath));
 
         location.ObfuscationKey.ShouldBe(0xDEADBEEF);
     }
@@ -181,9 +183,10 @@ public class ArchiveFormatTests
     public void LocateIndex_Version1_PointsAtTheSiblingIndexFile()
     {
         using var workspace = new TempWorkspace();
-        string indexPath = workspace.WriteFile("game.rpi", "index");
+        var archivePath = workspace.WriteFile("game.rpa", "data");
+        var indexPath = workspace.WriteFile("game.rpi", "index");
 
-        IndexLocation location = ArchiveFormat.Rpa1.LocateIndex(workspace.Path_("game.rpa"), string.Empty, indexPath);
+        IndexLocation location = ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath));
 
         location.FilePath.ShouldBe(indexPath);
         location.IsSeparateFile.ShouldBeTrue();
@@ -193,10 +196,13 @@ public class ArchiveFormatTests
     }
 
     [Fact]
-    public void LocateIndex_Version1WithoutAnIndexPath_Throws()
+    public void LocateIndex_Version1WhenTheNameNamesNoPair_Throws()
     {
+        using var workspace = new TempWorkspace();
+        var archivePath = workspace.WriteFile("archive.bin", "data");
+
         Exception ex = Should.Throw<Exception>(
-            () => ArchiveFormat.Rpa1.LocateIndex("game.rpa", string.Empty, null));
+            () => ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath)));
 
         ex.Message.ShouldContain("No index file provided");
     }
@@ -205,9 +211,10 @@ public class ArchiveFormatTests
     public void LocateIndex_Version1WithMissingIndexFile_Throws()
     {
         using var workspace = new TempWorkspace();
+        var archivePath = workspace.WriteFile("game.rpa", "data");
 
-        Exception ex = Should.Throw<Exception>(() =>
-            ArchiveFormat.Rpa1.LocateIndex(workspace.Path_("game.rpa"), string.Empty, workspace.Path_("absent.rpi")));
+        Exception ex = Should.Throw<Exception>(
+            () => ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath)));
 
         ex.Message.ShouldContain("Index file does not exist");
     }

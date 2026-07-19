@@ -37,11 +37,10 @@ namespace RpaParser
             _files = new ArchiveFileInfo(filePath);
             ArchiveInfo = _files.Archive;
 
-            var firstLine = _files.ReadFirstLine();
-            Format = ArchiveFormat.Detect(firstLine, _files.IndexPairExists)
+            Format = ArchiveFormat.Detect(_files)
                      ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
 
-            _indexLocation = Format.LocateIndex(_files.ArchivePath, firstLine, _files.IndexPath);
+            _indexLocation = Format.LocateIndex(_files);
             ObfuscationKey = _indexLocation.ObfuscationKey;
             IndexInfo = _indexLocation.IsSeparateFile ? new FileInfo(_indexLocation.FilePath) : null;
 
