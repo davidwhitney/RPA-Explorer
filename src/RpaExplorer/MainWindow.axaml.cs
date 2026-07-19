@@ -546,8 +546,7 @@ namespace RpaExplorer
                 }
                 catch (Exception ex)
                 {
-                    var fileInfo = new FileInfo(path);
-                    if (_rpaParser.CodeExtList.Contains(fileInfo.Extension.ToLower())
+                    if (ContentFormat.Detect(path) is CompiledScriptContent
                         && ex.Message.StartsWith(_rpaParser.RpycInfoBanner))
                     {
                         // unrpyc simply has not been obtained yet: offer to fetch it and

@@ -40,7 +40,17 @@ namespace RpaParser
 
         public FileInfo ArchiveInfo;
         public FileInfo IndexInfo;
-        public double ArchiveVersion = Version.Unknown;
+        private ArchiveFormat _format;
+
+        /// <summary>Detected (or chosen) format. Null until an archive is loaded or a version picked.</summary>
+        public ArchiveFormat Format => _format;
+
+        /// <summary>Numeric view of <see cref="Format"/>, kept for the settings UI and callers.</summary>
+        public double ArchiveVersion
+        {
+            get => _format?.Version ?? Version.Unknown;
+            set => _format = ArchiveFormat.ForVersion(value);
+        }
         public int Padding = 0;
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
@@ -81,77 +91,6 @@ namespace RpaParser
             public const string Audio = "audio";
         }
         
-        /*
-        RenPy Supports:
-        Images: JPEG/JPG, PNG, WEBP, BMP, GIF
-        Sound/Music: OPUS, OGG Vorbis, FLAC, WAV, MP3, MP2
-        Movies: WEBM, OGG Theora, VP9, VP8, MPEG 41, MPEG 2, MPEG 1
-        */
-
-        public readonly string[] ImageExtList =
-        [
-            ".jpeg",
-            ".jpg",
-            ".bmp",
-            ".tiff",
-            ".png",
-            ".webp",
-            ".exif",
-            ".ico",
-            ".gif"
-        ];
-
-        public readonly string[] AudioExtList =
-        [
-            ".aac",
-            ".ac3",
-            ".flac",
-            ".mp3",
-            ".wma",
-            ".wav",
-            ".ogg",
-            ".cpc"
-        ];
-
-        public readonly string[] VideoExtList =
-        [
-            ".3gp",
-            ".flv",
-            ".mov",
-            ".mp4",
-            ".ogv",
-            ".swf",
-            ".mpg",
-            ".mpeg",
-            ".avi",
-            ".mkv",
-            ".wmv",
-            ".webm"
-        ];
-
-        public readonly string[] TextExtList =
-        [
-            ".py",
-            ".rpy~",
-            ".rpy",
-            ".txt",
-            ".log",
-            ".nfo",
-            ".htm",
-            ".html",
-            ".xml",
-            ".json",
-            ".yaml",
-            ".csv"
-        ];
-
-        public readonly string[] CodeExtList =
-        [
-            ".rpyc~",
-            ".rpyc",
-            ".rpymc~",
-            ".rpymc"
-        ];
         
         public void LoadArchive(string filePath)
         {
@@ -159,17 +98,17 @@ namespace RpaParser
             GetIndexAndArchive();
             ArchiveInfo = GetArchiveInfo();
             _firstLine = GetFirstLine();
-            ArchiveVersion = CheckSupportedVersion(GetVersion());
-            
-            if (CheckVersion(ArchiveVersion, Version.Rpa2) || CheckVersion(ArchiveVersion, Version.Rpa3) || CheckVersion(ArchiveVersion, Version.Rpa32))
+            _format = DetectFormat();
+
+            if (_format.HasSeparateIndexFile)
+            {
+                IndexInfo = GetIndexInfo();
+            }
+            else
             {
                 _metadata = GetMetadata();
                 _offset = GetOffset();
-                ObfuscationKey = GetObfuscationKey();
-            }
-            else if (CheckVersion(ArchiveVersion, Version.Rpa1))
-            {
-                IndexInfo = GetIndexInfo();
+                ObfuscationKey = _format.ReadObfuscationKey(_metadata);
             }
 
             Index = GetIndexes();
@@ -217,18 +156,11 @@ namespace RpaParser
 
         public double CheckSupportedVersion(double version)
         {
-            switch (version)
+            if (ArchiveFormat.ForVersion(version) == null)
             {
-                case Version.Rpa32:
-                case Version.Rpa3:
-                case Version.Rpa2:
-                case Version.Rpa1:
-                    // Version is OK
-                    break;
-                default:
-                    throw new Exception("Specified version is not supported.");
+                throw new Exception("Specified version is not supported.");
             }
-            
+
             return version;
         }
 
@@ -268,34 +200,16 @@ namespace RpaParser
             return streamReader.ReadLine();
         }
 
-        private double GetVersion()
+        private ArchiveFormat DetectFormat()
         {
-            if (_firstLine.StartsWith(ArchiveMagic.Rpa32))
-            {
-                return 3.2;
-            }
+            // Version 1 carries no magic bytes; it is recognised by both halves of the pair
+            // being present, which GetIndexAndArchive has already resolved.
+            var indexPairExists = !string.IsNullOrEmpty(_indexPath)
+                                  && File.Exists(_archivePath)
+                                  && File.Exists(_indexPath);
 
-            if (_firstLine.StartsWith(ArchiveMagic.Rpa3))
-            {
-                return 3;
-            }
-
-            if (_firstLine.StartsWith(ArchiveMagic.Rpa2))
-            {
-                return 2;
-            }
-
-            if (_archivePath.EndsWith(ArchiveMagic.Rpa1Rpa, StringComparison.OrdinalIgnoreCase)
-                || _archivePath.EndsWith(ArchiveMagic.Rpa1Rpi, StringComparison.OrdinalIgnoreCase))
-            {
-                // LoadArchive has already resolved the pair before reaching this point.
-                if (File.Exists(_archivePath) && File.Exists(_indexPath))
-                {
-                    return 1;
-                }
-            }
-
-            throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
+            return ArchiveFormat.Detect(_firstLine, indexPairExists)
+                   ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
         }
 
         private string[] GetMetadata()
@@ -308,42 +222,17 @@ namespace RpaParser
             return Convert.ToInt64(_metadata[1], 16);
         }
 
-        private long GetObfuscationKey()
-        {
-            long key = 0;
-            
-            if (CheckVersion(ArchiveVersion, Version.Rpa3))
-            {
-                for(var i = 2; i < _metadata.Length; i++)
-                {
-                    key ^= Convert.ToInt64(_metadata[i], 16);
-                }
-            }
-            else if (CheckVersion(ArchiveVersion, Version.Rpa32))
-            {
-                for(var i = 3; i < _metadata.Length; i++)
-                {
-                    key ^= Convert.ToInt64(_metadata[i], 16);
-                }
-            }
-
-            return key;
-        }
         
         private SortedDictionary<string,ArchiveIndex> GetIndexes()
         {
             var indexList = new SortedDictionary<string,ArchiveIndex>();
             object unpickledIndexes;
 
-            var filePath = _archivePath;
-            if (CheckVersion(ArchiveVersion, Version.Rpa1))
-            {
-                filePath = _indexPath;
-            }
+            var filePath = _format.HasSeparateIndexFile ? _indexPath : _archivePath;
             
             using (var reader = new BinaryReader(File.OpenRead(filePath), Encoding.UTF8))
             {
-                if (CheckVersion(ArchiveVersion, Version.Rpa2) || CheckVersion(ArchiveVersion, Version.Rpa3) || CheckVersion(ArchiveVersion, Version.Rpa32))
+                if (!_format.HasSeparateIndexFile)
                 {
                     reader.BaseStream.Seek(_offset, SeekOrigin.Begin);
                 }
@@ -432,7 +321,7 @@ namespace RpaParser
                 foreach (var kvpI in kvp.Value.Tuples)
                 {
                     // Deobfuscate index data
-                    if (ArchiveVersion >= Version.Rpa3)
+                    if (_format.UsesObfuscation)
                     {
                         kvpI.Value.Offset ^= ObfuscationKey;
                         kvpI.Value.Length ^= ObfuscationKey;
@@ -564,60 +453,21 @@ namespace RpaParser
 
         public KeyValuePair<string, object> GetPreview(string fileName, bool returnRaw = false)
         {
-            var data = new KeyValuePair<string, object>(PreviewTypes.Unknown, null);
-
             if (!Index.ContainsKey(fileName))
             {
-                return data;
+                return new KeyValuePair<string, object>(PreviewTypes.Unknown, null);
             }
 
-            var fileInfo = new FileInfo(fileName);
             var bytes = ExtractData(fileName);
+            var preview = ContentFormat.Detect(fileName).CreatePreview(bytes, this);
 
-            if (ImageExtList.Contains(fileInfo.Extension.ToLower()))
-            {
-                // Return raw bytes; the UI decodes them cross-platform (WebP included).
-                data = new KeyValuePair<string, object>(PreviewTypes.Image, bytes);
-            }
-            else if (TextExtList.Contains(fileInfo.Extension.ToLower()))
-            {
-                data = new KeyValuePair<string, object>(PreviewTypes.Text, NormalizeNewLines(Encoding.UTF8.GetString(bytes, 0, bytes.Length)));
-            }
-            else if (CodeExtList.Contains(fileInfo.Extension.ToLower()))
-            {
-                var decompiledString = ParseRpyc(bytes);
-
-                if (decompiledString == string.Empty)
-                {
-                    data = new KeyValuePair<string, object>(PreviewTypes.Unknown, bytes);
-                }
-                else
-                {
-                    data = new KeyValuePair<string, object>(PreviewTypes.Text, decompiledString);
-                }
-            }
-            else if (AudioExtList.Contains(fileInfo.Extension.ToLower()))
-            {
-                data = new KeyValuePair<string, object>(PreviewTypes.Audio, bytes);
-            }
-            else if (VideoExtList.Contains(fileInfo.Extension.ToLower()))
-            {
-                data = new KeyValuePair<string, object>(PreviewTypes.Video, bytes);
-            }
-            else
-            {
-                data = new KeyValuePair<string, object>(PreviewTypes.Unknown, bytes);
-            }
-
-            if (returnRaw)
-            {
-                data = new KeyValuePair<string, object>(data.Key, bytes);
-            }
-
-            return data;
+            // The caller may want the bytes regardless of how the format presents them.
+            return returnRaw
+                ? new KeyValuePair<string, object>(preview.Key, bytes)
+                : preview;
         }
 
-        private string NormalizeNewLines(string text)
+        internal static string NormalizeNewLines(string text)
         {
             const string winNewLine = "\r\n";
             const string linNewLine = "\n";
@@ -748,27 +598,11 @@ namespace RpaParser
 
                 using (Stream stream = File.Open(tmpPath + ".rpa", FileMode.Truncate))
                 {
-                    int archiveOffset;
-                    switch (ArchiveVersion)
-                    {
-                        // File data starts immediately after the header, so these values are
-                        // the exact header lengths. 3.2 carries an extra field, making its
-                        // header nine bytes longer than 3.0's.
-                        case Version.Rpa32:
-                            archiveOffset = 43;
-                            break;
-                        case Version.Rpa3:
-                            archiveOffset = 34;
-                            break;
-                        case Version.Rpa2:
-                            archiveOffset = 25;
-                            break;
-                        case Version.Rpa1:
-                            archiveOffset = 0;
-                            break;
-                        default:
-                            throw new Exception("Specified version is not supported.");
-                    }
+                    var format = _format
+                                 ?? throw new Exception("Specified version is not supported.");
+
+                    // File data starts immediately after the header.
+                    var archiveOffset = format.HeaderLength;
 
                     stream.Position = archiveOffset;
 
@@ -799,8 +633,7 @@ namespace RpaParser
                         stream.Write(content, 0, content.Length);
 
                         List<object[]> indexData = [];
-                        if (CheckVersion(ArchiveVersion, Version.Rpa3) ||
-                            CheckVersion(ArchiveVersion, Version.Rpa32))
+                        if (format.UsesObfuscation)
                         {
                             indexData.Add([archiveOffset ^ ObfuscationKey, content.Length ^ ObfuscationKey, ""]); // Last is prefix
                         }
@@ -822,38 +655,12 @@ namespace RpaParser
 
                     var fileCompressed = Zlib.CompressBuffer(pickledIndexes);
 
-                    if (!CheckVersion(ArchiveVersion, Version.Rpa1))
+                    if (!format.HasSeparateIndexFile)
                     {
                         stream.Position = archiveOffset;
                         stream.Write(fileCompressed, 0, fileCompressed.Length);
 
-                        var headerContent = string.Empty;
-
-                        switch (ArchiveVersion)
-                        {
-                            case Version.Rpa32:
-                                // 3.2 carries an extra field between the offset and the key,
-                                // which is why GetObfuscationKey starts at index 3 for this
-                                // version rather than 2. Writing a 3.0-shaped header here
-                                // produced an archive this parser could not read back: the
-                                // key landed at index 2, so it was read as 0 and every
-                                // obfuscated offset decoded incorrectly.
-                                headerContent = ArchiveMagic.Rpa32 + archiveOffset.ToString("x").PadLeft(16, '0') +
-                                                " " +
-                                                0.ToString("x").PadLeft(8, '0') +
-                                                " " +
-                                                ObfuscationKey.ToString("x").PadLeft(8, '0') + "\n";
-                                break;
-                            case Version.Rpa3:
-                                headerContent = ArchiveMagic.Rpa3 + archiveOffset.ToString("x").PadLeft(16, '0') +
-                                                " " +
-                                                ObfuscationKey.ToString("x").PadLeft(8, '0') + "\n";
-                                break;
-                            case Version.Rpa2:
-                                headerContent = ArchiveMagic.Rpa2 + archiveOffset.ToString("x").PadLeft(16, '0') +
-                                                "\n";
-                                break;
-                        }
+                        var headerContent = format.BuildHeader(archiveOffset, ObfuscationKey);
 
                         var headerContentByte = Encoding.UTF8.GetBytes(headerContent);
 
