@@ -28,7 +28,7 @@ public class ArchiveVersionTests
     [Fact]
     public void Format_NewParser_IsNotYetKnown()
     {
-        var archive = Archive.Create();
+        var archive = new Archive();
 
         archive.Format.ShouldBeNull();
         archive.Index.ShouldBeEmpty();
@@ -90,7 +90,7 @@ public class ArchiveVersionTests
         var archivePath = workspace.CreateArchive(ArchiveFormat.Rpa1, entries);
         var indexPath = Path.ChangeExtension(archivePath, ".rpi");
         // pointing at the .rpi must locate the matching .rpa
-        var archive = Archive.Load(indexPath);
+        var archive = new Archive(indexPath);
 
         archive.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
         archive.Index.Keys.ShouldContain("a.txt");
@@ -104,7 +104,7 @@ public class ArchiveVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = payload };
         var archivePath = workspace.CreateArchive(
             ArchiveFormat.Rpa3, entries, "keyed.rpa", obfuscationKey: 0x1234ABCD);
-        var archive = Archive.Load(archivePath);
+        var archive = new Archive(archivePath);
 
         archive.ObfuscationKey.ShouldBe(0x1234ABCD);
         archive.ExtractData("a.txt").ShouldBe(payload);
@@ -118,7 +118,7 @@ public class ArchiveVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = payload };
         var archivePath = workspace.CreateArchive(
             ArchiveFormat.Rpa3, entries, "padded.rpa", padding: 32);
-        var archive = Archive.Load(archivePath);
+        var archive = new Archive(archivePath);
 
         archive.ExtractData("a.txt").ShouldBe(payload);
     }
@@ -127,9 +127,9 @@ public class ArchiveVersionTests
     public void LoadArchive_FileDoesNotExist_Throws()
     {
         using var workspace = new TempWorkspace();
-        var archive = Archive.Create();
+        var archive = new Archive();
 
-        var ex = Should.Throw<Exception>(() => Archive.Load(workspace.Path_("missing.rpa")));
+        var ex = Should.Throw<Exception>(() => new Archive(workspace.Path_("missing.rpa")));
         ex.Message.ShouldContain("does not exist");
     }
 
@@ -137,7 +137,7 @@ public class ArchiveVersionTests
     public void LoadArchive_EmptyPath_Throws()
     {
 
-        Should.Throw<Exception>(() => Archive.Load(string.Empty));
+        Should.Throw<Exception>(() => new Archive(string.Empty));
     }
 
     [Fact]
@@ -145,9 +145,9 @@ public class ArchiveVersionTests
     {
         using var workspace = new TempWorkspace();
         var path = workspace.WriteFile("not-an-archive.rpa", "just some text, no RPA header");
-        var archive = Archive.Create();
+        var archive = new Archive();
 
-        var ex = Should.Throw<Exception>(() => Archive.Load(path));
+        var ex = Should.Throw<Exception>(() => new Archive(path));
         ex.Message.ShouldContain("not valid RenPy Archive");
     }
 
@@ -158,9 +158,9 @@ public class ArchiveVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
         var archivePath = workspace.CreateArchive(ArchiveFormat.Rpa1, entries);
         File.Delete(Path.ChangeExtension(archivePath, ".rpi"));
-        var archive = Archive.Create();
+        var archive = new Archive();
 
         // without the .rpi the version can no longer be recognised
-        Should.Throw<Exception>(() => Archive.Load(archivePath));
+        Should.Throw<Exception>(() => new Archive(archivePath));
     }
 }

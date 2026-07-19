@@ -36,7 +36,7 @@ public class ArchivePathResolutionTests
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
-        Archive archive = Archive.Load(indexPath);
+        Archive archive = new Archive(indexPath);
 
         // Lower casing the extension here is what breaks on a case sensitive filesystem.
         Path.GetFileName(archive.Files.Archive.FullName).ShouldBe("GAME.RPA");
@@ -48,7 +48,7 @@ public class ArchivePathResolutionTests
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
-        Archive archive = Archive.Load(archivePath);
+        Archive archive = new Archive(archivePath);
 
         Path.GetFileName(archive.Files.IndexFile.File.FullName).ShouldBe("GAME.RPI");
     }
@@ -58,7 +58,7 @@ public class ArchivePathResolutionTests
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "game.rpa", "game.rpi");
-        Archive archive = Archive.Load(indexPath);
+        Archive archive = new Archive(indexPath);
 
         Path.GetFileName(archive.Files.Archive.FullName).ShouldBe("game.rpa");
         Path.GetFileName(archive.Files.IndexFile.File.FullName).ShouldBe("game.rpi");
@@ -69,7 +69,7 @@ public class ArchivePathResolutionTests
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "Game.Rpa", "Game.Rpi");
-        Archive archive = Archive.Load(archivePath);
+        Archive archive = new Archive(archivePath);
 
         archive.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
         archive.Index.Keys.ShouldContain("a.txt");

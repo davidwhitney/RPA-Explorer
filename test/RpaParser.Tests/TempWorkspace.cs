@@ -44,8 +44,7 @@ public sealed class TempWorkspace : IDisposable
         int padding = 0,
         long? obfuscationKey = null)
     {
-        var archive = Archive.Create(format);
-        archive.Padding = padding;
+        var archive = new Archive(format) { Padding = padding };
         if (obfuscationKey.HasValue)
         {
             archive.ObfuscationKey = obfuscationKey.Value;
@@ -71,7 +70,7 @@ public sealed class TempWorkspace : IDisposable
     public Archive LoadArchive(ArchiveFormat format, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
     {
         var path = CreateArchive(format, entries, archiveName);
-        var archive = Archive.Load(path);
+        var archive = new Archive(path);
         return archive;
     }
 

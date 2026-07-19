@@ -16,11 +16,24 @@ namespace RpaParser
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
 
-        private Archive()
+        /// <summary>
+        /// A new, empty archive whose format is chosen later, when it is saved.
+        /// </summary>
+        public Archive()
         {
         }
 
-        private Archive(string filePath)
+        public Archive(ArchiveFormat format)
+        {
+            Format = format;
+        }
+
+        /// <summary>
+        /// Reads an archive, or throws. Construction is all-or-nothing, so a reference to an
+        /// Archive is always a reference to one that was read successfully - a failed read
+        /// cannot leave a half-populated instance behind for the caller to discover later.
+        /// </summary>
+        public Archive(string filePath)
         {
             Files = new ArchiveFileInfo(filePath);
             Format = Files.Format;
@@ -28,20 +41,6 @@ namespace RpaParser
 
             Index = ArchiveIndex.Read(Files.IndexFile);
         }
-
-        /// <summary>
-        /// Reads an archive, or throws. Construction is all-or-nothing, so a reference to an
-        /// Archive is always a reference to one that was read successfully - a failed load
-        /// cannot leave a half-populated instance behind for the caller to discover later.
-        /// </summary>
-        public static Archive Load(string path) => new(path);
-
-        public static Archive Create(ArchiveFormat format) => new() { Format = format };
-
-        /// <summary>
-        /// Starts a new, empty archive whose format is chosen later, when it is saved.
-        /// </summary>
-        public static Archive Create() => new();
 
         public byte[] ExtractData(string fileName)
         {

@@ -85,7 +85,7 @@ public class ArchiveSaveTests
         var first = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var resaved = first.Save(workspace.Path_("resaved.rpa"));
-        var second = Archive.Load(resaved);
+        var second = new Archive(resaved);
 
         second.Index.Count.ShouldBe(2);
         Encoding.UTF8.GetString(second.ExtractData("dir/b.txt")).ShouldBe("second");
@@ -95,7 +95,7 @@ public class ArchiveSaveTests
     public void SaveArchive_NoFormatChosen_Throws()
     {
         using var workspace = new TempWorkspace();
-        var archive = Archive.Create();  // no format chosen
+        var archive = new Archive();  // no format chosen
         archive.Index.Add("a.txt", new ArchiveEntry
         {
             InArchive = false,
@@ -111,7 +111,7 @@ public class ArchiveSaveTests
     public void SaveArchive_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
     {
         using var workspace = new TempWorkspace();
-        var archive = Archive.Create(ArchiveFormat.Rpa3);
+        var archive = new Archive(ArchiveFormat.Rpa3);
         archive.Index.Add("ghost.txt", new ArchiveEntry
         {
             InArchive = false,

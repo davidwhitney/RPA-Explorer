@@ -63,7 +63,7 @@ public class RawArchiveTests
         var prefix = Encoding.UTF8.GetBytes("PRE");
         var path = WriteRpa3(workspace, "bytes-prefix.rpa", payload,
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length + prefix.Length, prefix, key));
-        var archive = Archive.Load(path);
+        var archive = new Archive(path);
 
         Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("PREBODY");
     }
@@ -75,7 +75,7 @@ public class RawArchiveTests
         var payload = Encoding.UTF8.GetBytes("BODY");
         var path = WriteRpa3(workspace, "string-prefix.rpa", payload,
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length + 3, "PRE", key));
-        var archive = Archive.Load(path);
+        var archive = new Archive(path);
 
         Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("PREBODY");
     }
@@ -91,7 +91,7 @@ public class RawArchiveTests
             object[] segment = { dataOffset ^ key, (long) payload.Length ^ key };
             return new Hashtable { { "a.txt", new ArrayList { segment } } };
         });
-        var archive = Archive.Load(path);
+        var archive = new Archive(path);
 
         Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("BODY");
     }
@@ -107,7 +107,7 @@ public class RawArchiveTests
             index.Add("discarded.txt", null);
             return index;
         });
-        var archive = Archive.Load(path);
+        var archive = new Archive(path);
 
         archive.Index.ShouldContainKey("a.txt");
         archive.Index.ShouldNotContainKey("discarded.txt");
@@ -124,7 +124,7 @@ public class RawArchiveTests
             object[] second = { (long) (dataOffset + 5) ^ key, 5L ^ key, string.Empty };
             return new Hashtable { { "a.txt", new ArrayList { first, second } } };
         });
-        var archive = Archive.Load(path);
+        var archive = new Archive(path);
 
         Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("HELLOWORLD");
         archive.Index["a.txt"].Segments.Count.ShouldBe(2);
@@ -141,7 +141,7 @@ public class RawArchiveTests
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length, string.Empty, key),
             headerOffsetOverride: 100_000);
 
-        Should.Throw<Exception>(() => Archive.Load(path));
+        Should.Throw<Exception>(() => new Archive(path));
     }
 
     [Fact]
@@ -157,6 +157,6 @@ public class RawArchiveTests
             stream.Write(new byte[] { 1, 2, 3, 4, 5, 6 }, 0, 6);
         }
 
-        Should.Throw<Exception>(() => Archive.Load(path));
+        Should.Throw<Exception>(() => new Archive(path));
     }
 }

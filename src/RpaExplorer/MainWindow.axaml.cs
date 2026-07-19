@@ -793,7 +793,7 @@ namespace RpaExplorer
                 return;
             }
 
-            _archive = Archive.Create();
+            _archive = new Archive();
             GenerateTreeView();
 
             Tabs.SelectedItem = TabNone;
@@ -884,7 +884,7 @@ namespace RpaExplorer
                     }
                 }
 
-                _archive = Archive.Load(chosen);
+                _archive = new Archive(chosen);
             }
             catch (Exception ex)
             {
@@ -960,8 +960,8 @@ namespace RpaExplorer
             }
             catch (Exception ex)
             {
-                // Saving does not touch the loaded archive and Archive.Load only assigns on
-                // success, so the archive in hand is still the one that was open.
+                // Saving does not touch the loaded archive, and a failed read throws rather
+                // than returning, so the archive in hand is still the one that was open.
                 await MessageBox.ShowError(this,
                     string.Format(GetText("Save_failed_reason"), ex.Message), GetText("Save_failed"));
             }
