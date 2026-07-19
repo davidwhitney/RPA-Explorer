@@ -50,7 +50,7 @@ public class ArchivePathResolutionTests
         (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
         Archive archive = Archive.Load(archivePath);
 
-        Path.GetFileName(archive.IndexInfo.FullName).ShouldBe("GAME.RPI");
+        Path.GetFileName(archive.IndexFile.File.FullName).ShouldBe("GAME.RPI");
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class ArchivePathResolutionTests
         Archive archive = Archive.Load(indexPath);
 
         Path.GetFileName(archive.Files.Archive.FullName).ShouldBe("game.rpa");
-        Path.GetFileName(archive.IndexInfo.FullName).ShouldBe("game.rpi");
+        Path.GetFileName(archive.IndexFile.File.FullName).ShouldBe("game.rpi");
     }
 
     [Fact]

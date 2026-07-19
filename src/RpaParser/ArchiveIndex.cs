@@ -33,7 +33,7 @@ namespace RpaParser
         /// obfuscation key, which is zero for formats that do not obfuscate, so the entries
         /// come back already decoded.
         /// </summary>
-        public static ArchiveIndex Read(IndexLocation location)
+        public static ArchiveIndex Read(IndexFileInfo location)
         {
             var unpickled = Unpickle(ReadCompressed(location));
             var index = new ArchiveIndex();
@@ -94,7 +94,7 @@ namespace RpaParser
         /// <summary>Files staged to be added, which are not yet stored in the archive.</summary>
         public IEnumerable<ArchiveEntry> Unsaved => Values.Where(entry => !entry.InArchive);
 
-        private static byte[] ReadCompressed(IndexLocation location)
+        private static byte[] ReadCompressed(IndexFileInfo location)
         {
             using var reader = new BinaryReader(File.OpenRead(location.FilePath), Encoding.UTF8);
             reader.BaseStream.Seek(location.Offset, SeekOrigin.Begin);

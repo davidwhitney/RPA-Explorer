@@ -56,7 +56,7 @@ public class ArchiveIndexTests
 
         var blob = ArchiveIndex.Serialize(placements, obfuscationKey: 0);
         var path = workspace.WriteFile("index.rpi", blob);
-        var index = ArchiveIndex.Read(new IndexLocation(path, 0, 0));
+        var index = ArchiveIndex.Read(IndexFileInfo.SeparateFile(path));
 
         index.Count.ShouldBe(2);
         index["a.txt"].Segments[0].Offset.ShouldBe(34);
@@ -73,7 +73,7 @@ public class ArchiveIndexTests
 
         var blob = ArchiveIndex.Serialize(placements, key);
         var path = workspace.WriteFile("index.rpi", blob);
-        var index = ArchiveIndex.Read(new IndexLocation(path, 0, key));
+        var index = ArchiveIndex.Read(IndexFileInfo.InsideArchive(path, 0, key));
 
         index["a.txt"].Segments[0].Offset.ShouldBe(4096);
         index["a.txt"].Segments[0].Length.ShouldBe(128);
@@ -87,7 +87,7 @@ public class ArchiveIndexTests
         byte[] padded = [.. new byte[16], .. blob];
         var path = workspace.WriteFile("archive.rpa", padded);
 
-        var index = ArchiveIndex.Read(new IndexLocation(path, 16, 0));
+        var index = ArchiveIndex.Read(IndexFileInfo.InsideArchive(path, 16, 0));
 
         index.ShouldContainKey("a.txt");
     }
@@ -100,6 +100,6 @@ public class ArchiveIndexTests
         var blob = ArchiveIndex.Serialize([], 0);
         var path = workspace.WriteFile("index.rpi", blob);
 
-        ArchiveIndex.Read(new IndexLocation(path, 0, 0)).ShouldBeEmpty();
+        ArchiveIndex.Read(IndexFileInfo.SeparateFile(path)).ShouldBeEmpty();
     }
 }

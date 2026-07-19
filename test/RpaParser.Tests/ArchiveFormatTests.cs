@@ -160,7 +160,7 @@ public class ArchiveFormatTests
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", format.BuildHeader(4096, 0xDEADBEEF));
 
-        IndexLocation location = format.LocateIndex(new ArchiveFileInfo(archivePath));
+        IndexFileInfo location = format.LocateIndex(new ArchiveFileInfo(archivePath));
 
         location.FilePath.ShouldBe(archivePath);
         location.Offset.ShouldBe(4096);
@@ -174,7 +174,7 @@ public class ArchiveFormatTests
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", format.BuildHeader(4096, 0xDEADBEEF));
 
-        IndexLocation location = format.LocateIndex(new ArchiveFileInfo(archivePath));
+        IndexFileInfo location = format.LocateIndex(new ArchiveFileInfo(archivePath));
 
         location.ObfuscationKey.ShouldBe(0xDEADBEEF);
     }
@@ -186,7 +186,7 @@ public class ArchiveFormatTests
         var archivePath = workspace.WriteFile("game.rpa", "data");
         var indexPath = workspace.WriteFile("game.rpi", "index");
 
-        IndexLocation location = ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath));
+        IndexFileInfo location = ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath));
 
         location.FilePath.ShouldBe(indexPath);
         location.IsSeparateFile.ShouldBeTrue();

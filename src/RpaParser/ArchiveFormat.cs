@@ -6,11 +6,48 @@ using System.Text;
 
 namespace RpaParser
 {
-    /// <summary>Where an archive's index lives and what is needed to decode it.</summary>
-    public sealed record IndexLocation(string FilePath, long Offset, long ObfuscationKey)
+    /// <summary>
+    /// The file an archive's index lives in, and what is needed to decode it: where in that
+    /// file it starts and the key its offsets are XORed with.
+    /// </summary>
+    public sealed record IndexFileInfo
     {
+        private IndexFileInfo()
+        {
+        }
+
+        public string FilePath { get; private init; }
+
+        /// <summary>Where the index starts in that file. Zero when it is the whole file.</summary>
+        public long Offset { get; private init; }
+
+        /// <summary>Zero for formats that do not obfuscate.</summary>
+        public long ObfuscationKey { get; private init; }
+
         /// <summary>True when the index is a file of its own rather than part of the archive.</summary>
-        public bool IsSeparateFile { get; init; }
+        public bool IsSeparateFile { get; private init; }
+
+        /// <summary>
+        /// The index's own file, or null when the index sits inside the archive and so has
+        /// no file of its own to describe.
+        /// </summary>
+        public FileInfo File { get; private init; }
+
+        /// <summary>An index embedded in the archive, starting at an offset.</summary>
+        public static IndexFileInfo InsideArchive(string archivePath, long offset, long obfuscationKey) => new()
+        {
+            FilePath = archivePath,
+            Offset = offset,
+            ObfuscationKey = obfuscationKey
+        };
+
+        /// <summary>An index that is the whole of a separate file, so unkeyed and unoffset.</summary>
+        public static IndexFileInfo SeparateFile(string indexPath) => new()
+        {
+            FilePath = indexPath,
+            IsSeparateFile = true,
+            File = new FileInfo(indexPath)
+        };
     }
 
     /// <summary>
@@ -105,11 +142,11 @@ namespace RpaParser
         /// embed their index take its position and key from the header line; only version 1
         /// looks elsewhere.
         /// </summary>
-        public virtual IndexLocation LocateIndex(ArchiveFileInfo files)
+        public virtual IndexFileInfo LocateIndex(ArchiveFileInfo files)
         {
             var headerFields = files.FirstLine.Split(' ');
 
-            return new IndexLocation(
+            return IndexFileInfo.InsideArchive(
                 files.ArchivePath,
                 Convert.ToInt64(headerFields[1], 16),
                 ReadObfuscationKey(headerFields));
@@ -170,7 +207,7 @@ namespace RpaParser
         /// The index is the whole of the sibling .rpi file, so there is no offset to seek to
         /// and no key to undo.
         /// </summary>
-        public override IndexLocation LocateIndex(ArchiveFileInfo files)
+        public override IndexFileInfo LocateIndex(ArchiveFileInfo files)
         {
             if (string.IsNullOrEmpty(files.IndexPath))
             {
@@ -182,7 +219,7 @@ namespace RpaParser
                 throw new Exception("Index file does not exist.");
             }
 
-            return new IndexLocation(files.IndexPath, 0, 0) { IsSeparateFile = true };
+            return IndexFileInfo.SeparateFile(files.IndexPath);
         }
     }
 

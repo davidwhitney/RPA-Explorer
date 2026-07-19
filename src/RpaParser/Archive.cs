@@ -15,22 +15,18 @@ namespace RpaParser
     
     public sealed class Archive
     {
-        
-        public FileInfo IndexInfo;
-        /// <summary>
-        /// The archive format: detected when loading, chosen by the caller when saving.
-        /// Null until one or the other has happened.
-        /// </summary>
+        /// <summary>Where this archive's index lives. Null until it is loaded.</summary>
+        public IndexFileInfo IndexFile { get; private set; }
+        public ArchiveFileInfo Files { get; private set; }
+        public ArchiveIndex Index { get; set; } = new();
         public ArchiveFormat Format { get; set; }
+        
         public int Padding = 0;
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
-        public ArchiveIndex Index = new();
 
         
-        private IndexLocation _indexLocation;
         /// <summary>The files this archive was opened from. Null until it is loaded.</summary>
-        public ArchiveFileInfo Files { get; private set; }
         
         private void Read(string filePath)
         {
@@ -39,11 +35,10 @@ namespace RpaParser
             Format = ArchiveFormat.Detect(Files)
                      ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
 
-            _indexLocation = Format.LocateIndex(Files);
-            ObfuscationKey = _indexLocation.ObfuscationKey;
-            IndexInfo = _indexLocation.IsSeparateFile ? new FileInfo(_indexLocation.FilePath) : null;
+            IndexFile = Format.LocateIndex(Files);
+            ObfuscationKey = IndexFile.ObfuscationKey;
 
-            Index = ArchiveIndex.Read(_indexLocation);
+            Index = ArchiveIndex.Read(IndexFile);
         }
 
         /// <summary>

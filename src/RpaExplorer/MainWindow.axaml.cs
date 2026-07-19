@@ -443,10 +443,10 @@ namespace RpaExplorer
                     info += GetText("Archive_version") + _archive.Format + Environment.NewLine;
                     info += GetText("Archive_file_location") + _archive.Files.Archive.FullName + Environment.NewLine;
                     info += GetText("Archive_file_size") + FormatSize(_archive.Files.Archive.Length) + Environment.NewLine;
-                    if (_archive.IndexInfo != null)
+                    if (_archive.IndexFile?.File != null)
                     {
-                        info += GetText("Index_file_location") + _archive.IndexInfo.FullName + Environment.NewLine;
-                        info += GetText("Index_file_size") + FormatSize(_archive.IndexInfo.Length) + Environment.NewLine;
+                        info += GetText("Index_file_location") + _archive.IndexFile.File.FullName + Environment.NewLine;
+                        info += GetText("Index_file_size") + FormatSize(_archive.IndexFile.File.Length) + Environment.NewLine;
                     }
                 }
 
