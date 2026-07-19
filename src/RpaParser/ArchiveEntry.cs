@@ -24,11 +24,6 @@ namespace RpaParser
             Length = segments.Sum(segment => segment.Length)
         };
 
-        /// <summary>
-        /// A file on disk staged to be added to an archive. Its path inside the archive is
-        /// taken relative to <paramref name="rootPath"/>, the directory the file was added
-        /// from. Archive paths always use '/', whatever the local separator is.
-        /// </summary>
         public static ArchiveEntry FromFilename(string path, string? rootPath)
         {
             var fullPath = path.Replace('\\', '/');

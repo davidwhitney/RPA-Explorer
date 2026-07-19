@@ -7,13 +7,19 @@ namespace RpaParser
 {
     public sealed record ArchiveFileInfo
     {
+        public ArchiveFormat Format { get; }
+        public IndexFileInfo IndexFile { get; }
+
+        public string ArchivePath { get; }
+        public string? IndexPath { get; }
+
+        public FileInfo Archive { get; }
+        public bool IndexPairExists { get; }
+        public string? FirstLine { get; }
+        
         private const string ArchiveExtension = ".rpa";
         private const string IndexExtension = ".rpi";
 
-        /// <summary>
-        /// Resolves the pair from either half and checks the archive is there, so an
-        /// instance always names files that are present.
-        /// </summary>
         public ArchiveFileInfo(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -44,31 +50,6 @@ namespace RpaParser
 
             IndexFile = Format.LocateIndex(this);
         }
-
-        public ArchiveFormat Format { get; }
-        public IndexFileInfo IndexFile { get; }
-
-        /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>
-        public string ArchivePath { get; }
-
-        /// <summary>
-        /// The sibling .rpi, or null when the name carried neither extension and so names
-        /// no pair.
-        /// </summary>
-        public string? IndexPath { get; }
-
-        public FileInfo Archive { get; }
-
-        /// <summary>
-        /// True when both halves are present.
-        /// </summary>
-        public bool IndexPairExists { get; }
-
-        /// <summary>
-        /// The archive's header line, which is what identifies its format. Null for an
-        /// empty file.
-        /// </summary>
-        public string? FirstLine { get; }
 
         private static string? ReadFirstLine(string archivePath)
         {

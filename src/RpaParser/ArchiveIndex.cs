@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +21,7 @@ namespace RpaParser
         {
         }
 
-        public ArchiveIndex(IDictionary<string, ArchiveEntry> entries) : base(entries)
+        private ArchiveIndex(IDictionary<string, ArchiveEntry> entries) : base(entries)
         {
         }
 

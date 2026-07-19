@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
-using RpaParser;
 using RpaParser.Content;
 using RpaParser.Decompilation;
 using RpaParser.Formats;

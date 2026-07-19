@@ -1,5 +1,3 @@
-using System.Linq;
-using RpaParser;
 using RpaParser.Content;
 using RpaParser.Decompilation;
 using Shouldly;
@@ -123,7 +121,7 @@ public class ContentFormatTests
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsText()
-            .ShouldBe("one" + System.Environment.NewLine + "two");
+            .ShouldBe("one" + Environment.NewLine + "two");
     }
 
     [Fact]

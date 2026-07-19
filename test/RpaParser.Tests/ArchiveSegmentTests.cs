@@ -1,5 +1,4 @@
 using System.Text;
-using RpaParser;
 using Shouldly;
 
 namespace RpaParser.Tests;

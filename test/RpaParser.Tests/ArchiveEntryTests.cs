@@ -1,5 +1,3 @@
-using System.IO;
-using RpaParser;
 using Shouldly;
 
 namespace RpaParser.Tests;

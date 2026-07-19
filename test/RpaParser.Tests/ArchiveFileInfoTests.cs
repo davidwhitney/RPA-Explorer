@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using RpaParser;
 using RpaParser.Formats;
 using Shouldly;
 

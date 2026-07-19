@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
 using System.Text;
-using RpaParser;
 using RpaParser.Formats;
 using Shouldly;
 
@@ -161,7 +158,7 @@ public class ArchiveFormatTests
     [Fact]
     public void BuildHeader_Version1_ThrowsBecauseItHasNoHeader()
     {
-        Should.Throw<System.InvalidOperationException>(() => ArchiveFormat.Rpa1.BuildHeader(0, 0));
+        Should.Throw<InvalidOperationException>(() => ArchiveFormat.Rpa1.BuildHeader(0, 0));
     }
 
     [Theory]

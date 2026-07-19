@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 
 namespace RpaExplorer

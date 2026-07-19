@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using RpaParser;
 using RpaParser.Formats;
 
 namespace RpaParser.Tests;
@@ -21,12 +17,12 @@ public sealed class TempWorkspace : IDisposable
         Directory.CreateDirectory(Root);
     }
 
-    public string Path_(params string[] parts) => System.IO.Path.Combine(Root, System.IO.Path.Combine(parts));
+    public string Path_(params string[] parts) => Path.Combine(Root, Path.Combine(parts));
 
     public string WriteFile(string relativePath, byte[] content)
     {
-        var full = Path_(relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(full)!);
+        var full = Path_(relativePath.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         File.WriteAllBytes(full, content);
         return full;
     }
@@ -56,9 +52,9 @@ public sealed class TempWorkspace : IDisposable
 
         foreach (var entry in entries)
         {
-            var onDisk = System.IO.Path.Combine(
-                sourceDir, entry.Key.Replace('/', System.IO.Path.DirectorySeparatorChar));
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(onDisk)!);
+            var onDisk = Path.Combine(
+                sourceDir, entry.Key.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(onDisk)!);
             File.WriteAllBytes(onDisk, entry.Value);
 
             archive.Index.Add(entry.Key, ArchiveEntry.FromFilename(onDisk, sourceDir));
