@@ -17,31 +17,11 @@ namespace RpaParser
         private const string ArchiveExtension = ".rpa";
         private const string IndexExtension = ".rpi";
 
-        private ArchiveFileInfo()
-        {
-        }
-
-        /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>
-        public string ArchivePath { get; private init; }
-
         /// <summary>
-        /// The sibling .rpi, or null when the name carried neither extension and so names
-        /// no pair.
+        /// Resolves the pair from either half and checks the archive is there, so an
+        /// instance always names files that are present.
         /// </summary>
-        public string IndexPath { get; private init; }
-
-        public FileInfo Archive { get; private init; }
-
-        /// <summary>
-        /// True when both halves are present, which is how a version 1 archive is
-        /// recognised - it carries no magic bytes of its own.
-        /// </summary>
-        public bool IndexPairExists { get; private init; }
-
-        /// <summary>
-        /// Resolves the pair from either half and checks the archive is there.
-        /// </summary>
-        public static ArchiveFileInfo Resolve(string path)
+        public ArchiveFileInfo(string path)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -55,14 +35,28 @@ namespace RpaParser
                 throw new Exception("Archive file does not exist.");
             }
 
-            return new ArchiveFileInfo
-            {
-                ArchivePath = archivePath,
-                IndexPath = indexPath,
-                Archive = new FileInfo(archivePath),
-                IndexPairExists = !string.IsNullOrEmpty(indexPath) && File.Exists(indexPath)
-            };
+            ArchivePath = archivePath;
+            IndexPath = indexPath;
+            Archive = new FileInfo(archivePath);
+            IndexPairExists = !string.IsNullOrEmpty(indexPath) && File.Exists(indexPath);
         }
+
+        /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>
+        public string ArchivePath { get; }
+
+        /// <summary>
+        /// The sibling .rpi, or null when the name carried neither extension and so names
+        /// no pair.
+        /// </summary>
+        public string IndexPath { get; }
+
+        public FileInfo Archive { get; }
+
+        /// <summary>
+        /// True when both halves are present, which is how a version 1 archive is
+        /// recognised - it carries no magic bytes of its own.
+        /// </summary>
+        public bool IndexPairExists { get; }
 
         /// <summary>The archive's header line, which is what identifies its format.</summary>
         public string ReadFirstLine()

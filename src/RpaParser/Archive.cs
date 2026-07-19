@@ -34,7 +34,7 @@ namespace RpaParser
         
         private void Read(string filePath)
         {
-            _files = ArchiveFileInfo.Resolve(filePath);
+            _files = new ArchiveFileInfo(filePath);
             ArchiveInfo = _files.Archive;
 
             var firstLine = _files.ReadFirstLine();

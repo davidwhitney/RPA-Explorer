@@ -8,68 +8,68 @@ namespace RpaParser.Tests;
 public class ArchiveFileInfoTests
 {
     [Fact]
-    public void Resolve_ArchivePath_DerivesTheSiblingIndexPath()
+    public void Constructor_ArchivePath_DerivesTheSiblingIndexPath()
     {
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", "content");
 
-        var files = ArchiveFileInfo.Resolve(archivePath);
+        var files = new ArchiveFileInfo(archivePath);
 
         files.ArchivePath.ShouldBe(archivePath);
         files.IndexPath.ShouldBe(workspace.Path_("game.rpi"));
     }
 
     [Fact]
-    public void Resolve_IndexPath_ResolvesBackToTheArchive()
+    public void Constructor_IndexPath_ResolvesBackToTheArchive()
     {
         using var workspace = new TempWorkspace();
         workspace.WriteFile("game.rpa", "content");
         var indexPath = workspace.Path_("game.rpi");
 
-        var files = ArchiveFileInfo.Resolve(indexPath);
+        var files = new ArchiveFileInfo(indexPath);
 
         files.ArchivePath.ShouldBe(workspace.Path_("game.rpa"));
         files.IndexPath.ShouldBe(indexPath);
     }
 
     [Fact]
-    public void Resolve_UppercaseExtension_KeepsTheCasingOnTheDerivedPath()
+    public void Constructor_UppercaseExtension_KeepsTheCasingOnTheDerivedPath()
     {
         using var workspace = new TempWorkspace();
         workspace.WriteFile("GAME.RPA", "content");
 
-        var files = ArchiveFileInfo.Resolve(workspace.Path_("GAME.RPA"));
+        var files = new ArchiveFileInfo(workspace.Path_("GAME.RPA"));
 
         // Lower casing here is what breaks on a case sensitive filesystem.
         Path.GetFileName(files.IndexPath).ShouldBe("GAME.RPI");
     }
 
     [Fact]
-    public void Resolve_BothHalvesPresent_ReportsThePair()
+    public void Constructor_BothHalvesPresent_ReportsThePair()
     {
         using var workspace = new TempWorkspace();
         workspace.WriteFile("game.rpa", "content");
         workspace.WriteFile("game.rpi", "index");
 
-        ArchiveFileInfo.Resolve(workspace.Path_("game.rpa")).IndexPairExists.ShouldBeTrue();
+        new ArchiveFileInfo(workspace.Path_("game.rpa")).IndexPairExists.ShouldBeTrue();
     }
 
     [Fact]
-    public void Resolve_NoSiblingIndex_ReportsNoPair()
+    public void Constructor_NoSiblingIndex_ReportsNoPair()
     {
         using var workspace = new TempWorkspace();
         workspace.WriteFile("game.rpa", "content");
 
-        ArchiveFileInfo.Resolve(workspace.Path_("game.rpa")).IndexPairExists.ShouldBeFalse();
+        new ArchiveFileInfo(workspace.Path_("game.rpa")).IndexPairExists.ShouldBeFalse();
     }
 
     [Fact]
-    public void Resolve_NameWithNeitherExtension_NamesNoIndexAtAll()
+    public void Constructor_NameWithNeitherExtension_NamesNoIndexAtAll()
     {
         using var workspace = new TempWorkspace();
         var path = workspace.WriteFile("archive.bin", "content");
 
-        var files = ArchiveFileInfo.Resolve(path);
+        var files = new ArchiveFileInfo(path);
 
         files.ArchivePath.ShouldBe(path);
         files.IndexPath.ShouldBeNull();
@@ -77,19 +77,19 @@ public class ArchiveFileInfoTests
     }
 
     [Fact]
-    public void Resolve_ArchiveDoesNotExist_Throws()
+    public void Constructor_ArchiveDoesNotExist_Throws()
     {
         using var workspace = new TempWorkspace();
 
-        var ex = Should.Throw<Exception>(() => ArchiveFileInfo.Resolve(workspace.Path_("absent.rpa")));
+        var ex = Should.Throw<Exception>(() => new ArchiveFileInfo(workspace.Path_("absent.rpa")));
 
         ex.Message.ShouldContain("does not exist");
     }
 
     [Fact]
-    public void Resolve_EmptyPath_Throws()
+    public void Constructor_EmptyPath_Throws()
     {
-        var ex = Should.Throw<Exception>(() => ArchiveFileInfo.Resolve(string.Empty));
+        var ex = Should.Throw<Exception>(() => new ArchiveFileInfo(string.Empty));
 
         ex.Message.ShouldContain("No archive file provided");
     }
@@ -100,7 +100,7 @@ public class ArchiveFileInfoTests
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", "content");
 
-        var files = ArchiveFileInfo.Resolve(archivePath);
+        var files = new ArchiveFileInfo(archivePath);
 
         files.Archive.Exists.ShouldBeTrue();
         files.Archive.Length.ShouldBe(new FileInfo(archivePath).Length);
@@ -112,7 +112,7 @@ public class ArchiveFileInfoTests
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", "RPA-3.0 0000000000000022 deadbeef\nrest of file");
 
-        ArchiveFileInfo.Resolve(archivePath).ReadFirstLine()
+        new ArchiveFileInfo(archivePath).ReadFirstLine()
             .ShouldBe("RPA-3.0 0000000000000022 deadbeef");
     }
 }
