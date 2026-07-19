@@ -245,31 +245,11 @@ namespace RpaParser
                     ParentPath = Path.GetDirectoryName((string) kvp.Key),
                     InArchive = true
                 };
+                var key = Format.UsesObfuscation ? ObfuscationKey : 0;
                 var counter = 0;
                 foreach (object[] value in (ArrayList) kvp.Value)
-                { 
-                    var index = new ArchiveSegment
-                    {
-                        Offset = Convert.ToInt64(value.GetValue(0)),
-                        Length = Convert.ToInt64(value.GetValue(1))
-                    };
-                    if ((long) value.Length == 3)
-                    {
-                        if (value.GetValue(2).GetType() == typeof(byte[]))
-                        {
-                            index.Prefix = (byte[]) value.GetValue(2);
-                        }
-                        else
-                        {
-                            index.Prefix = Encoding.UTF8.GetBytes((string) value.GetValue(2));
-                        }
-                    }
-                    else
-                    {
-                        index.Prefix = [];
-                    }
-
-                    indexEntry.Segments.Add(counter, index);
+                {
+                    indexEntry.Segments.Add(counter, ArchiveSegment.FromIndexData(value, key));
                     counter++;
                 }
                 indexList.Add(indexEntry.TreePath, indexEntry);
@@ -277,16 +257,9 @@ namespace RpaParser
 
             foreach (var kvp in indexList)
             {
-                foreach (var kvpI in kvp.Value.Segments)
+                foreach (var segment in kvp.Value.Segments.Values)
                 {
-                    // Deobfuscate index data
-                    if (Format.UsesObfuscation)
-                    {
-                        kvpI.Value.Offset ^= ObfuscationKey;
-                        kvpI.Value.Length ^= ObfuscationKey;
-                    }
-
-                    kvp.Value.Length += kvpI.Value.Length;
+                    kvp.Value.Length += segment.Length;
                 }
             }
 
@@ -310,14 +283,8 @@ namespace RpaParser
                 
                 foreach (var kvpI in kvp.Value.Segments)
                 {
-                    var index = new ArchiveSegment
-                    {
-                        Length = kvpI.Value.Length,
-                        Offset = kvpI.Value.Offset,
-                        Prefix = kvpI.Value.Prefix
-                    };
-                    
-                    archIndex.Segments.Add(kvpI.Key, index);
+                    // Segments are immutable, so the copy can share them.
+                    archIndex.Segments.Add(kvpI.Key, kvpI.Value);
                 }
                 
                 indexCopy.Add(kvp.Key, archIndex);
