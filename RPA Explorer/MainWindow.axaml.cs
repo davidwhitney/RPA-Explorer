@@ -197,6 +197,51 @@ namespace RPA_Explorer
             GenerateArchiveInfo();
         }
 
+        // Ensures LibVLC is usable, retrying detection in case VLC was installed after
+        // start-up. When it is still missing the user is prompted with a way to get it.
+        private async Task<bool> EnsureMediaAvailable()
+        {
+            if (_mediaPlayer != null)
+            {
+                return true;
+            }
+
+            try
+            {
+                if (VlcSetup.Initialize())
+                {
+                    _libVlc = new LibVLC("--input-repeat=9999999");
+                    _mediaPlayer = new MediaPlayer(_libVlc) { Volume = (int) VolumeSlider.Value };
+                    _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+                    _mediaUnavailableReason = string.Empty;
+                    return true;
+                }
+
+                _mediaUnavailableReason = VlcSetup.UnavailableReason;
+            }
+            catch (Exception ex)
+            {
+                _mediaUnavailableReason = ex.Message;
+                _libVlc = null;
+                _mediaPlayer = null;
+            }
+
+            await PromptInstallVlc();
+            return false;
+        }
+
+        private async Task PromptInstallVlc()
+        {
+            bool openPage = await MessageBox.ShowYesNo(this,
+                GetText(Platform.HasHomebrew ? "Vlc_required_prompt_brew" : "Vlc_required_prompt"),
+                GetText("Vlc_required"));
+
+            if (openPage)
+            {
+                Platform.OpenUrl(VlcSetup.DownloadUrl);
+            }
+        }
+
         // Fetches unrpyc from GitHub and selects it. Returns true when unrpyc is available
         // afterwards. When confirm is false the caller has already asked the user.
         private async Task<bool> DownloadUnrpyc(bool confirm)
@@ -549,28 +594,30 @@ namespace RPA_Explorer
                 }
                 else if (data.Key == RpaParser.PreviewTypes.Audio || data.Key == RpaParser.PreviewTypes.Video)
                 {
-                    if (_libVlc == null || _mediaPlayer == null)
+                    // Prompts the user to install VLC when it is missing; the placeholder tab
+                    // then explains what to do, so no second error dialog is raised here.
+                    if (await EnsureMediaAvailable())
                     {
-                        throw new Exception(string.IsNullOrEmpty(_mediaUnavailableReason)
-                            ? VlcSetup.InstallHint
-                            : _mediaUnavailableReason);
+                        _memoryStreamVlc = new MemoryStream((byte[]) data.Value);
+                        _streamMediaInputVlc = new StreamMediaInput(_memoryStreamVlc);
+                        _mediaVlc = new Media(_libVlc, _streamMediaInputVlc);
+                        SetMediaTimeLabel(_mediaVlc.Duration, 0);
+                        AudioArt.IsVisible = data.Key == RpaParser.PreviewTypes.Audio;
+                        PlayPauseButton.Content = GetText("Pause");
+
+                        // The media tab must be visible *before* playback starts: a TabControl
+                        // does not realise the content of an unselected tab, so the VideoView's
+                        // native surface would not exist yet and libvlc would fail with
+                        // "No drawable-nsobject found / video output creation failed".
+                        Tabs.SelectedItem = TabMedia;
+                        await WaitForVideoSurfaceAsync();
+                        _mediaPlayer.Play(_mediaVlc);
+                        unsupported = false;
                     }
-
-                    _memoryStreamVlc = new MemoryStream((byte[]) data.Value);
-                    _streamMediaInputVlc = new StreamMediaInput(_memoryStreamVlc);
-                    _mediaVlc = new Media(_libVlc, _streamMediaInputVlc);
-                    SetMediaTimeLabel(_mediaVlc.Duration, 0);
-                    AudioArt.IsVisible = data.Key == RpaParser.PreviewTypes.Audio;
-                    PlayPauseButton.Content = GetText("Pause");
-
-                    // The media tab must be visible *before* playback starts: a TabControl
-                    // does not realise the content of an unselected tab, so the VideoView's
-                    // native surface would not exist yet and libvlc would fail with
-                    // "No drawable-nsobject found / video output creation failed".
-                    Tabs.SelectedItem = TabMedia;
-                    await WaitForVideoSurfaceAsync();
-                    _mediaPlayer.Play(_mediaVlc);
-                    unsupported = false;
+                    else
+                    {
+                        failureMessage = GetText("Vlc_not_installed_hint");
+                    }
                 }
             }
             catch (Exception ex)

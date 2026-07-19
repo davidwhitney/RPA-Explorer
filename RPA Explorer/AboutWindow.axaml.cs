@@ -30,31 +30,8 @@ namespace RPA_Explorer
                 string.Join(", ", TranslatorsList),
                 string.Join(", ", ContributorsList));
 
-            RepoButton.Click += (_, _) => OpenUrl(_appRepository);
+            RepoButton.Click += (_, _) => Platform.OpenUrl(_appRepository);
             CloseButton.Click += (_, _) => Close();
-        }
-
-        private static void OpenUrl(string url)
-        {
-            try
-            {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    Process.Start("open", url);
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-                }
-                else
-                {
-                    Process.Start("xdg-open", url);
-                }
-            }
-            catch
-            {
-                // Best effort only.
-            }
         }
     }
 }

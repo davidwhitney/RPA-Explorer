@@ -21,12 +21,20 @@ namespace RPA_Explorer
 
         public static string UnavailableReason { get; private set; } = string.Empty;
 
+        public const string DownloadUrl = "https://www.videolan.org/vlc/";
+
         public const string InstallHint =
             "Audio/video preview requires VLC to be installed.\n\n" +
-            "Install VLC from https://www.videolan.org/vlc/ (on macOS, drag VLC.app into /Applications) and restart RPA Explorer.";
+            "Install VLC from " + DownloadUrl + " (on macOS, drag VLC.app into /Applications).";
 
         public static bool Initialize()
         {
+            // Safe to call again: the user may have installed VLC since start-up.
+            if (Available)
+            {
+                return true;
+            }
+
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
