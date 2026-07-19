@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace RpaParser
 {
@@ -20,41 +21,84 @@ namespace RpaParser
     /// obfuscated and how the header is written - is answered by the format object rather
     /// than by version comparisons spread through the parser. Detection returns the format
     /// for the bytes in hand, so code holding one already knows which rules apply.
+    ///
+    /// Versions 2 onwards share a shape: magic, then the index offset as sixteen hex
+    /// digits, then zero or more eight digit fields. That shape lives here, so a format
+    /// only states what is particular to it.
     /// </summary>
     public abstract class ArchiveFormat
     {
-        /// <summary>Numeric version, as reported by <see cref="Parser.ArchiveVersion"/>.</summary>
+        private const int OffsetDigits = 16;
+        private const int FieldDigits = 8;
+
+        /// <summary>Numeric version, as reported by <see cref="Archive.Format"/>.</summary>
         public abstract double Version { get; }
-
-        /// <summary>True when the index is a separate .rpi file rather than part of the archive.</summary>
-        public abstract bool HasSeparateIndexFile { get; }
-
-        /// <summary>True when index offsets and lengths are XORed with the obfuscation key.</summary>
-        public abstract bool UsesObfuscation { get; }
-
-        /// <summary>True when random padding may be inserted between stored files.</summary>
-        public virtual bool SupportsPadding => true;
 
         /// <summary>Name shown to the user.</summary>
         public abstract string DisplayName { get; }
 
+        /// <summary>Bytes identifying the format at the start of the header.</summary>
+        protected abstract string Magic { get; }
+
         /// <summary>
-        /// Bytes reserved before the first file. File data starts immediately after the
-        /// header, so this is exactly the length <see cref="BuildHeader"/> produces.
+        /// Index of the first header field forming the obfuscation key. Negative when the
+        /// format does not obfuscate, which is what <see cref="UsesObfuscation"/> reports.
         /// </summary>
-        public abstract int HeaderLength { get; }
+        protected virtual int KeyFieldIndex => -1;
+
+        /// <summary>
+        /// Header fields written after the offset, in order. Version 3.2 puts a spare field
+        /// ahead of the key, which is why its key is read one position further along.
+        /// </summary>
+        protected virtual IEnumerable<long> FieldsAfterOffset(long obfuscationKey) => [];
+
+        /// <summary>True when the index is a separate .rpi file rather than part of the archive.</summary>
+        public virtual bool HasSeparateIndexFile => false;
+
+        /// <summary>True when random padding may be inserted between stored files.</summary>
+        public virtual bool SupportsPadding => true;
+
+        /// <summary>True when index offsets and lengths are XORed with the obfuscation key.</summary>
+        public bool UsesObfuscation => KeyFieldIndex >= 0;
+
+        /// <summary>
+        /// Bytes reserved before the first file. Derived from the header the format actually
+        /// writes, so the two cannot drift apart - a header longer than the space reserved
+        /// for it overwrites the first file, which is what corrupted 3.2 archives.
+        /// </summary>
+        public virtual int HeaderLength => Encoding.UTF8.GetByteCount(BuildHeader(0, 0));
 
         /// <summary>Whether this format recognises the archive in hand.</summary>
-        public abstract bool Matches(string firstLine, bool indexPairExists);
+        public virtual bool Matches(string firstLine, bool indexPairExists) =>
+            firstLine.StartsWith(Magic, StringComparison.Ordinal);
 
         /// <summary>The header written ahead of the file data.</summary>
-        public abstract string BuildHeader(long indexOffset, long obfuscationKey);
+        public virtual string BuildHeader(long indexOffset, long obfuscationKey)
+        {
+            var fields = FieldsAfterOffset(obfuscationKey)
+                .Select(field => " " + Hex(field, FieldDigits));
+
+            return Magic + Hex(indexOffset, OffsetDigits) + string.Concat(fields) + "\n";
+        }
 
         /// <summary>
-        /// Reads the obfuscation key out of the whitespace separated header fields.
-        /// Formats without obfuscation have no key.
+        /// Reads the obfuscation key out of the whitespace separated header fields, by
+        /// XORing everything from <see cref="KeyFieldIndex"/> onwards.
         /// </summary>
-        public virtual long ReadObfuscationKey(string[] headerFields) => 0;
+        public long ReadObfuscationKey(string[] headerFields)
+        {
+            if (!UsesObfuscation)
+            {
+                return 0;
+            }
+
+            long key = 0;
+            for (var i = KeyFieldIndex; i < headerFields.Length; i++)
+            {
+                key ^= Convert.ToInt64(headerFields[i], 16);
+            }
+            return key;
+        }
 
         /// <summary>
         /// Locates the index of an archive that has just been recognised. Formats that
@@ -91,24 +135,24 @@ namespace RpaParser
 
         public override string ToString() => DisplayName;
 
-        // Offsets are written as 16 hex digits and keys as 8, which is what fixes the
-        // header lengths below.
-        private protected static string Hex(long value, int digits) =>
+        private static string Hex(long value, int digits) =>
             value.ToString("x").PadLeft(digits, '0');
     }
 
     /// <summary>
     /// Version 1: a .rpa/.rpi pair with no header at all. It is recognised by the presence
-    /// of both halves rather than by any magic bytes.
+    /// of both halves rather than by any magic bytes, and so overrides most of the shape
+    /// the later versions share.
     /// </summary>
     public sealed class Rpa1Format : ArchiveFormat
     {
         public override double Version => 1;
         public override string DisplayName => "RPA 1.0";
-        public override bool HasSeparateIndexFile => true;
-        public override bool UsesObfuscation => false;
+        protected override string Magic => string.Empty;
 
-        // Version 1 writes the files back to back with no header to offset them.
+        public override bool HasSeparateIndexFile => true;
+
+        // The files are written back to back with no header to offset them.
         public override bool SupportsPadding => false;
         public override int HeaderLength => 0;
 
@@ -138,81 +182,38 @@ namespace RpaParser
         }
     }
 
-    /// <summary>Version 2: magic and index offset, no obfuscation.</summary>
+    /// <summary>Version 2: magic and index offset, nothing more.</summary>
     public sealed class Rpa2Format : ArchiveFormat
     {
-        private const string Magic = "RPA-2.0 ";
-
         public override double Version => 2;
         public override string DisplayName => "RPA 2.0";
-        public override bool HasSeparateIndexFile => false;
-        public override bool UsesObfuscation => false;
-        public override int HeaderLength => Magic.Length + 16 + 1;
-
-        public override bool Matches(string firstLine, bool indexPairExists) =>
-            firstLine.StartsWith(Magic, StringComparison.Ordinal);
-
-        public override string BuildHeader(long indexOffset, long obfuscationKey) =>
-            Magic + Hex(indexOffset, 16) + "\n";
+        protected override string Magic => "RPA-2.0 ";
     }
 
-    /// <summary>Version 3: adds an obfuscation key, held in the field after the offset.</summary>
+    /// <summary>Version 3: adds an obfuscation key in the field after the offset.</summary>
     public sealed class Rpa3Format : ArchiveFormat
     {
-        private const string Magic = "RPA-3.0 ";
-
-        /// <summary>Header fields from this index onwards are XORed together to form the key.</summary>
-        private const int KeyFieldIndex = 2;
-
         public override double Version => 3;
         public override string DisplayName => "RPA 3.0";
-        public override bool HasSeparateIndexFile => false;
-        public override bool UsesObfuscation => true;
-        public override int HeaderLength => Magic.Length + 16 + 1 + 8 + 1;
+        protected override string Magic => "RPA-3.0 ";
 
-        public override bool Matches(string firstLine, bool indexPairExists) =>
-            firstLine.StartsWith(Magic, StringComparison.Ordinal);
+        protected override int KeyFieldIndex => 2;
 
-        public override string BuildHeader(long indexOffset, long obfuscationKey) =>
-            Magic + Hex(indexOffset, 16) + " " + Hex(obfuscationKey, 8) + "\n";
-
-        public override long ReadObfuscationKey(string[] headerFields) =>
-            XorFrom(headerFields, KeyFieldIndex);
-
-        internal static long XorFrom(string[] headerFields, int firstField)
-        {
-            long key = 0;
-            for (var i = firstField; i < headerFields.Length; i++)
-            {
-                key ^= Convert.ToInt64(headerFields[i], 16);
-            }
-            return key;
-        }
+        protected override IEnumerable<long> FieldsAfterOffset(long obfuscationKey) => [obfuscationKey];
     }
 
     /// <summary>
-    /// Version 3.2: as version 3, but with an extra field between the offset and the key,
-    /// which is why the key is read from one field further along and the header is nine
-    /// bytes longer.
+    /// Version 3.2: as version 3, but with a spare field between the offset and the key,
+    /// which is why the key is read one field further along.
     /// </summary>
     public sealed class Rpa32Format : ArchiveFormat
     {
-        private const string Magic = "RPA-3.2 ";
-        private const int KeyFieldIndex = 3;
-
         public override double Version => 3.2;
         public override string DisplayName => "RPA 3.2";
-        public override bool HasSeparateIndexFile => false;
-        public override bool UsesObfuscation => true;
-        public override int HeaderLength => Magic.Length + 16 + 1 + 8 + 1 + 8 + 1;
+        protected override string Magic => "RPA-3.2 ";
 
-        public override bool Matches(string firstLine, bool indexPairExists) =>
-            firstLine.StartsWith(Magic, StringComparison.Ordinal);
+        protected override int KeyFieldIndex => 3;
 
-        public override string BuildHeader(long indexOffset, long obfuscationKey) =>
-            Magic + Hex(indexOffset, 16) + " " + Hex(0, 8) + " " + Hex(obfuscationKey, 8) + "\n";
-
-        public override long ReadObfuscationKey(string[] headerFields) =>
-            Rpa3Format.XorFrom(headerFields, KeyFieldIndex);
+        protected override IEnumerable<long> FieldsAfterOffset(long obfuscationKey) => [0, obfuscationKey];
     }
 }
