@@ -26,11 +26,15 @@ Pre-built, self-contained binaries for macOS, Windows and Linux are attached to 
 | --- | --- | --- |
 | macOS (Apple Silicon) | `…-osx-arm64.zip` | contains `RPA Explorer.app` |
 | macOS (Intel) | `…-osx-x64.zip` | contains `RPA Explorer.app` |
-| Windows | `…-win-x64.zip` / `…-win-arm64.zip` | run `RPA_Explorer.exe` |
+| Windows | `…-win-x64.zip` | run `RPA_Explorer.exe`; also used on Windows ARM |
 | Linux | `…-linux-x64.tar.gz` / `…-linux-arm64.tar.gz` | run `RPA_Explorer` |
 
 The macOS builds are not code-signed or notarised. On first launch use **right-click → Open**, or
 run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
+
+There is no separate Windows ARM download. VideoLAN publishes no Windows arm64 build of VLC, so
+an arm64 binary could never play media; Windows on ARM runs the x64 build under emulation with
+everything working, so that is the one to use.
 
 ## Set-up is automatic
 
@@ -117,7 +121,7 @@ dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
 ./build.sh --framework-dependent            # smaller, requires .NET on the target
 ```
 
-Targets: `osx-arm64`, `osx-x64`, `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`. macOS
+Targets: `osx-arm64`, `osx-x64`, `win-x64`, `linux-x64`, `linux-arm64`. macOS
 artifacts are packaged as a `RPA Explorer.app` bundle, Windows as a zip and Linux as a tarball,
 alongside a `SHA256SUMS` file.
 

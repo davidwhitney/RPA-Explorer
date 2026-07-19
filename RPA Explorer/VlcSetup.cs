@@ -62,8 +62,23 @@ namespace RPA_Explorer
                 }
                 else
                 {
-                    // Windows: native libraries come from the VideoLAN.LibVLC.Windows package.
-                    Core.Initialize();
+                    // Windows: prefer the natives bundled by VideoLAN.LibVLC.Windows, and
+                    // fall back to a system-wide VLC installation when they are absent.
+                    string bundled = BundledWindowsVlc();
+                    if (bundled != null)
+                    {
+                        Core.Initialize();
+                    }
+                    else
+                    {
+                        string installed = FindWindowsVlc();
+                        if (installed == null)
+                        {
+                            UnavailableReason = WindowsUnavailableReason();
+                            return false;
+                        }
+                        Core.Initialize(installed);
+                    }
                 }
 
                 Available = true;
@@ -110,6 +125,74 @@ namespace RPA_Explorer
             }
 
             return null;
+        }
+
+        // Directory holding the natives shipped alongside the app, if any. LibVLCSharp's
+        // parameterless Core.Initialize() resolves "libvlc/win-<arch>" relative to the app.
+        private static string BundledWindowsVlc()
+        {
+            string arch = RuntimeInformation.ProcessArchitecture switch
+            {
+                Architecture.X64 => "win-x64",
+                Architecture.X86 => "win-x86",
+                Architecture.Arm64 => "win-arm64",
+                _ => null
+            };
+
+            if (arch == null)
+            {
+                return null;
+            }
+
+            string dir = Path.Combine(AppContext.BaseDirectory, "libvlc", arch);
+            return File.Exists(Path.Combine(dir, "libvlc.dll")) ? dir : null;
+        }
+
+        // A system-wide VLC install, but only when its architecture matches this process:
+        // an arm64 process cannot load the x64 DLLs a normal Windows VLC installs.
+        private static string FindWindowsVlc()
+        {
+            Architecture process = RuntimeInformation.ProcessArchitecture;
+            if (process != Architecture.X64 && process != Architecture.X86)
+            {
+                return null;
+            }
+
+            List<string> candidates = new();
+            foreach (string variable in new[] { "ProgramFiles", "ProgramFiles(x86)" })
+            {
+                string root = Environment.GetEnvironmentVariable(variable);
+                if (!string.IsNullOrWhiteSpace(root))
+                {
+                    candidates.Add(Path.Combine(root, "VideoLAN", "VLC"));
+                }
+            }
+
+            foreach (string candidate in candidates)
+            {
+                if (File.Exists(Path.Combine(candidate, "libvlc.dll"))
+                    && Directory.Exists(Path.Combine(candidate, "plugins")))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static string WindowsUnavailableReason()
+        {
+            if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                // VideoLAN publishes no Windows arm64 build of VLC, so there is nothing to
+                // bundle or to fall back to; an arm64 process cannot load the x64 libraries.
+                return "Audio/video preview is not available in the Windows arm64 build, " +
+                       "because VLC has no Windows arm64 release.\n\n" +
+                       "Use the Windows x64 download instead - Windows on ARM runs it under " +
+                       "emulation and media preview works there.";
+            }
+
+            return InstallHint;
         }
 
         private static string FindLinuxPlugins()

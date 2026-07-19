@@ -11,8 +11,16 @@
   Mostly solved. macOS and Linux no longer ship VLC at all - the app binds to a system
   installation and prompts with a download link if one is missing, so those downloads are
   ~40MB. Windows still bundles the natives, but only for the architecture that can actually
-  load them, which took the x64 download from 128MB to 87MB. The arm64 download carries none
-  (no arm64 native build exists, and an arm64 process cannot load x64 DLLs).
+  load them, which took the x64 download from 128MB to 87MB.
+
+- **Windows on ARM had no media preview.**
+  Investigating showed the original plan - falling back to a system-wide VLC - could not work:
+  VideoLAN publishes no Windows arm64 build of VLC, so there is nothing to bundle or to fall
+  back to, and an arm64 process cannot load the x64 libraries. The arm64 download was dropped
+  instead; Windows on ARM runs the x64 build under emulation with media preview working. The
+  Windows fallback to a system-wide VLC install was still added, so the app works when the
+  bundled natives are absent, and an arm64 binary now explains the situation rather than just
+  offering a VLC download that would not help.
 
 - **Make `.rpyc` preview usable without manual setup.**
   unrpyc can now be downloaded from within the app, and the Python interpreter is detected
@@ -24,11 +32,6 @@
   Improved during the port - the non-obvious parts (archive format handling, VLC discovery,
   the native video surface lifecycle, Python detection) are commented - but the parser could
   still use proper API documentation.
-
-- **Windows on ARM has no media preview.**
-  There is no arm64 libvlc build to bundle. Teaching `VlcSetup` to fall back to a
-  system-wide VLC install on Windows, as it already does on macOS and Linux, would fix this
-  and shrink the x64 download further.
 
 - **macOS builds are not code-signed or notarised.**
   Users have to right-click → Open on first launch. Fixing this needs an Apple Developer
