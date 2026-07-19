@@ -16,15 +16,6 @@ namespace RpaParser
     public sealed class Archive
     {
         
-        private static class FileExtension
-        {
-            public const string Rpa = ".rpa";
-            public const string Rpi = ".rpi";
-            public const string Rpa2 = "RPA-2.0 ";
-            public const string Rpa3 = "RPA-3.0 ";
-            public const string Rpa32 = "RPA-3.2 ";
-        }
-        
         public FileInfo ArchiveInfo;
         public FileInfo IndexInfo;
         /// <summary>
@@ -39,22 +30,18 @@ namespace RpaParser
 
         
         private IndexLocation _indexLocation;
-        private string _archivePath;
-        private string _indexPath;
-        private string _firstLine;
-
-        
-        
+        private ArchiveFileInfo _files;
         
         private void Read(string filePath)
         {
-            _archivePath = filePath;
-            GetIndexAndArchive();
-            ArchiveInfo = GetArchiveInfo();
-            _firstLine = GetFirstLine();
-            Format = DetectFormat();
+            _files = ArchiveFileInfo.Resolve(filePath);
+            ArchiveInfo = _files.Archive;
 
-            _indexLocation = Format.LocateIndex(_archivePath, _firstLine, _indexPath);
+            var firstLine = _files.ReadFirstLine();
+            Format = ArchiveFormat.Detect(firstLine, _files.IndexPairExists)
+                     ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
+
+            _indexLocation = Format.LocateIndex(_files.ArchivePath, firstLine, _files.IndexPath);
             ObfuscationKey = _indexLocation.ObfuscationKey;
             IndexInfo = _indexLocation.IsSeparateFile ? new FileInfo(_indexLocation.FilePath) : null;
 
@@ -81,74 +68,6 @@ namespace RpaParser
         /// </summary>
         public static Archive Create() => new();
 
-        private void GetIndexAndArchive()
-        {
-            if (_archivePath.EndsWith(FileExtension.Rpa, StringComparison.OrdinalIgnoreCase))
-            {
-                _indexPath = SwapExtension(_archivePath, FileExtension.Rpi);
-            }
-            else if (_archivePath.EndsWith(FileExtension.Rpi, StringComparison.OrdinalIgnoreCase))
-            {
-                _indexPath = _archivePath;
-                _archivePath = SwapExtension(_archivePath, FileExtension.Rpa);
-            }
-        }
-
-        /// <summary>
-        /// Replaces the trailing extension while keeping the casing it is given. The
-        /// extensions are matched case insensitively, so writing a lower case one back would
-        /// derive "GAME.rpa" from "GAME.RPI" and find nothing on a case sensitive filesystem.
-        /// Both extensions are the same length, so the casing can be copied per character.
-        /// </summary>
-        private static string SwapExtension(string path, string replacement)
-        {
-            var existing = path[^replacement.Length..];
-            var swapped = new char[replacement.Length];
-
-            for (var i = 0; i < replacement.Length; i++)
-            {
-                swapped[i] = char.IsUpper(existing[i])
-                    ? char.ToUpperInvariant(replacement[i])
-                    : replacement[i];
-            }
-
-            return path[..^replacement.Length] + new string(swapped);
-        }
-
-        private FileInfo GetArchiveInfo()
-        {
-            if (string.IsNullOrEmpty(_archivePath))
-            {
-                throw new Exception("No archive file provided.");
-            }
-
-            if (!File.Exists(_archivePath))
-            {
-                throw new Exception("Archive file does not exist.");
-            }
-
-            return new FileInfo(_archivePath);
-        }
-
-        private string GetFirstLine()
-        {
-            using var streamReader = new StreamReader(_archivePath, Encoding.UTF8);
-            return streamReader.ReadLine();
-        }
-
-        private ArchiveFormat DetectFormat()
-        {
-            // Version 1 carries no magic bytes; it is recognised by both halves of the pair
-            // being present, which GetIndexAndArchive has already resolved.
-            var indexPairExists = !string.IsNullOrEmpty(_indexPath)
-                                  && File.Exists(_archivePath)
-                                  && File.Exists(_indexPath);
-
-            return ArchiveFormat.Detect(_firstLine, indexPairExists)
-                   ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
-        }
-
-        
         public byte[] ExtractData(string fileName)
         {
             if (!Index.ContainsKey(fileName))
@@ -158,7 +77,7 @@ namespace RpaParser
 
             if (Index[fileName].InArchive)
             {
-                using var reader = new BinaryReader(File.OpenRead(_archivePath), Encoding.UTF8);
+                using var reader = new BinaryReader(File.OpenRead(_files.ArchivePath), Encoding.UTF8);
                 byte[] finalData = [];
 
                 foreach (var segment in Index[fileName].Segments)
@@ -222,17 +141,7 @@ namespace RpaParser
             tmpPath = tmpPath.Substring(0, Math.Min(100, tmpPath.Length - 1)) + "_" +
                       DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid().ToString("N");
 
-            /*if (archivePath == _archivePath && _archivePath != String.Empty)
-            {
-                throw new Exception("Cannot overwrite same archive file that is loaded.");
-            }*/
-
             var indexPath = Regex.Replace(archivePath, @"\.rpa$", ".rpi", RegexOptions.IgnoreCase);
-
-            /*if (indexPath == _indexPath && _indexPath != String.Empty)
-            {
-                throw new Exception("Cannot overwrite same index file that is loaded.");
-            }*/
             
             BuildArchive(archivePath, indexPath, tmpPath);
 
