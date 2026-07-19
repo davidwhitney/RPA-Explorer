@@ -22,7 +22,7 @@ public class ArchivePreviewTests
     [InlineData("picture.jpg")]
     [InlineData("picture.webp")]
     [InlineData("picture.GIF")]
-    public void GetPreview_ImageExtension_ReturnsImageTypeWithRawBytes(string entryName)
+    public void Create_ImageExtension_ReturnsImageTypeWithRawBytes(string entryName)
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 0x89, 0x50, 0x4E, 0x47 };
@@ -39,7 +39,7 @@ public class ArchivePreviewTests
     [InlineData("script.rpy")]
     [InlineData("data.json")]
     [InlineData("page.HTML")]
-    public void GetPreview_TextExtension_ReturnsDecodedText(string entryName)
+    public void Create_TextExtension_ReturnsDecodedText(string entryName)
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, entryName, Encoding.UTF8.GetBytes("hello world"));
@@ -54,7 +54,7 @@ public class ArchivePreviewTests
     [InlineData("track.mp3")]
     [InlineData("track.ogg")]
     [InlineData("track.FLAC")]
-    public void GetPreview_AudioExtension_ReturnsAudioTypeWithRawBytes(string entryName)
+    public void Create_AudioExtension_ReturnsAudioTypeWithRawBytes(string entryName)
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 1, 2, 3 };
@@ -70,7 +70,7 @@ public class ArchivePreviewTests
     [InlineData("clip.webm")]
     [InlineData("clip.mp4")]
     [InlineData("clip.AVI")]
-    public void GetPreview_VideoExtension_ReturnsVideoTypeWithRawBytes(string entryName)
+    public void Create_VideoExtension_ReturnsVideoTypeWithRawBytes(string entryName)
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 4, 5, 6 };
@@ -83,7 +83,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_UnrecognisedExtension_ReturnsUnknownTypeWithRawBytes()
+    public void Create_UnrecognisedExtension_ReturnsUnknownTypeWithRawBytes()
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 0xDE, 0xAD };
@@ -96,7 +96,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_FileNotInIndex_ReturnsTheMissingPreview()
+    public void Create_FileNotInIndex_ReturnsTheMissingPreview()
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes("a"));
@@ -110,7 +110,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_RawRequestedForTextFile_ReturnsBytesInsteadOfString()
+    public void CreateRaw_TextFile_ReturnsBytesInsteadOfString()
     {
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("raw please");
@@ -123,7 +123,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreviewRaw_TextFile_ReturnsTypeAndBytes()
+    public void CreateRaw_TextFile_ReturnsTypeAndBytes()
     {
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("raw accessor");
@@ -140,7 +140,7 @@ public class ArchivePreviewTests
     [InlineData("unix\nline\nendings")]
     [InlineData("mac\rline\rendings")]
     [InlineData("no line endings at all")]
-    public void GetPreview_TextWithAnyLineEndingStyle_NormalisesToEnvironmentNewline(string raw)
+    public void Create_TextWithAnyLineEndingStyle_NormalisesToEnvironmentNewline(string raw)
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
@@ -153,7 +153,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptWithoutPythonConfigured_ThrowsWithGuidance()
+    public void Create_CompiledScriptWithoutPythonConfigured_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
@@ -166,7 +166,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptWithMissingPython_ThrowsWithGuidance()
+    public void Create_CompiledScriptWithMissingPython_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
@@ -178,7 +178,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptWithoutUnrpycConfigured_ThrowsWithGuidance()
+    public void Create_CompiledScriptWithoutUnrpycConfigured_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
@@ -190,7 +190,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptWithMissingUnrpyc_ThrowsWithGuidance()
+    public void Create_CompiledScriptWithMissingUnrpyc_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
@@ -202,7 +202,7 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void ParseRpyc_DecompilerFails_ThrowsReportingTheFailure()
+    public void Decompile_UnrpycFails_ThrowsReportingTheFailure()
     {
         using var workspace = new TempWorkspace();
         var decompiler = new Decompiler(new DecompilerOptions

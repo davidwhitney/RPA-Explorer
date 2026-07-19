@@ -56,7 +56,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_IndexPrefixStoredAsBytes_PrependsPrefixToContent()
+    public void Constructor_IndexPrefixStoredAsBytes_PrependsPrefixToContent()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("BODY");
@@ -69,7 +69,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_IndexPrefixStoredAsString_PrependsPrefixToContent()
+    public void Constructor_IndexPrefixStoredAsString_PrependsPrefixToContent()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("BODY");
@@ -81,7 +81,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_IndexSegmentWithoutPrefix_ReturnsContentUnchanged()
+    public void Constructor_IndexSegmentWithoutPrefix_ReturnsContentUnchanged()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("BODY");
@@ -97,7 +97,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_IndexContainsNullEntry_SkipsItAndKeepsTheRest()
+    public void Constructor_IndexContainsNullEntry_SkipsItAndKeepsTheRest()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("BODY");
@@ -114,7 +114,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_EntrySplitAcrossSegments_ConcatenatesInOrder()
+    public void Constructor_EntrySplitAcrossSegments_ConcatenatesInOrder()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("HELLOWORLD");
@@ -132,7 +132,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_HeaderOffsetBeyondEndOfFile_Throws()
+    public void Constructor_HeaderOffsetBeyondEndOfFile_Throws()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("BODY");
@@ -145,7 +145,7 @@ public class RawArchiveTests
     }
 
     [Fact]
-    public void LoadArchive_IndexIsNotValidZlib_Throws()
+    public void Constructor_IndexIsNotValidZlib_Throws()
     {
         using var workspace = new TempWorkspace();
         var header = "RPA-3.0 " + 34.ToString("x").PadLeft(16, '0') + " " + 0.ToString("x").PadLeft(8, '0') + "\n";

@@ -27,7 +27,7 @@ public class ArchiveVersionTests
         Formats(ArchiveFormat.All.Where(f => !f.HasSeparateIndexFile).ToArray());
 
     [Fact]
-    public void Format_NewParser_IsNotYetKnown()
+    public void Constructor_NewArchive_HasNoFormatYet()
     {
         var archive = new Archive();
 
@@ -40,7 +40,7 @@ public class ArchiveVersionTests
 
     [Theory]
     [MemberData(nameof(AllFormats))]
-    public void LoadArchive_ArchiveOfEachVersion_DetectsVersionAndContents(ArchiveFormat format)
+    public void Constructor_ArchiveOfEachVersion_DetectsVersionAndContents(ArchiveFormat format)
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new()
@@ -59,7 +59,7 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_Version1Archive_ExposesIndexFileInfo()
+    public void Constructor_Version1Archive_ExposesIndexFileInfo()
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
@@ -74,7 +74,7 @@ public class ArchiveVersionTests
 
     [Theory]
     [MemberData(nameof(EmbeddedIndexFormats))]
-    public void LoadArchive_VersionWithEmbeddedIndex_HasNoSeparateIndexFile(ArchiveFormat format)
+    public void Constructor_VersionWithEmbeddedIndex_HasNoSeparateIndexFile(ArchiveFormat format)
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
@@ -85,7 +85,7 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_Version1IndexPathGiven_ResolvesArchiveFromIndex()
+    public void Constructor_Version1IndexPathGiven_ResolvesArchiveFromIndex()
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
@@ -99,7 +99,7 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_Rpa3WithObfuscationKey_DeobfuscatesOffsets()
+    public void Constructor_Rpa3WithObfuscationKey_DeobfuscatesOffsets()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("obfuscated payload");
@@ -113,7 +113,7 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_ArchiveWithPadding_StillReadsContents()
+    public void Constructor_ArchiveWithPadding_StillReadsContents()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("padded payload");
@@ -126,7 +126,7 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_FileDoesNotExist_Throws()
+    public void Constructor_FileDoesNotExist_Throws()
     {
         using var workspace = new TempWorkspace();
         var archive = new Archive();
@@ -136,14 +136,14 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_EmptyPath_Throws()
+    public void Constructor_EmptyPath_Throws()
     {
 
         Should.Throw<Exception>(() => new Archive(string.Empty));
     }
 
     [Fact]
-    public void LoadArchive_FileIsNotAnArchive_Throws()
+    public void Constructor_FileIsNotAnArchive_Throws()
     {
         using var workspace = new TempWorkspace();
         var path = workspace.WriteFile("not-an-archive.rpa", "just some text, no RPA header");
@@ -154,7 +154,7 @@ public class ArchiveVersionTests
     }
 
     [Fact]
-    public void LoadArchive_Version1ArchiveMissingIndexFile_Throws()
+    public void Constructor_Version1ArchiveMissingIndexFile_Throws()
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };

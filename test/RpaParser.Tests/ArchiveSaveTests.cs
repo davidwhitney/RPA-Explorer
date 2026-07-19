@@ -30,7 +30,7 @@ public class ArchiveSaveTests
     };
 
     [Fact]
-    public void SaveArchive_PathWithoutExtension_AppendsRpaExtension()
+    public void Save_PathWithoutExtension_AppendsRpaExtension()
     {
         using var workspace = new TempWorkspace();
         var requested = workspace.Path_("no-extension");
@@ -42,7 +42,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void SaveArchive_PathEndingInRpi_WritesRpaInstead()
+    public void Save_PathEndingInRpi_WritesRpaInstead()
     {
         using var workspace = new TempWorkspace();
 
@@ -53,7 +53,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void SaveArchive_Version1_WritesBothArchiveAndIndexFiles()
+    public void Save_Version1_WritesBothArchiveAndIndexFiles()
     {
         using var workspace = new TempWorkspace();
 
@@ -65,7 +65,7 @@ public class ArchiveSaveTests
 
     [Theory]
     [MemberData(nameof(AllFormats))]
-    public void SaveArchive_EachVersion_ProducesArchiveThatReloadsIdentically(ArchiveFormat format)
+    public void Save_EachVersion_ProducesArchiveThatReloadsIdentically(ArchiveFormat format)
     {
         using var workspace = new TempWorkspace();
         var entries = SampleEntries();
@@ -80,7 +80,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void SaveArchive_ReSavingLoadedArchive_PreservesContents()
+    public void Save_ReSavingLoadedArchive_PreservesContents()
     {
         using var workspace = new TempWorkspace();
         var first = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -93,7 +93,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void SaveArchive_NoFormatChosen_Throws()
+    public void Save_NoFormatChosen_Throws()
     {
         using var workspace = new TempWorkspace();
         var archive = new Archive();  // no format chosen
@@ -109,7 +109,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void SaveArchive_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
+    public void Save_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
     {
         using var workspace = new TempWorkspace();
         var archive = new Archive(ArchiveFormat.Rpa3);
@@ -128,7 +128,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void SaveArchive_WithPadding_ProducesLargerArchiveThanWithout()
+    public void Save_WithPadding_ProducesLargerArchiveThanWithout()
     {
         using var workspace = new TempWorkspace();
 
@@ -140,7 +140,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void CopyIndex_ModifyingCopy_LeavesOriginalUnchanged()
+    public void Copy_ModifyingCopy_LeavesOriginalUnchanged()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -154,7 +154,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void CopyIndex_SharedEntry_CannotBeMutatedThroughTheCopy()
+    public void Copy_SharedEntry_CannotBeMutatedThroughTheCopy()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -169,7 +169,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void CopyIndex_CopiedEntry_CarriesAllFieldsAndSegments()
+    public void Copy_CopiedEntry_CarriesAllFieldsAndSegments()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -189,7 +189,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void CopyIndex_EmptyIndex_ReturnsEmptyCopy()
+    public void Copy_EmptyIndex_ReturnsEmptyCopy()
     {
         var index = new ArchiveIndex();
 

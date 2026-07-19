@@ -43,7 +43,7 @@ public class ArchiveDecompileTests
         new(StubOptions(workspace, interpreterBody));
 
     [Fact]
-    public void ParseRpyc_DecompilerWritesOutput_ReturnsDecompiledSource()
+    public void Decompile_UnrpycWritesOutput_ReturnsDecompiledSource()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -61,7 +61,7 @@ public class ArchiveDecompileTests
     }
 
     [Fact]
-    public void ParseRpyc_DecompilerWritesCrlfOutput_NormalisesLineEndings()
+    public void Decompile_UnrpycWritesCrlfOutput_NormalisesLineEndings()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -79,7 +79,7 @@ public class ArchiveDecompileTests
     }
 
     [Fact]
-    public void ParseRpyc_DecompilerLeavesNoTemporaryFilesBehind()
+    public void Decompile_UnrpycSucceeds_LeavesNoTemporaryFilesBehind()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -99,7 +99,7 @@ public class ArchiveDecompileTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptDecompiles_ReturnsTextPreview()
+    public void Create_CompiledScriptDecompiles_ReturnsTextPreview()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -120,7 +120,7 @@ public class ArchiveDecompileTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptDecompilesToNothing_FallsBackToUnknown()
+    public void Create_CompiledScriptDecompilesToNothing_FallsBackToUnknown()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -143,7 +143,7 @@ public class ArchiveDecompileTests
     }
 
     [Fact]
-    public void GetPreview_CompiledScriptRawRequested_ReturnsRawBytes()
+    public void CreateRaw_CompiledScript_ReturnsRawBytes()
     {
         if (OperatingSystem.IsWindows())
         {

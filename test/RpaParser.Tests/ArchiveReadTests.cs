@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace RpaParser.Tests;
 
-public class ArchiveExtractTests
+public class ArchiveReadTests
 {
     private static Dictionary<string, byte[]> SampleEntries() => new()
     {
@@ -17,7 +17,7 @@ public class ArchiveExtractTests
     };
 
     [Fact]
-    public void ExtractData_FileStoredInArchive_ReturnsOriginalBytes()
+    public void Read_FileStoredInArchive_ReturnsOriginalBytes()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -28,7 +28,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void ExtractData_FileNotInIndex_Throws()
+    public void Read_FileNotInIndex_Throws()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -39,7 +39,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void ExtractData_EntryNotYetInArchive_ReadsFromDisk()
+    public void Read_EntryNotYetInArchive_ReadsFromDisk()
     {
         using var workspace = new TempWorkspace();
         var onDisk = workspace.WriteFile("pending/new.txt", "not yet archived");
@@ -52,7 +52,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void ExtractData_MultiSegmentEntry_ConcatenatesSegments()
+    public void Read_MultiSegmentEntry_ConcatenatesSegments()
     {
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("segment payload");
@@ -66,7 +66,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void Extract_ExportPathGiven_WritesFileUnderThatPath()
+    public void Export_ExportPathGiven_WritesFileUnderThatPath()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -81,7 +81,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void Extract_NestedEntry_CreatesIntermediateDirectories()
+    public void Export_NestedEntry_CreatesIntermediateDirectories()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -95,7 +95,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void Extract_EmptyExportPath_WritesNextToArchive()
+    public void Export_EmptyExportPath_WritesNextToArchive()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -107,7 +107,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void Extract_WhitespaceExportPath_WritesNextToArchive()
+    public void Export_WhitespaceExportPath_WritesNextToArchive()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -119,7 +119,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void Extract_ExportPathDoesNotExist_Throws()
+    public void Export_ExportPathDoesNotExist_Throws()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -131,7 +131,7 @@ public class ArchiveExtractTests
     }
 
     [Fact]
-    public void Extract_FileNotInIndex_Throws()
+    public void Export_FileNotInIndex_Throws()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());

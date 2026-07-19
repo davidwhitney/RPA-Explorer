@@ -33,7 +33,7 @@ public class ArchivePathResolutionTests
     }
 
     [Fact]
-    public void LoadArchive_UppercaseIndexPath_DerivesArchivePathWithMatchingCase()
+    public void Constructor_UppercaseIndexPath_DerivesArchivePathWithMatchingCase()
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
@@ -45,7 +45,7 @@ public class ArchivePathResolutionTests
     }
 
     [Fact]
-    public void LoadArchive_UppercaseArchivePath_DerivesIndexPathWithMatchingCase()
+    public void Constructor_UppercaseArchivePath_DerivesIndexPathWithMatchingCase()
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
@@ -55,7 +55,7 @@ public class ArchivePathResolutionTests
     }
 
     [Fact]
-    public void LoadArchive_LowercaseIndexPath_StillResolvesLowercaseArchive()
+    public void Constructor_LowercaseIndexPath_StillResolvesLowercaseArchive()
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "game.rpa", "game.rpi");
@@ -66,7 +66,7 @@ public class ArchivePathResolutionTests
     }
 
     [Fact]
-    public void LoadArchive_MixedCaseExtension_ResolvesTheArchive()
+    public void Constructor_MixedCaseExtension_ResolvesTheArchive()
     {
         using TempWorkspace workspace = new TempWorkspace();
         (string archivePath, string indexPath) = BuildPair(workspace, "Game.Rpa", "Game.Rpi");
