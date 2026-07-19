@@ -46,13 +46,13 @@ namespace RPA_Explorer
         {
             InitializeComponent();
 
-            string appDataDir = Path.Combine(
+            var appDataDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RPA Explorer");
             Directory.CreateDirectory(appDataDir);
             _settingsPath = Path.Combine(appDataDir, "settings.ini");
             _settings = new Settings(_settingsPath);
 
-            foreach (Settings.Language lang in _settings.LangList)
+            foreach (var lang in _settings.LangList)
             {
                 LanguageCombo.Items.Add(lang.Name);
             }
@@ -118,7 +118,7 @@ namespace RPA_Explorer
                 }
             }
 
-            string[] args = Program.StartupArgs;
+            var args = Program.StartupArgs;
             if (args.Length >= 1 && !string.IsNullOrWhiteSpace(args[0]))
             {
                 await LoadArchive(args[0]);
@@ -234,7 +234,7 @@ namespace RPA_Explorer
 
         private async Task PromptInstallVlc()
         {
-            bool openPage = await MessageBox.ShowYesNo(this,
+            var openPage = await MessageBox.ShowYesNo(this,
                 GetText(Platform.HasHomebrew ? "Vlc_required_prompt_brew" : "Vlc_required_prompt"),
                 GetText("Vlc_required"));
 
@@ -250,7 +250,7 @@ namespace RPA_Explorer
         {
             if (confirm)
             {
-                bool proceed = await MessageBox.ShowYesNo(this,
+                var proceed = await MessageBox.ShowYesNo(this,
                     string.Format(GetText("Download_unrpyc_prompt"),
                         UnrpycInstaller.Version,
                         UnrpycInstaller.DownloadUrl,
@@ -263,13 +263,13 @@ namespace RPA_Explorer
                 }
             }
 
-            string previousStatus = StatusText.Text;
+            var previousStatus = StatusText.Text;
             try
             {
                 Progress<string> progress = new(message => StatusText.Text = message);
                 StatusText.Text = GetText("Downloading_unrpyc");
 
-                string script = await UnrpycInstaller.EnsureAsync(progress);
+                var script = await UnrpycInstaller.EnsureAsync(progress);
 
                 _settings.SetUnrpyc(script);
                 if (_rpaParser != null)
@@ -309,10 +309,10 @@ namespace RPA_Explorer
         private void GenerateTreeView()
         {
             // Preserve currently-expanded folders across the rebuild.
-            HashSet<string> expanded = new();
+            HashSet<string> expanded = [];
             if (_root != null)
             {
-                foreach (FileNode node in _root.All())
+                foreach (var node in _root.All())
                 {
                     if (node.IsExpanded)
                     {
@@ -327,18 +327,18 @@ namespace RPA_Explorer
             _root = new FileNode { Name = "/", FullPath = string.Empty, IsFolder = true, InArchive = true };
             Dictionary<string, FileNode> nodeByPath = new() { [string.Empty] = _root };
 
-            foreach (KeyValuePair<string, RpaParser.ArchiveIndex> kvp in _rpaParser.Index)
+            foreach (var kvp in _rpaParser.Index)
             {
-                string[] parts = kvp.Key.Split('/');
-                string build = string.Empty;
-                FileNode parent = _root;
+                var parts = kvp.Key.Split('/');
+                var build = string.Empty;
+                var parent = _root;
 
-                for (int i = 0; i < parts.Length; i++)
+                for (var i = 0; i < parts.Length; i++)
                 {
-                    bool isFile = i == parts.Length - 1;
+                    var isFile = i == parts.Length - 1;
                     build = build == string.Empty ? parts[i] : build + "/" + parts[i];
 
-                    if (!nodeByPath.TryGetValue(build, out FileNode node))
+                    if (!nodeByPath.TryGetValue(build, out var node))
                     {
                         node = new FileNode
                         {
@@ -357,13 +357,13 @@ namespace RPA_Explorer
             }
 
             // Folder size accumulation (matches the original behaviour).
-            foreach (KeyValuePair<string, RpaParser.ArchiveIndex> kvp in _rpaParser.Index)
+            foreach (var kvp in _rpaParser.Index)
             {
-                long length = kvp.Value.Length;
-                string[] parts = kvp.Key.Split('/');
-                string build = string.Empty;
+                var length = kvp.Value.Length;
+                var parts = kvp.Key.Split('/');
+                var build = string.Empty;
 
-                for (int i = 0; i < parts.Length; i++)
+                for (var i = 0; i < parts.Length; i++)
                 {
                     build = build == string.Empty ? parts[i] : build + "/" + parts[i];
                     if (i < parts.Length - 1)
@@ -379,7 +379,7 @@ namespace RPA_Explorer
             }
 
             // Mark unsaved (new) entries green and propagate to ancestors.
-            foreach (FileNode node in _root.All())
+            foreach (var node in _root.All())
             {
                 if (!node.IsFolder && !node.InArchive)
                 {
@@ -389,7 +389,7 @@ namespace RPA_Explorer
 
             Tree.ItemsSource = new ObservableCollection<FileNode> { _root };
 
-            foreach (FileNode node in _root.All())
+            foreach (var node in _root.All())
             {
                 if (expanded.Contains(node.FullPath))
                 {
@@ -406,7 +406,7 @@ namespace RPA_Explorer
         private static void MarkChanged(FileNode node)
         {
             node.IsChanged = true;
-            FileNode parent = node.Parent;
+            var parent = node.Parent;
             while (parent != null)
             {
                 parent.IsChanged = true;
@@ -418,15 +418,15 @@ namespace RPA_Explorer
 
         private void GenerateArchiveInfo()
         {
-            string info = string.Empty;
+            var info = string.Empty;
 
             if (_archiveLoaded && _rpaParser != null)
             {
-                string selectedPath = (Tree.SelectedItem as FileNode)?.FullPath ?? string.Empty;
+                var selectedPath = (Tree.SelectedItem as FileNode)?.FullPath ?? string.Empty;
 
                 long selectedSize = -1;
-                int unsavedCount = 0;
-                foreach (KeyValuePair<string, RpaParser.ArchiveIndex> kvp in _rpaParser.Index)
+                var unsavedCount = 0;
+                foreach (var kvp in _rpaParser.Index)
                 {
                     if (!kvp.Value.InArchive)
                     {
@@ -474,9 +474,9 @@ namespace RPA_Explorer
 
         private static string FormatSize(long bytes)
         {
-            string[] units = { "B", "KiB", "MiB", "GiB", "TiB", "PiB" };
+            string[] units = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
             double size = bytes;
-            int unit = 0;
+            var unit = 0;
             while (size >= 1024 && unit < units.Length - 1)
             {
                 size /= 1024;
@@ -527,7 +527,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            string path = selected.FullPath;
+            var path = selected.FullPath;
             if (selected.IsFolder || _rpaParser == null || !_rpaParser.Index.ContainsKey(path))
             {
                 Tabs.SelectedItem = TabNone;
@@ -535,7 +535,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            bool unsupported = true;
+            var unsupported = true;
             string failureMessage = null;
             try
             {
@@ -546,13 +546,13 @@ namespace RPA_Explorer
                 }
                 catch (Exception ex)
                 {
-                    FileInfo fileInfo = new FileInfo(path);
+                    var fileInfo = new FileInfo(path);
                     if (_rpaParser.CodeExtList.Contains(fileInfo.Extension.ToLower())
-                        && ex.Message.StartsWith(_rpaParser.rpycInfoBanner))
+                        && ex.Message.StartsWith(_rpaParser.RpycInfoBanner))
                     {
                         // unrpyc simply has not been obtained yet: offer to fetch it and
                         // retry, rather than making the user go and install it by hand.
-                        bool retried = false;
+                        var retried = false;
                         if (string.IsNullOrEmpty(_rpaParser.UnrpycLocation)
                             && await DownloadUnrpyc(true))
                         {
@@ -688,7 +688,7 @@ namespace RPA_Explorer
             const string timeFormat = @"hh\:mm\:ss\.f";
             const string unknown = "--:--:--.-";
 
-            TimeSpan current = TimeSpan.FromMilliseconds(currentMs < 0 ? 0 : currentMs);
+            var current = TimeSpan.FromMilliseconds(currentMs < 0 ? 0 : currentMs);
             string text;
 
             if (totalMs <= 0)
@@ -701,9 +701,9 @@ namespace RPA_Explorer
             }
             else
             {
-                TimeSpan total = TimeSpan.FromMilliseconds(totalMs);
-                long remainingMs = totalMs - currentMs;
-                TimeSpan remaining = TimeSpan.FromMilliseconds(remainingMs < 0 ? 0 : remainingMs);
+                var total = TimeSpan.FromMilliseconds(totalMs);
+                var remainingMs = totalMs - currentMs;
+                var remaining = TimeSpan.FromMilliseconds(remainingMs < 0 ? 0 : remainingMs);
                 text = current.ToString(timeFormat) + " / " + total.ToString(timeFormat) +
                        " (-" + remaining.ToString(timeFormat) + ")";
             }
@@ -731,10 +731,10 @@ namespace RPA_Explorer
         private void Search(TextBox tb, string pattern)
         {
             tb.Focus();
-            string text = tb.Text ?? string.Empty;
-            int start = Math.Min(_searchStartIndex, text.Length);
+            var text = tb.Text ?? string.Empty;
+            var start = Math.Min(_searchStartIndex, text.Length);
 
-            int index = text.IndexOf(pattern, start, StringComparison.Ordinal);
+            var index = text.IndexOf(pattern, start, StringComparison.Ordinal);
             if (index == -1)
             {
                 _searchStartIndex = 0;
@@ -758,12 +758,12 @@ namespace RPA_Explorer
 
         private List<string> CheckedFiles()
         {
-            List<string> list = new();
+            List<string> list = [];
             if (_root == null)
             {
                 return list;
             }
-            foreach (FileNode node in _root.All())
+            foreach (var node in _root.All())
             {
                 if (node.IsChecked == true && !node.IsFolder && _rpaParser.Index.ContainsKey(node.FullPath))
                 {
@@ -775,8 +775,8 @@ namespace RPA_Explorer
 
         private void RemoveChecked()
         {
-            bool changed = false;
-            foreach (FileNode node in _root.All())
+            var changed = false;
+            foreach (var node in _root.All())
             {
                 if (node.IsChecked == true && !node.IsFolder && _rpaParser.Index.ContainsKey(node.FullPath))
                 {
@@ -827,14 +827,14 @@ namespace RPA_Explorer
             string chosen;
             if (string.IsNullOrEmpty(openFile))
             {
-                IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
                     Title = GetText("Load_RenPy_Archive"),
                     AllowMultiple = false,
-                    FileTypeFilter = new[]
-                    {
-                        new FilePickerFileType(GetText("RPA_RPI_files")) { Patterns = new[] { "*.rpa", "*.rpi" } }
-                    },
+                    FileTypeFilter =
+                    [
+                        new FilePickerFileType(GetText("RPA_RPI_files")) { Patterns = ["*.rpa", "*.rpi"] }
+                    ],
                     SuggestedStartLocation = await StartLocation(_settings.GetArchive())
                 });
 
@@ -887,7 +887,7 @@ namespace RPA_Explorer
                 else
                 {
                     // Silently reuse a previous download instead of prompting again.
-                    string downloaded = UnrpycInstaller.FindExisting();
+                    var downloaded = UnrpycInstaller.FindExisting();
                     if (downloaded != null)
                     {
                         _rpaParser.UnrpycLocation = downloaded;
@@ -930,7 +930,7 @@ namespace RPA_Explorer
             StatusText.Text = GetText("Saving_archive");
 
             _rpaParser.OptionsConfirmed = false;
-            ArchiveSaveWindow options = new ArchiveSaveWindow(_rpaParser);
+            var options = new ArchiveSaveWindow(_rpaParser);
             await options.ShowDialog<bool>(this);
 
             if (!_rpaParser.OptionsConfirmed)
@@ -939,14 +939,14 @@ namespace RPA_Explorer
                 return;
             }
 
-            IStorageFile save = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            var save = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = GetText("Save_RenPy_Archive"),
                 DefaultExtension = "rpa",
-                FileTypeChoices = new[]
-                {
-                    new FilePickerFileType(GetText("RPA_RPI_files")) { Patterns = new[] { "*.rpa", "*.rpi" } }
-                },
+                FileTypeChoices =
+                [
+                    new FilePickerFileType(GetText("RPA_RPI_files")) { Patterns = ["*.rpa", "*.rpi"] }
+                ],
                 SuggestedStartLocation = await StartLocation(_rpaParser.ArchiveInfo?.DirectoryName)
             });
 
@@ -956,7 +956,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            string target = save.TryGetLocalPath();
+            var target = save.TryGetLocalPath();
             if (string.IsNullOrEmpty(target))
             {
                 StatusText.Text = GetText("Ready");
@@ -966,7 +966,7 @@ namespace RPA_Explorer
             _rpaParserBak = _rpaParser;
             try
             {
-                string saveName = _rpaParser.SaveArchive(target);
+                var saveName = _rpaParser.SaveArchive(target);
                 await LoadArchive(saveName, true);
             }
             catch (Exception ex)
@@ -982,13 +982,13 @@ namespace RPA_Explorer
 
         private async Task ExportChecked()
         {
-            List<string> exportFilesList = CheckedFiles();
+            var exportFilesList = CheckedFiles();
             if (exportFilesList.Count == 0)
             {
                 return;
             }
 
-            IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = GetText("Export_checked"),
                 AllowMultiple = false,
@@ -1000,7 +1000,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            string dest = folders[0].TryGetLocalPath();
+            var dest = folders[0].TryGetLocalPath();
             if (string.IsNullOrEmpty(dest))
             {
                 return;
@@ -1018,14 +1018,14 @@ namespace RPA_Explorer
 
         private void ExportFiles(List<string> exportFilesList, string destination)
         {
-            int counter = 0;
-            int jobSize = exportFilesList.Count;
+            var counter = 0;
+            var jobSize = exportFilesList.Count;
 
-            foreach (string file in exportFilesList)
+            foreach (var file in exportFilesList)
             {
                 counter++;
-                int pctProcessed = (int) Math.Ceiling((double) counter / jobSize * 100);
-                int current = counter;
+                var pctProcessed = (int) Math.Ceiling((double) counter / jobSize * 100);
+                var current = counter;
                 Dispatcher.UIThread.Post(() =>
                 {
                     ProgressLabel.Text = $"{current} / {jobSize}";
@@ -1062,9 +1062,9 @@ namespace RPA_Explorer
             _fileListBackup = _rpaParser.DeepCopyIndex(_rpaParser.Index);
             _cancelAdd = false;
 
-            foreach (string path in pathList)
+            foreach (var path in pathList)
             {
-                string originalPath = path;
+                var originalPath = path;
                 if (Directory.Exists(path))
                 {
                     originalPath = new DirectoryInfo(path).Parent?.FullName;
@@ -1092,11 +1092,11 @@ namespace RPA_Explorer
 
             if (Directory.Exists(path))
             {
-                foreach (string pathFile in Directory.GetFiles(path))
+                foreach (var pathFile in Directory.GetFiles(path))
                 {
                     AddPathToIndex(pathFile, originalPath);
                 }
-                foreach (string pathDir in Directory.GetDirectories(path))
+                foreach (var pathDir in Directory.GetDirectories(path))
                 {
                     AddPathToIndex(pathDir, originalPath);
                 }
@@ -1104,12 +1104,12 @@ namespace RPA_Explorer
 
             if (File.Exists(path) && !_cancelAdd)
             {
-                RpaParser.ArchiveIndex index = new RpaParser.ArchiveIndex
+                var index = new RpaParser.ArchiveIndex
                 {
                     InArchive = false,
                     FullPath = path.Replace('\\', '/')
                 };
-                string originalNormalized = (originalPath ?? string.Empty).Replace('\\', '/');
+                var originalNormalized = (originalPath ?? string.Empty).Replace('\\', '/');
                 index.TreePath = index.FullPath.Replace(originalNormalized + "/", string.Empty);
                 index.ParentPath = Path.GetDirectoryName(index.TreePath);
                 index.Length = new FileInfo(path).Length;
@@ -1136,7 +1136,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            string[] paths = e.Data.GetFiles()?
+            var paths = e.Data.GetFiles()?
                 .Select(f => f.TryGetLocalPath())
                 .Where(p => !string.IsNullOrEmpty(p))
                 .ToArray();
@@ -1156,7 +1156,7 @@ namespace RPA_Explorer
 
         private async void OnTabsDrop(object sender, DragEventArgs e)
         {
-            string first = e.Data.GetFiles()?
+            var first = e.Data.GetFiles()?
                 .Select(f => f.TryGetLocalPath())
                 .FirstOrDefault(p => !string.IsNullOrEmpty(p));
 
@@ -1170,14 +1170,14 @@ namespace RPA_Explorer
 
         private async Task DefineUnrpycLocation()
         {
-            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = GetText("Locate_unrpyc_script"),
                 AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
-                    new FilePickerFileType(GetText("UNRPYC_script")) { Patterns = new[] { "unrpyc.py", "*.py" } }
-                },
+                FileTypeFilter =
+                [
+                    new FilePickerFileType(GetText("UNRPYC_script")) { Patterns = ["unrpyc.py", "*.py"] }
+                ],
                 SuggestedStartLocation = await StartLocation(_settings.GetUnrpyc())
             });
 
@@ -1186,7 +1186,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            string chosen = files[0].TryGetLocalPath();
+            var chosen = files[0].TryGetLocalPath();
             if (!string.IsNullOrEmpty(chosen))
             {
                 _settings.SetUnrpyc(chosen);
@@ -1199,14 +1199,14 @@ namespace RPA_Explorer
 
         private async Task DefinePythonLocation()
         {
-            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = GetText("Locate_Python_Interpreter"),
                 AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
-                    new FilePickerFileType(GetText("Python_interpreter")) { Patterns = new[] { "python*", "*" } }
-                },
+                FileTypeFilter =
+                [
+                    new FilePickerFileType(GetText("Python_interpreter")) { Patterns = ["python*", "*"] }
+                ],
                 SuggestedStartLocation = await StartLocation(_settings.GetPython())
             });
 
@@ -1215,7 +1215,7 @@ namespace RPA_Explorer
                 return;
             }
 
-            string chosen = files[0].TryGetLocalPath();
+            var chosen = files[0].TryGetLocalPath();
             if (!string.IsNullOrEmpty(chosen))
             {
                 _settings.SetPython(chosen);
@@ -1236,7 +1236,7 @@ namespace RPA_Explorer
                 {
                     return null;
                 }
-                string dir = Directory.Exists(pathHint) ? pathHint : Path.GetDirectoryName(pathHint);
+                var dir = Directory.Exists(pathHint) ? pathHint : Path.GetDirectoryName(pathHint);
                 if (string.IsNullOrEmpty(dir))
                 {
                     return null;
@@ -1253,7 +1253,7 @@ namespace RPA_Explorer
         {
             if (!string.IsNullOrEmpty(message) && _archiveChanged)
             {
-                bool yes = await MessageBox.ShowYesNo(this, message, GetText("Archive_modified"));
+                var yes = await MessageBox.ShowYesNo(this, message, GetText("Archive_modified"));
                 return !yes;
             }
 
@@ -1296,7 +1296,7 @@ namespace RPA_Explorer
             }
 
             e.Cancel = true;
-            bool abort = await CheckIfChanged(GetText("Archive_modified_close"));
+            var abort = await CheckIfChanged(GetText("Archive_modified_close"));
             if (!abort)
             {
                 _forceClose = true;

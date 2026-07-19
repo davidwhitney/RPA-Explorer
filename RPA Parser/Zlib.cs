@@ -10,17 +10,17 @@ namespace RPA_Parser
     {
         public static byte[] UncompressBuffer(byte[] compressed)
         {
-            using MemoryStream input = new MemoryStream(compressed);
-            using ZLibStream zlib = new ZLibStream(input, CompressionMode.Decompress);
-            using MemoryStream output = new MemoryStream();
+            using var input = new MemoryStream(compressed);
+            using var zlib = new ZLibStream(input, CompressionMode.Decompress);
+            using var output = new MemoryStream();
             zlib.CopyTo(output);
             return output.ToArray();
         }
 
         public static byte[] CompressBuffer(byte[] raw)
         {
-            using MemoryStream output = new MemoryStream();
-            using (ZLibStream zlib = new ZLibStream(output, CompressionLevel.Optimal, true))
+            using var output = new MemoryStream();
+            using (var zlib = new ZLibStream(output, CompressionLevel.Optimal, true))
             {
                 zlib.Write(raw, 0, raw.Length);
             }

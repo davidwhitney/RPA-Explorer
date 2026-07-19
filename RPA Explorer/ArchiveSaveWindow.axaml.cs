@@ -22,14 +22,14 @@ namespace RPA_Explorer
 
             LoadTexts();
 
-            VersionCombo.Items.Add(RpaParser.Version.RPA_3_2);
-            VersionCombo.Items.Add(RpaParser.Version.RPA_3);
-            VersionCombo.Items.Add(RpaParser.Version.RPA_2);
-            VersionCombo.Items.Add(RpaParser.Version.RPA_1);
+            VersionCombo.Items.Add(RpaParser.Version.Rpa32);
+            VersionCombo.Items.Add(RpaParser.Version.Rpa3);
+            VersionCombo.Items.Add(RpaParser.Version.Rpa2);
+            VersionCombo.Items.Add(RpaParser.Version.Rpa1);
 
             VersionCombo.SelectedItem =
                 _rpaParser.CheckVersion(_rpaParser.ArchiveVersion, RpaParser.Version.Unknown)
-                    ? RpaParser.Version.RPA_3
+                    ? RpaParser.Version.Rpa3
                     : _rpaParser.ArchiveVersion;
 
             PaddingBox.Text = _rpaParser.Padding.ToString();
@@ -75,13 +75,13 @@ namespace RPA_Explorer
 
             switch ((double) VersionCombo.SelectedItem)
             {
-                case RpaParser.Version.RPA_1:
+                case RpaParser.Version.Rpa1:
                     PaddingBox.IsEnabled = false;
                     KeyBox.IsEnabled = false;
                     PaddingBox.Text = "0";
                     KeyBox.Text = "0";
                     break;
-                case RpaParser.Version.RPA_2:
+                case RpaParser.Version.Rpa2:
                     PaddingBox.IsEnabled = true;
                     KeyBox.IsEnabled = false;
                     PaddingBox.Text = _rpaParser.Padding.ToString();

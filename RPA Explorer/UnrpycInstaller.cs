@@ -26,7 +26,7 @@ namespace RPA_Explorer
 
         private static HttpClient CreateClient()
         {
-            HttpClient client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+            var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("RPA-Explorer");
             return client;
         }
@@ -67,7 +67,7 @@ namespace RPA_Explorer
         // Re-uses a previous download when one is already present.
         public static async Task<string> EnsureAsync(IProgress<string> progress = null)
         {
-            string existing = FindExisting();
+            var existing = FindExisting();
             if (existing != null)
             {
                 return existing;
@@ -75,25 +75,25 @@ namespace RPA_Explorer
 
             Directory.CreateDirectory(ToolsDirectory);
 
-            string tempZip = Path.Combine(Path.GetTempPath(),
+            var tempZip = Path.Combine(Path.GetTempPath(),
                 "unrpyc-" + Version + "-" + Guid.NewGuid().ToString("N") + ".zip");
 
             try
             {
                 progress?.Report(string.Format("Downloading unrpyc v{0}...", Version));
 
-                using (HttpResponseMessage response =
+                using (var response =
                        await Http.GetAsync(DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
                     response.EnsureSuccessStatusCode();
 
-                    using FileStream file = File.Create(tempZip);
+                    using var file = File.Create(tempZip);
                     await response.Content.CopyToAsync(file);
                 }
 
                 progress?.Report("Extracting unrpyc...");
 
-                string target = Path.Combine(ToolsDirectory, "unrpyc-" + Version);
+                var target = Path.Combine(ToolsDirectory, "unrpyc-" + Version);
                 if (Directory.Exists(target))
                 {
                     Directory.Delete(target, true);
@@ -102,7 +102,7 @@ namespace RPA_Explorer
                 // ExtractToDirectory refuses entries that would escape the destination.
                 ZipFile.ExtractToDirectory(tempZip, ToolsDirectory);
 
-                string script = FindExisting();
+                var script = FindExisting();
                 if (script == null)
                 {
                     throw new Exception("unrpyc.py was not found in the downloaded archive.");

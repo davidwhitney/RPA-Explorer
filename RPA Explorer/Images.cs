@@ -16,7 +16,7 @@ namespace RPA_Explorer
 
         public static Bitmap LoadAsset(string fileName)
         {
-            using Stream stream = AssetLoader.Open(new Uri(AssetBase + fileName));
+            using var stream = AssetLoader.Open(new Uri(AssetBase + fileName));
             return new Bitmap(stream);
         }
 
@@ -30,8 +30,8 @@ namespace RPA_Explorer
 
         public static Bitmap DecodeToBitmap(byte[] data)
         {
-            using Image image = SixLabors.ImageSharp.Image.Load(data);
-            using MemoryStream output = new MemoryStream();
+            using var image = SixLabors.ImageSharp.Image.Load(data);
+            using var output = new MemoryStream();
             image.Save(output, new PngEncoder());
             output.Position = 0;
             return new Bitmap(output);

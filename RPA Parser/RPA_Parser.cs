@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Razorvine.Pickle;
@@ -19,24 +18,24 @@ namespace RPA_Parser
         public class Version
         {
             public const double Unknown = -1;
-            public const double RPA_1 = 1;
-            public const double RPA_2 = 2;
-            public const double RPA_3 = 3;
-            public const double RPA_3_2 = 3.2;
+            public const double Rpa1 = 1;
+            public const double Rpa2 = 2;
+            public const double Rpa3 = 3;
+            public const double Rpa32 = 3.2;
         }
         
         private class ArchiveMagic
         {
-            public const string RPA_1_RPA = ".rpa";
-            public const string RPA_1_RPI = ".rpi";
-            public const string RPA_2 = "RPA-2.0 ";
-            public const string RPA_3 = "RPA-3.0 ";
-            public const string RPA_3_2 = "RPA-3.2 ";
+            public const string Rpa1Rpa = ".rpa";
+            public const string Rpa1Rpi = ".rpi";
+            public const string Rpa2 = "RPA-2.0 ";
+            public const string Rpa3 = "RPA-3.0 ";
+            public const string Rpa32 = "RPA-3.2 ";
         }
         
-        private class RPCMagic
+        private class RpcMagic
         {
-            public const string RPC_2 = "RENPY RPC2";
+            public const string Rpc2 = "RENPY RPC2";
         }
 
         public FileInfo ArchiveInfo;
@@ -48,7 +47,7 @@ namespace RPA_Parser
         public SortedDictionary<string,ArchiveIndex> Index = new ();
 
         public string PythonLocation = PythonLocator.Detected;
-        public string UnrpycLocation = String.Empty;
+        public string UnrpycLocation = string.Empty;
         
         private long _offset;
         private string _archivePath;
@@ -66,9 +65,9 @@ namespace RPA_Parser
         public class ArchiveIndex
         {
             public readonly SortedDictionary<int, Tuples> Tuples = new ();
-            public string FullPath = String.Empty;
-            public string TreePath = String.Empty;
-            public string ParentPath = String.Empty;
+            public string FullPath = string.Empty;
+            public string TreePath = string.Empty;
+            public string ParentPath = string.Empty;
             public bool InArchive;
             public long Length;
         }
@@ -89,7 +88,8 @@ namespace RPA_Parser
         Movies: WEBM, OGG Theora, VP9, VP8, MPEG 41, MPEG 2, MPEG 1
         */
 
-        public readonly string[] ImageExtList = {
+        public readonly string[] ImageExtList =
+        [
             ".jpeg",
             ".jpg",
             ".bmp",
@@ -99,9 +99,10 @@ namespace RPA_Parser
             ".exif",
             ".ico",
             ".gif"
-        };
+        ];
 
-        public readonly string[] AudioExtList = {
+        public readonly string[] AudioExtList =
+        [
             ".aac",
             ".ac3",
             ".flac",
@@ -110,9 +111,10 @@ namespace RPA_Parser
             ".wav",
             ".ogg",
             ".cpc"
-        };
+        ];
 
-        public readonly string[] VideoExtList = {
+        public readonly string[] VideoExtList =
+        [
             ".3gp",
             ".flv",
             ".mov",
@@ -125,9 +127,10 @@ namespace RPA_Parser
             ".mkv",
             ".wmv",
             ".webm"
-        };
+        ];
 
-        public readonly string[] TextExtList = {
+        public readonly string[] TextExtList =
+        [
             ".py",
             ".rpy~",
             ".rpy",
@@ -140,14 +143,15 @@ namespace RPA_Parser
             ".json",
             ".yaml",
             ".csv"
-        };
+        ];
 
-        public readonly string[] CodeExtList = {
+        public readonly string[] CodeExtList =
+        [
             ".rpyc~",
             ".rpyc",
             ".rpymc~",
             ".rpymc"
-        };
+        ];
         
         public void LoadArchive(string filePath)
         {
@@ -157,13 +161,13 @@ namespace RPA_Parser
             _firstLine = GetFirstLine();
             ArchiveVersion = CheckSupportedVersion(GetVersion());
             
-            if (CheckVersion(ArchiveVersion, Version.RPA_2) || CheckVersion(ArchiveVersion, Version.RPA_3) || CheckVersion(ArchiveVersion, Version.RPA_3_2))
+            if (CheckVersion(ArchiveVersion, Version.Rpa2) || CheckVersion(ArchiveVersion, Version.Rpa3) || CheckVersion(ArchiveVersion, Version.Rpa32))
             {
                 _metadata = GetMetadata();
                 _offset = GetOffset();
                 ObfuscationKey = GetObfuscationKey();
             }
-            else if (CheckVersion(ArchiveVersion, Version.RPA_1))
+            else if (CheckVersion(ArchiveVersion, Version.Rpa1))
             {
                 IndexInfo = GetIndexInfo();
             }
@@ -173,7 +177,7 @@ namespace RPA_Parser
 
         public bool CheckVersion(double version, double check)
         {
-            double difference = version - check;
+            var difference = version - check;
             if (difference == 0)
             {
                 return true;
@@ -184,11 +188,11 @@ namespace RPA_Parser
 
         private void GetIndexAndArchive()
         {
-            if (_archivePath.ToLower().EndsWith(ArchiveMagic.RPA_1_RPA))
+            if (_archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpa))
             {
                 _indexPath = Regex.Replace(_archivePath, @"\.rpa$", ".rpi", RegexOptions.IgnoreCase);
             }
-            if (_archivePath.ToLower().EndsWith(ArchiveMagic.RPA_1_RPI))
+            if (_archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpi))
             {
                 _indexPath = _archivePath;
                 _archivePath = Regex.Replace(_archivePath, @"\.rpi$", ".rpa", RegexOptions.IgnoreCase);
@@ -199,10 +203,10 @@ namespace RPA_Parser
         {
             switch (version)
             {
-                case Version.RPA_3_2:
-                case Version.RPA_3:
-                case Version.RPA_2:
-                case Version.RPA_1:
+                case Version.Rpa32:
+                case Version.Rpa3:
+                case Version.Rpa2:
+                case Version.Rpa1:
                     // Version is OK
                     break;
                 default:
@@ -214,7 +218,7 @@ namespace RPA_Parser
 
         private FileInfo GetArchiveInfo()
         {
-            if (_archivePath == String.Empty)
+            if (_archivePath == string.Empty)
             {
                 throw new Exception("No archive file provided.");
             }
@@ -229,7 +233,7 @@ namespace RPA_Parser
 
         private FileInfo GetIndexInfo()
         {
-            if (_indexPath == String.Empty)
+            if (_indexPath == string.Empty)
             {
                 throw new Exception("No index file provided.");
             }
@@ -244,28 +248,28 @@ namespace RPA_Parser
 
         private string GetFirstLine()
         {
-            using StreamReader streamReader = new StreamReader(_archivePath, Encoding.UTF8);
+            using var streamReader = new StreamReader(_archivePath, Encoding.UTF8);
             return streamReader.ReadLine();
         }
 
         private double GetVersion()
         {
-            if (_firstLine.StartsWith(ArchiveMagic.RPA_3_2))
+            if (_firstLine.StartsWith(ArchiveMagic.Rpa32))
             {
                 return 3.2;
             }
 
-            if (_firstLine.StartsWith(ArchiveMagic.RPA_3))
+            if (_firstLine.StartsWith(ArchiveMagic.Rpa3))
             {
                 return 3;
             }
 
-            if (_firstLine.StartsWith(ArchiveMagic.RPA_2))
+            if (_firstLine.StartsWith(ArchiveMagic.Rpa2))
             {
                 return 2;
             }
 
-            if (_archivePath.ToLower().EndsWith(ArchiveMagic.RPA_1_RPA) || _archivePath.ToLower().EndsWith(ArchiveMagic.RPA_1_RPI))
+            if (_archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpa) || _archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpi))
             {
                 GetIndexAndArchive();
                 if (File.Exists(_archivePath) && File.Exists(_indexPath))
@@ -291,16 +295,16 @@ namespace RPA_Parser
         {
             long key = 0;
             
-            if (CheckVersion(ArchiveVersion, Version.RPA_3))
+            if (CheckVersion(ArchiveVersion, Version.Rpa3))
             {
-                for(int i = 2; i < _metadata.Length; i++)
+                for(var i = 2; i < _metadata.Length; i++)
                 {
                     key ^= Convert.ToInt64(_metadata[i], 16);
                 }
             }
-            else if (CheckVersion(ArchiveVersion, Version.RPA_3_2))
+            else if (CheckVersion(ArchiveVersion, Version.Rpa32))
             {
-                for(int i = 3; i < _metadata.Length; i++)
+                for(var i = 3; i < _metadata.Length; i++)
                 {
                     key ^= Convert.ToInt64(_metadata[i], 16);
                 }
@@ -311,26 +315,26 @@ namespace RPA_Parser
         
         private SortedDictionary<string,ArchiveIndex> GetIndexes()
         {
-            SortedDictionary<string,ArchiveIndex> indexList = new SortedDictionary<string,ArchiveIndex>();
+            var indexList = new SortedDictionary<string,ArchiveIndex>();
             object unpickledIndexes;
 
-            string filePath = _archivePath;
-            if (CheckVersion(ArchiveVersion, Version.RPA_1))
+            var filePath = _archivePath;
+            if (CheckVersion(ArchiveVersion, Version.Rpa1))
             {
                 filePath = _indexPath;
             }
             
-            using (BinaryReader reader = new BinaryReader(File.OpenRead(filePath), Encoding.UTF8))
+            using (var reader = new BinaryReader(File.OpenRead(filePath), Encoding.UTF8))
             {
-                if (CheckVersion(ArchiveVersion, Version.RPA_2) || CheckVersion(ArchiveVersion, Version.RPA_3) || CheckVersion(ArchiveVersion, Version.RPA_3_2))
+                if (CheckVersion(ArchiveVersion, Version.Rpa2) || CheckVersion(ArchiveVersion, Version.Rpa3) || CheckVersion(ArchiveVersion, Version.Rpa32))
                 {
                     reader.BaseStream.Seek(_offset, SeekOrigin.Begin);
                 }
 
-                long blockOffset = _offset;
+                var blockOffset = _offset;
                 long blockSize = 2046;
-                long payloadSize = reader.BaseStream.Length;
-                byte[] fileCompressed = { };
+                var payloadSize = reader.BaseStream.Length;
+                byte[] fileCompressed = [];
 
                 while (blockSize > 0)
                 {
@@ -347,7 +351,7 @@ namespace RPA_Parser
 
                     if (blockSize != 0)
                     {
-                        byte[] buffer = reader.ReadBytes((int) blockSize);
+                        var buffer = reader.ReadBytes((int) blockSize);
                         fileCompressed = fileCompressed.Concat(buffer).ToArray();
 
                         blockOffset += blockSize;
@@ -355,8 +359,8 @@ namespace RPA_Parser
                     }
                 }
 
-                byte[] fileUncompressed = Zlib.UncompressBuffer(fileCompressed);
-                using (Unpickler unpickler = new Unpickler())
+                var fileUncompressed = Zlib.UncompressBuffer(fileCompressed);
+                using (var unpickler = new Unpickler())
                 {
                     unpickledIndexes = unpickler.loads(fileUncompressed);
                 }
@@ -370,16 +374,16 @@ namespace RPA_Parser
                     continue;
                 }
 
-                ArchiveIndex indexEntry = new ArchiveIndex
+                var indexEntry = new ArchiveIndex
                 {
                     TreePath = (string) kvp.Key,
                     ParentPath = Path.GetDirectoryName((string) kvp.Key),
                     InArchive = true
                 };
-                int counter = 0;
+                var counter = 0;
                 foreach (object[] value in (ArrayList) kvp.Value)
                 { 
-                    Tuples index = new Tuples
+                    var index = new Tuples
                     {
                         Offset = Convert.ToInt64(value.GetValue(0)),
                         Length = Convert.ToInt64(value.GetValue(1))
@@ -397,7 +401,7 @@ namespace RPA_Parser
                     }
                     else
                     {
-                        index.Prefix = Array.Empty<byte>();
+                        index.Prefix = [];
                     }
 
                     indexEntry.Tuples.Add(counter, index);
@@ -406,12 +410,12 @@ namespace RPA_Parser
                 indexList.Add(indexEntry.TreePath, indexEntry);
             }
 
-            foreach (KeyValuePair<string, ArchiveIndex> kvp in indexList)
+            foreach (var kvp in indexList)
             {
-                foreach (KeyValuePair<int, Tuples> kvpI in kvp.Value.Tuples)
+                foreach (var kvpI in kvp.Value.Tuples)
                 {
                     // Deobfuscate index data
-                    if (ArchiveVersion >= Version.RPA_3)
+                    if (ArchiveVersion >= Version.Rpa3)
                     {
                         kvpI.Value.Offset ^= ObfuscationKey;
                         kvpI.Value.Length ^= ObfuscationKey;
@@ -426,11 +430,11 @@ namespace RPA_Parser
 
         public SortedDictionary<string, ArchiveIndex> DeepCopyIndex(SortedDictionary<string, ArchiveIndex> originalIndex)
         {
-            SortedDictionary<string, ArchiveIndex> indexCopy = new SortedDictionary<string, ArchiveIndex>();
+            var indexCopy = new SortedDictionary<string, ArchiveIndex>();
             
-            foreach (KeyValuePair<string, ArchiveIndex> kvp in originalIndex)
+            foreach (var kvp in originalIndex)
             {
-                ArchiveIndex archIndex = new ArchiveIndex
+                var archIndex = new ArchiveIndex
                 {
                     FullPath = kvp.Value.FullPath,
                     InArchive = kvp.Value.InArchive,
@@ -439,9 +443,9 @@ namespace RPA_Parser
                     Length = kvp.Value.Length
                 };
                 
-                foreach (KeyValuePair<int, Tuples> kvpI in kvp.Value.Tuples)
+                foreach (var kvpI in kvp.Value.Tuples)
                 {
-                    Tuples index = new Tuples
+                    var index = new Tuples
                     {
                         Length = kvpI.Value.Length,
                         Offset = kvpI.Value.Offset,
@@ -457,56 +461,56 @@ namespace RPA_Parser
             return indexCopy;
         }
         
-        public string rpycInfoBanner =
+        public string RpycInfoBanner =
             "RPYC file contains compiled RenPy code. To preview code we need to use an external script called unrpyc for decompilation, plus a Python interpreter to run it. " +
             "Use Python 3 with current unrpyc for Ren'Py 8 games, or Python 2.7 with legacy unrpyc for Ren'Py 7 and older.";
 
-        public string ParseRPYC(byte[] file)
+        public string ParseRpyc(byte[] file)
         {
-            string decompiled = String.Empty;
-            if (PythonLocation == String.Empty)
+            var decompiled = string.Empty;
+            if (PythonLocation == string.Empty)
             {
-                throw new Exception(rpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Python environment is not defined.");
+                throw new Exception(RpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Python environment is not defined.");
             }
             
             if (!File.Exists(PythonLocation))
             {
-                throw new Exception(rpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Defined Python environment cannot be found (" + PythonLocation + ").");
+                throw new Exception(RpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Defined Python environment cannot be found (" + PythonLocation + ").");
             }
 
-            if (UnrpycLocation == String.Empty)
+            if (UnrpycLocation == string.Empty)
             {
-                throw new Exception(rpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Location of unrpyc script is not defined.");
+                throw new Exception(RpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Location of unrpyc script is not defined.");
             }
             
             if (!File.Exists(UnrpycLocation))
             {
-                throw new Exception(rpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Defined location of unrpyc script cannot be found (" + UnrpycLocation + ").");
+                throw new Exception(RpycInfoBanner + Environment.NewLine + Environment.NewLine + "ERROR: Defined location of unrpyc script cannot be found (" + UnrpycLocation + ").");
             }
 
-            string tmpFile = Path.GetTempFileName();
-            string decompiledFile = tmpFile + ".rpy";
+            var tmpFile = Path.GetTempFileName();
+            var decompiledFile = tmpFile + ".rpy";
             tmpFile += ".rpyc";
-            string result = String.Empty;
+            var result = string.Empty;
             
             try
             {
                 File.WriteAllBytes(tmpFile, file);
                 
-                ProcessStartInfo start = new ProcessStartInfo();
+                var start = new ProcessStartInfo();
                 start.FileName = PythonLocation;
                 start.Arguments = string.Format(@"""{0}"" {1} ""{2}""", UnrpycLocation, "--try-harder", tmpFile);
                 start.UseShellExecute = false;
                 start.RedirectStandardOutput = true;
                 start.RedirectStandardError = true;
                 start.CreateNoWindow = true;
-                using(Process process = Process.Start(start))
+                using(var process = Process.Start(start))
                 {
-                    using(StreamReader reader = process.StandardOutput)
+                    using(var reader = process.StandardOutput)
                     {
                         result += reader.ReadToEnd();
                     }
-                    using(StreamReader reader = process.StandardError)
+                    using(var reader = process.StandardError)
                     {
                         result += reader.ReadToEnd();
                     }
@@ -532,74 +536,26 @@ namespace RPA_Parser
                 }
             }
             
-            /*
-            // Attempt to port unrpyc from Python to C#
-
-            if (Encoding.UTF8.GetString(code).StartsWith(RPCMagic.RPC_2))
-            {
-                long blockOffset = 10;
-                Dictionary<int, byte[]> chunkList = new Dictionary<int, byte[]>();
-
-                while (true)
-                {
-                    byte[] chunkPart = new byte[12];
-                    Buffer.BlockCopy(code, (int) blockOffset, chunkPart, 0, 12);
-                    object[] structData = StructConverter.Unpack("III", chunkPart); // slot, start, length
-                    if ((int) structData[0] == 0)
-                    {
-                        break;
-                    }
-                    blockOffset += 12;
-                    
-                    byte[] chunk = new byte[(int) structData[2]];
-                    Buffer.BlockCopy(code, (int) structData[1], chunk, 0, (int) structData[2]);
-                    
-                    chunkList.Add((int) structData[0], chunk);
-                }
-
-                byte[] fileUncompressed;
-                try
-                {
-                    fileUncompressed = ZlibStream.UncompressBuffer(chunkList[1]);
-                }
-                catch (ZlibException ex)
-                {
-                    throw new Exception("Parsed slot 1 is not Zlib BLOB. " + ex.Message);
-                }
-
-                if (!Encoding.UTF8.GetString(fileUncompressed).EndsWith("."))
-                {
-                    throw new Exception("Parsed uncompressed slot 1 is not simple pickle.");
-                }
-
-                // TODO: pickletools.dis => disassembly, seems like there is no out of the box alternative for this in C#
-
-                //decompiled = Encoding.UTF8.GetString(fileUncompressed);
-            }
-
-            throw new NotImplementedException(); // TODO: remove when done
-            /**/
-            
             return decompiled;
         }
 
         public KeyValuePair<string, byte[]> GetPreviewRaw(string fileName)
         {
-            KeyValuePair<string, object> data = GetPreview(fileName, true);
+            var data = GetPreview(fileName, true);
             return new KeyValuePair<string, byte[]>(data.Key, (byte[]) data.Value);
         }
 
         public KeyValuePair<string, object> GetPreview(string fileName, bool returnRaw = false)
         {
-            KeyValuePair<string, object> data = new KeyValuePair<string, object>(PreviewTypes.Unknown, null);
+            var data = new KeyValuePair<string, object>(PreviewTypes.Unknown, null);
 
             if (!Index.ContainsKey(fileName))
             {
                 return data;
             }
 
-            FileInfo fileInfo = new FileInfo(fileName);
-            byte[] bytes = ExtractData(fileName);
+            var fileInfo = new FileInfo(fileName);
+            var bytes = ExtractData(fileName);
 
             if (ImageExtList.Contains(fileInfo.Extension.ToLower()))
             {
@@ -612,9 +568,9 @@ namespace RPA_Parser
             }
             else if (CodeExtList.Contains(fileInfo.Extension.ToLower()))
             {
-                string decompiledString = ParseRPYC(bytes);
+                var decompiledString = ParseRpyc(bytes);
 
-                if (decompiledString == String.Empty)
+                if (decompiledString == string.Empty)
                 {
                     data = new KeyValuePair<string, object>(PreviewTypes.Unknown, bytes);
                 }
@@ -650,11 +606,11 @@ namespace RPA_Parser
             const string linNewLine = "\n";
             const string macNewLine = "\r";
             
-            int countWin = Regex.Matches(text, winNewLine).Count;
-            int countLinux = Regex.Matches(text, linNewLine).Count;
-            int countMac = Regex.Matches(text, macNewLine).Count;
+            var countWin = Regex.Matches(text, winNewLine).Count;
+            var countLinux = Regex.Matches(text, linNewLine).Count;
+            var countMac = Regex.Matches(text, macNewLine).Count;
             
-            string newLineSymbol = Environment.NewLine;
+            var newLineSymbol = Environment.NewLine;
             
             if (countWin >= countLinux && countWin >= countMac)
             {
@@ -683,15 +639,15 @@ namespace RPA_Parser
 
             if (Index[fileName].InArchive)
             {
-                using BinaryReader reader = new BinaryReader(File.OpenRead(_archivePath), Encoding.UTF8);
-                byte[] finalData = { };
+                using var reader = new BinaryReader(File.OpenRead(_archivePath), Encoding.UTF8);
+                byte[] finalData = [];
 
-                foreach (KeyValuePair<int, Tuples> kvpI in Index[fileName].Tuples)
+                foreach (var kvpI in Index[fileName].Tuples)
                 {
                     reader.BaseStream.Seek(kvpI.Value.Offset, SeekOrigin.Begin);
-                    byte[] prefixData = kvpI.Value.Prefix;
-                    byte[] fileData = reader.ReadBytes((int) kvpI.Value.Length - kvpI.Value.Prefix.Length); // Exported file max size ~2.14 GB
-                    byte[] partData = new byte[finalData.Length + prefixData.Length + fileData.Length];
+                    var prefixData = kvpI.Value.Prefix;
+                    var fileData = reader.ReadBytes((int) kvpI.Value.Length - kvpI.Value.Prefix.Length); // Exported file max size ~2.14 GB
+                    var partData = new byte[finalData.Length + prefixData.Length + fileData.Length];
                     Buffer.BlockCopy(finalData, 0, partData, 0, finalData.Length);
                     Buffer.BlockCopy(prefixData, 0, partData, finalData.Length, prefixData.Length);
                     Buffer.BlockCopy(fileData, 0, partData, finalData.Length + prefixData.Length, fileData.Length);
@@ -706,11 +662,11 @@ namespace RPA_Parser
 
         public string Extract(string fileName, string exportPath)
         {
-            byte[] finalData = ExtractData(fileName);
+            var finalData = ExtractData(fileName);
             // Archive tree paths always use '/'; convert to the local separator.
-            string relativePath = fileName.Replace('/', Path.DirectorySeparatorChar);
+            var relativePath = fileName.Replace('/', Path.DirectorySeparatorChar);
             string baseDir;
-            if (exportPath.Trim() == String.Empty)
+            if (exportPath.Trim() == string.Empty)
             {
                 baseDir = ArchiveInfo.DirectoryName;
             }
@@ -723,7 +679,7 @@ namespace RPA_Parser
                 baseDir = exportPath.Trim();
             }
 
-            string finalPath = Path.Combine(baseDir, relativePath);
+            var finalPath = Path.Combine(baseDir, relativePath);
 
             Directory.CreateDirectory(Path.GetDirectoryName(finalPath) ?? throw new InvalidOperationException());
             File.WriteAllBytes(finalPath, finalData);
@@ -743,7 +699,7 @@ namespace RPA_Parser
                 archivePath += ".rpa";
             }
 
-            string tmpPath = Regex.Replace(archivePath, @"\.rpa$", "", RegexOptions.IgnoreCase);
+            var tmpPath = Regex.Replace(archivePath, @"\.rpa$", "", RegexOptions.IgnoreCase);
             tmpPath = tmpPath.Substring(0, Math.Min(100, tmpPath.Length - 1)) + "_" +
                       DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Guid.NewGuid().ToString("N");
 
@@ -752,7 +708,7 @@ namespace RPA_Parser
                 throw new Exception("Cannot overwrite same archive file that is loaded.");
             }*/
 
-            string indexPath = Regex.Replace(archivePath, @"\.rpa$", ".rpi", RegexOptions.IgnoreCase);
+            var indexPath = Regex.Replace(archivePath, @"\.rpa$", ".rpi", RegexOptions.IgnoreCase);
 
             /*if (indexPath == _indexPath && _indexPath != String.Empty)
             {
@@ -770,7 +726,7 @@ namespace RPA_Parser
             {
                 if (!File.Exists(tmpPath + ".rpa"))
                 {
-                    File.WriteAllBytes(tmpPath + ".rpa", new byte[] { });
+                    File.WriteAllBytes(tmpPath + ".rpa", []);
                 }
 
                 using (Stream stream = File.Open(tmpPath + ".rpa", FileMode.Truncate))
@@ -778,16 +734,19 @@ namespace RPA_Parser
                     int archiveOffset;
                     switch (ArchiveVersion)
                     {
-                        case Version.RPA_3_2:
+                        // File data starts immediately after the header, so these values are
+                        // the exact header lengths. 3.2 carries an extra field, making its
+                        // header nine bytes longer than 3.0's.
+                        case Version.Rpa32:
+                            archiveOffset = 43;
+                            break;
+                        case Version.Rpa3:
                             archiveOffset = 34;
                             break;
-                        case Version.RPA_3:
-                            archiveOffset = 34;
-                            break;
-                        case Version.RPA_2:
+                        case Version.Rpa2:
                             archiveOffset = 25;
                             break;
-                        case Version.RPA_1:
+                        case Version.Rpa1:
                             archiveOffset = 0;
                             break;
                         default:
@@ -796,18 +755,18 @@ namespace RPA_Parser
 
                     stream.Position = archiveOffset;
 
-                    Random rnd = new Random();
+                    var rnd = new Random();
 
                     // Update indexes
-                    Hashtable indexes = new Hashtable();
-                    foreach (KeyValuePair<string, ArchiveIndex> index in Index)
+                    var indexes = new Hashtable();
+                    foreach (var index in Index)
                     {
-                        byte[] content = ExtractData(index.Key);
+                        var content = ExtractData(index.Key);
 
                         if (Padding > 0)
                         {
-                            string paddingStr = String.Empty;
-                            int paddingLength = rnd.Next(1, Padding);
+                            var paddingStr = string.Empty;
+                            var paddingLength = rnd.Next(1, Padding);
 
                             while (paddingLength > 0)
                             {
@@ -815,23 +774,22 @@ namespace RPA_Parser
                                 paddingLength--;
                             }
 
-                            byte[] paddingBytes = Encoding.ASCII.GetBytes(paddingStr);
+                            var paddingBytes = Encoding.ASCII.GetBytes(paddingStr);
                             archiveOffset += paddingBytes.Length;
                         }
 
                         stream.Position = archiveOffset;
                         stream.Write(content, 0, content.Length);
 
-                        List<object[]> indexData = new List<object[]>();
-                        if (CheckVersion(ArchiveVersion, Version.RPA_3) ||
-                            CheckVersion(ArchiveVersion, Version.RPA_3_2))
+                        List<object[]> indexData = [];
+                        if (CheckVersion(ArchiveVersion, Version.Rpa3) ||
+                            CheckVersion(ArchiveVersion, Version.Rpa32))
                         {
-                            indexData.Add(new object[]
-                                {archiveOffset ^ ObfuscationKey, content.Length ^ ObfuscationKey, ""}); // Last is prefix
+                            indexData.Add([archiveOffset ^ ObfuscationKey, content.Length ^ ObfuscationKey, ""]); // Last is prefix
                         }
                         else
                         {
-                            indexData.Add(new object[] {archiveOffset, content.Length});
+                            indexData.Add([archiveOffset, content.Length]);
                         }
 
                         archiveOffset += content.Length;
@@ -840,39 +798,47 @@ namespace RPA_Parser
                     }
 
                     byte[] pickledIndexes;
-                    using (Pickler pickler = new Pickler())
+                    using (var pickler = new Pickler())
                     {
                         pickledIndexes = pickler.dumps(indexes);
                     }
 
-                    byte[] fileCompressed = Zlib.CompressBuffer(pickledIndexes);
+                    var fileCompressed = Zlib.CompressBuffer(pickledIndexes);
 
-                    if (!CheckVersion(ArchiveVersion, Version.RPA_1))
+                    if (!CheckVersion(ArchiveVersion, Version.Rpa1))
                     {
                         stream.Position = archiveOffset;
                         stream.Write(fileCompressed, 0, fileCompressed.Length);
 
-                        string headerContent = String.Empty;
+                        var headerContent = string.Empty;
 
                         switch (ArchiveVersion)
                         {
-                            case Version.RPA_3_2:
-                                headerContent = ArchiveMagic.RPA_3_2 + archiveOffset.ToString("x").PadLeft(16, '0') +
+                            case Version.Rpa32:
+                                // 3.2 carries an extra field between the offset and the key,
+                                // which is why GetObfuscationKey starts at index 3 for this
+                                // version rather than 2. Writing a 3.0-shaped header here
+                                // produced an archive this parser could not read back: the
+                                // key landed at index 2, so it was read as 0 and every
+                                // obfuscated offset decoded incorrectly.
+                                headerContent = ArchiveMagic.Rpa32 + archiveOffset.ToString("x").PadLeft(16, '0') +
+                                                " " +
+                                                0.ToString("x").PadLeft(8, '0') +
                                                 " " +
                                                 ObfuscationKey.ToString("x").PadLeft(8, '0') + "\n";
                                 break;
-                            case Version.RPA_3:
-                                headerContent = ArchiveMagic.RPA_3 + archiveOffset.ToString("x").PadLeft(16, '0') +
+                            case Version.Rpa3:
+                                headerContent = ArchiveMagic.Rpa3 + archiveOffset.ToString("x").PadLeft(16, '0') +
                                                 " " +
                                                 ObfuscationKey.ToString("x").PadLeft(8, '0') + "\n";
                                 break;
-                            case Version.RPA_2:
-                                headerContent = ArchiveMagic.RPA_2 + archiveOffset.ToString("x").PadLeft(16, '0') +
+                            case Version.Rpa2:
+                                headerContent = ArchiveMagic.Rpa2 + archiveOffset.ToString("x").PadLeft(16, '0') +
                                                 "\n";
                                 break;
                         }
 
-                        byte[] headerContentByte = Encoding.UTF8.GetBytes(headerContent);
+                        var headerContentByte = Encoding.UTF8.GetBytes(headerContent);
 
                         stream.Position = 0;
                         stream.Write(headerContentByte, 0, headerContentByte.Length);
@@ -886,7 +852,7 @@ namespace RPA_Parser
                 try
                 {
                     // Test if archive is corrupted or not
-                    RpaParser testParse = new RpaParser();
+                    var testParse = new RpaParser();
                     testParse.LoadArchive(tmpPath + ".rpa");
                 }
                 catch (Exception ex)
@@ -915,246 +881,6 @@ namespace RPA_Parser
 
                 throw;
             }
-        }
-    }
-
-    // https://stackoverflow.com/a/28418846/3650856
-    public class StructConverter
-    {
-        // We use this function to provide an easier way to make type-agnostic call via GetBytes method of the BitConverter class.
-        // This means we can have much cleaner code below.
-        private static byte[] TypeAgnosticGetBytes(object o)
-        {
-            switch (o)
-            {
-                case char c:
-                    return BitConverter.GetBytes(c);
-                case int i:
-                    return BitConverter.GetBytes(i);
-                case uint u:
-                    return BitConverter.GetBytes(u);
-                case long l:
-                    return BitConverter.GetBytes(l);
-                case ulong @ulong:
-                    return BitConverter.GetBytes(@ulong);
-                case short s:
-                    return BitConverter.GetBytes(s);
-                case ushort @ushort:
-                    return BitConverter.GetBytes(@ushort);
-                case byte _:
-                case sbyte _:
-                    return new[] { (byte)o };
-                default:
-                    throw new ArgumentException("Unsupported object type found");
-            }
-        }
-
-        private static string GetFormatSpecifierFor(object o)
-        {
-            switch (o)
-            {
-                case char _:
-                    return "c";
-                case int _:
-                    return "i";
-                case uint _:
-                    return "I";
-                case long _:
-                    return "q";
-                case ulong _:
-                    return "Q";
-                case short _:
-                    return "h";
-                case ushort _:
-                    return "H";
-                case byte _:
-                    return "B";
-                case sbyte _:
-                    return "b";
-                default:
-                    throw new ArgumentException("Unsupported object type found");
-            }
-        }
-
-        /// <summary>
-        /// Convert a byte array into an array of objects based on Python's "struct.unpack" protocol.
-        /// </summary>
-        /// <param name="fmt">A "struct.pack"-compatible format string</param>
-        /// <param name="bytes">An array of bytes to convert to objects</param>
-        /// <returns>Array of objects.</returns>
-        /// <remarks>You are responsible for casting the objects in the array back to their proper types.</remarks>
-        public static object[] Unpack(string fmt, byte[] bytes)
-        {
-            Debug.WriteLine("Format string is length {0}, {1} bytes provided.", fmt.Length, bytes.Length);
-
-            // First we parse the format string to make sure it's proper.
-            if (fmt.Length < 1) throw new ArgumentException("Format string cannot be empty.");
-
-            bool endianFlip = false;
-            if (fmt.Substring(0, 1) == "<")
-            {
-                Debug.WriteLine("  Endian marker found: little endian");
-                // Little endian.
-                // Do we need to flip endianness?
-                if (BitConverter.IsLittleEndian == false) endianFlip = true;
-                fmt = fmt.Substring(1);
-            }
-            else if (fmt.Substring(0, 1) == ">")
-            {
-                Debug.WriteLine("  Endian marker found: big endian");
-                // Big endian.
-                // Do we need to flip endianness?
-                if (BitConverter.IsLittleEndian) endianFlip = true;
-                fmt = fmt.Substring(1);
-            }
-
-            // Now, we find out how long the byte array needs to be
-            int totalByteLength = 0;
-            foreach (char c in fmt)
-            {
-                Debug.WriteLine("  Format character found: {0}", c);
-                switch (c)
-                {
-                    case 'q':
-                    case 'Q':
-                        totalByteLength += 8;
-                        break;
-                    case 'i':
-                    case 'I':
-                        totalByteLength += 4;
-                        break;
-                    case 'h':
-                    case 'H':
-                        totalByteLength += 2;
-                        break;
-                    case 'b':
-                    case 'B':
-                    case 'x':
-                        totalByteLength += 1;
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid character found in format string.");
-                }
-            }
-
-            Debug.WriteLine("Endianness will {0}be flipped.", (object)(endianFlip ? "" : "NOT "));
-            Debug.WriteLine("The byte array is expected to be {0} bytes long.", totalByteLength);
-
-            // Test the byte array length to see if it contains as many bytes as is needed for the string.
-            if (bytes.Length != totalByteLength) throw new ArgumentException("The number of bytes provided does not match the total length of the format string.");
-
-            // Ok, we can go ahead and start parsing bytes!
-            int byteArrayPosition = 0;
-            var outputList = new List<object>();
-
-            Debug.WriteLine("Processing byte array...");
-            foreach (char c in fmt)
-            {
-                byte[] buf;
-                switch (c)
-                {
-                    case 'q':
-                        outputList.Add(BitConverter.ToInt64(bytes, byteArrayPosition));
-                        byteArrayPosition += 8;
-                        Debug.WriteLine("  Added signed 64-bit integer.");
-                        break;
-                    case 'Q':
-                        outputList.Add(BitConverter.ToUInt64(bytes, byteArrayPosition));
-                        byteArrayPosition += 8;
-                        Debug.WriteLine("  Added unsigned 64-bit integer.");
-                        break;
-                    case 'i':
-                        outputList.Add(BitConverter.ToInt32(bytes, byteArrayPosition));
-                        byteArrayPosition += 4;
-                        Debug.WriteLine("  Added signed 32-bit integer.");
-                        break;
-                    case 'I':
-                        outputList.Add(BitConverter.ToUInt32(bytes, byteArrayPosition));
-                        byteArrayPosition += 4;
-                        Debug.WriteLine("  Added unsigned 32-bit integer.");
-                        break;
-                    case 'h':
-                        outputList.Add(BitConverter.ToInt16(bytes, byteArrayPosition));
-                        byteArrayPosition += 2;
-                        Debug.WriteLine("  Added signed 16-bit integer.");
-                        break;
-                    case 'H':
-                        if (endianFlip)
-                        {
-                            var deezBytes = Enumerable.Reverse(bytes).Skip(byteArrayPosition).Take(2).ToArray();
-                            outputList.Add(BitConverter.ToUInt16(deezBytes, 0));
-                        }
-                        else
-                        {
-                            outputList.Add(BitConverter.ToUInt16(bytes, byteArrayPosition));
-                        }
-
-                        byteArrayPosition += 2;
-                        Debug.WriteLine("  Added unsigned 16-bit integer.");
-                        break;
-                    case 'b':
-                        buf = new byte[1];
-                        Array.Copy(bytes, byteArrayPosition, buf, 0, 1);
-                        outputList.Add((sbyte)buf[0]);
-                        byteArrayPosition++;
-                        Debug.WriteLine("  Added signed byte");
-                        break;
-                    case 'B':
-                        buf = new byte[1];
-                        Array.Copy(bytes, byteArrayPosition, buf, 0, 1);
-                        outputList.Add(buf[0]);
-                        byteArrayPosition++;
-                        Debug.WriteLine("  Added unsigned byte");
-                        break;
-                    case 'x':
-                        byteArrayPosition++;
-                        Debug.WriteLine("  Ignoring a byte");
-                        break;
-                    default:
-                        throw new ArgumentException("You should not be here.");
-                }
-            }
-            return outputList.ToArray();
-        }
-
-        /// <summary>
-        /// Convert an array of objects to a byte array, along with a string that can be used with Unpack.
-        /// </summary>
-        /// <param name="items">An object array of items to convert</param>
-        /// <param name="littleEndian">Set to False if you want to use big endian output.</param>
-        /// <param name="neededFormatStringToRecover">Variable to place an 'Unpack'-compatible format string into.</param>
-        /// <returns>A Byte array containing the objects provided in binary format.</returns>
-        public static byte[] Pack(object[] items, bool littleEndian, out string neededFormatStringToRecover)
-        {
-
-            // make a byte list to hold the bytes of output
-            var outputBytes = new List<byte>();
-
-            // should we be flipping bits for proper endianness?
-            bool endianFlip = (littleEndian != BitConverter.IsLittleEndian);
-
-            // start working on the output string
-            string outString = (littleEndian == false ? ">" : "<");
-
-            // convert each item in the objects to the representative bytes
-            foreach (object o in items)
-            {
-                byte[] theseBytes = TypeAgnosticGetBytes(o);
-                if (endianFlip) theseBytes = Enumerable.Reverse(theseBytes).ToArray();
-                outString += GetFormatSpecifierFor(o);
-                outputBytes.AddRange(theseBytes);
-            }
-
-            neededFormatStringToRecover = outString;
-
-            return outputBytes.ToArray();
-
-        }
-
-        public static byte[] Pack(object[] items)
-        {
-            string dummy = "";
-            return Pack(items, true, out dummy);
         }
     }
 }

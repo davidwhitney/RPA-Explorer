@@ -77,7 +77,7 @@ namespace RPA_Explorer
 
             if (updateChildren && _isChecked.HasValue)
             {
-                foreach (FileNode child in Children)
+                foreach (var child in Children)
                 {
                     child.SetIsChecked(_isChecked, true, false);
                 }
@@ -94,9 +94,9 @@ namespace RPA_Explorer
         private void VerifyCheckState()
         {
             bool? state = null;
-            for (int i = 0; i < Children.Count; i++)
+            for (var i = 0; i < Children.Count; i++)
             {
-                bool? current = Children[i].IsChecked;
+                var current = Children[i].IsChecked;
                 if (i == 0)
                 {
                     state = current;
@@ -114,10 +114,10 @@ namespace RPA_Explorer
         // Depth-first enumeration of this node and all descendants.
         public IEnumerable<FileNode> All()
         {
-            foreach (FileNode child in Children)
+            foreach (var child in Children)
             {
                 yield return child;
-                foreach (FileNode sub in child.All())
+                foreach (var sub in child.All())
                 {
                     yield return sub;
                 }

@@ -19,9 +19,11 @@ namespace RPA_Explorer
         {
             if (!_loadingPending)
             {
-                List<string> cfg = new List<string>();
-                
-                cfg.Add("language=" + GetLang().Name);
+                List<string> cfg =
+                [
+                    "language=" + GetLang().Name
+                ];
+
                 if (!string.IsNullOrEmpty(GetPython()))
                 {
                     cfg.Add("python=" + GetPython());
@@ -51,10 +53,10 @@ namespace RPA_Explorer
             
             if (File.Exists(_settingsPath))
             {
-                string[] lines = File.ReadAllLines(_settingsPath);
-                foreach (string line in lines)
+                var lines = File.ReadAllLines(_settingsPath);
+                foreach (var line in lines)
                 {
-                    string cfg = String.Empty;
+                    var cfg = string.Empty;
                     if (line.Contains("#"))
                     {
                         cfg = line.Split('#')[0].Trim();
@@ -68,9 +70,9 @@ namespace RPA_Explorer
                     {
                         if (cfg.Contains("="))
                         {
-                            string[] cfgSplit = cfg.Split('=');
-                            string name = cfgSplit[0].Trim().ToLower();
-                            string value = String.Empty;
+                            var cfgSplit = cfg.Split('=');
+                            var name = cfgSplit[0].Trim().ToLower();
+                            var value = string.Empty;
                             if (cfgSplit.Length > 1)
                             {
                                 value = cfgSplit[1].Trim();
@@ -123,13 +125,14 @@ namespace RPA_Explorer
         private static readonly Language Test = new Language("TEST", "TST");
 
         // List of enabled languages
-        public readonly Language[] LangList = {
+        public readonly Language[] LangList =
+        [
             English
             /* *-/
             // For testing only
             , Test
             /* */
-        };
+        ];
         
         private Language _language = new Language("English", "EN");
         
@@ -140,8 +143,8 @@ namespace RPA_Explorer
 
         public void SetLang(string language)
         {
-            bool isValid = false;
-            foreach (Language lang in LangList)
+            var isValid = false;
+            foreach (var lang in LangList)
             {
                 if (language == lang.Name || language == lang.Abbrev)
                 {
@@ -166,7 +169,7 @@ namespace RPA_Explorer
          * 
          */
         
-        private string _python = String.Empty;
+        private string _python = string.Empty;
         
         public string GetPython()
         {
@@ -182,7 +185,7 @@ namespace RPA_Explorer
             else
             {
                 // Default
-                _python = String.Empty;
+                _python = string.Empty;
             }
 
             StoreSettings();
@@ -194,7 +197,7 @@ namespace RPA_Explorer
          * 
          */
         
-        private string _unrpyc = String.Empty;
+        private string _unrpyc = string.Empty;
         
         public string GetUnrpyc()
         {
@@ -210,7 +213,7 @@ namespace RPA_Explorer
             else
             {
                 // Default
-                _unrpyc = String.Empty;
+                _unrpyc = string.Empty;
             }
 
             StoreSettings();
@@ -222,7 +225,7 @@ namespace RPA_Explorer
          * 
          */
         
-        private string _archive = String.Empty;
+        private string _archive = string.Empty;
         
         public string GetArchive()
         {
@@ -238,7 +241,7 @@ namespace RPA_Explorer
             else
             {
                 // Default
-                _unrpyc = String.Empty;
+                _unrpyc = string.Empty;
             }
 
             StoreSettings();

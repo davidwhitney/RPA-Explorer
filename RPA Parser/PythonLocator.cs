@@ -18,26 +18,86 @@ namespace RPA_Parser
     // "python3" works fine in the user's terminal.
     public static class PythonLocator
     {
-        private static readonly Lazy<string> CachedPath = new(Detect);
+        /// <summary>
+        /// The environment the search runs against. Introduced so the search can be exercised
+        /// against a controlled filesystem and OS rather than whichever machine runs the tests.
+        /// </summary>
+        internal interface IEnvironmentProbe
+        {
+            bool IsWindows { get; }
+            string GetEnvironmentVariable(string name);
+            string UserProfile { get; }
+            bool FileExists(string path);
+            bool DirectoryExists(string path);
+            string[] GetDirectories(string path);
+        }
+
+        private sealed class SystemProbe : IEnvironmentProbe
+        {
+            public static readonly SystemProbe Instance = new();
+
+            public bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+            public string GetEnvironmentVariable(string name) => Environment.GetEnvironmentVariable(name);
+
+            public string UserProfile =>
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            public bool FileExists(string path)
+            {
+                try
+                {
+                    return File.Exists(path);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            public bool DirectoryExists(string path)
+            {
+                try
+                {
+                    return Directory.Exists(path);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            public string[] GetDirectories(string path)
+            {
+                try
+                {
+                    return Directory.GetDirectories(path);
+                }
+                catch
+                {
+                    return [];
+                }
+            }
+        }
+
+        private static readonly Lazy<string> CachedPath = new(() => Detect(SystemProbe.Instance));
 
         // Detected interpreter, or an empty string when none was found. Computed once.
         public static string Detected => CachedPath.Value;
 
-        private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        private static string[] ExecutableNames(IEnvironmentProbe probe) => probe.IsWindows
+            ? ["python3.exe", "python.exe", "python2.7.exe", "python2.exe"]
+            : ["python3", "python", "python2.7", "python2"];
 
-        private static string[] ExecutableNames => IsWindows
-            ? new[] { "python3.exe", "python.exe", "python2.7.exe", "python2.exe" }
-            : new[] { "python3", "python", "python2.7", "python2" };
-
-        private static string Detect()
+        internal static string Detect(IEnvironmentProbe probe)
         {
-            List<string> directories = EnumerateDirectories();
+            var directories = EnumerateDirectories(probe);
 
             // Names are the outer loop so an explicit python3 anywhere wins over a bare
             // "python" (which is still Python 2 on many setups).
-            foreach (string name in ExecutableNames)
+            foreach (var name in ExecutableNames(probe))
             {
-                foreach (string directory in directories)
+                foreach (var directory in directories)
                 {
                     string full;
                     try
@@ -49,16 +109,9 @@ namespace RPA_Parser
                         continue; // malformed PATH entry
                     }
 
-                    try
+                    if (probe.FileExists(full))
                     {
-                        if (File.Exists(full))
-                        {
-                            return full;
-                        }
-                    }
-                    catch
-                    {
-                        // Unreadable location, keep looking
+                        return full;
                     }
                 }
             }
@@ -66,10 +119,10 @@ namespace RPA_Parser
             return string.Empty;
         }
 
-        private static List<string> EnumerateDirectories()
+        internal static List<string> EnumerateDirectories(IEnvironmentProbe probe)
         {
-            HashSet<string> seen = new();
-            List<string> dirs = new();
+            HashSet<string> seen = [];
+            List<string> dirs = [];
 
             void Add(string dir)
             {
@@ -80,24 +133,22 @@ namespace RPA_Parser
             }
 
             // 1. The process PATH: correct when the app was started from a shell.
-            string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-            foreach (string dir in pathEnv.Split(Path.PathSeparator))
+            var pathEnv = probe.GetEnvironmentVariable("PATH") ?? string.Empty;
+            foreach (var dir in pathEnv.Split(Path.PathSeparator))
             {
                 Add(dir.Trim());
             }
 
             // 2. pyenv, which a Finder/Dock launch would not expose through PATH.
-            foreach (string dir in PyenvDirectories())
+            foreach (var dir in PyenvDirectories(probe))
             {
                 Add(dir);
             }
 
             // 3. Common install locations a GUI app's PATH usually misses.
-            if (IsWindows)
+            if (probe.IsWindows)
             {
-                Add(Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Programs", "Python"));
+                Add(Path.Combine(probe.UserProfile, "AppData", "Local", "Programs", "Python"));
             }
             else
             {
@@ -112,46 +163,45 @@ namespace RPA_Parser
 
         // pyenv shims first (they honour the user's selected global/local version), then the
         // concrete installs, newest version first.
-        private static IEnumerable<string> PyenvDirectories()
+        internal static IEnumerable<string> PyenvDirectories(IEnvironmentProbe probe)
         {
-            string root = Environment.GetEnvironmentVariable("PYENV_ROOT");
+            var root = probe.GetEnvironmentVariable("PYENV_ROOT");
             if (string.IsNullOrWhiteSpace(root))
             {
-                root = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".pyenv");
+                root = Path.Combine(probe.UserProfile, ".pyenv");
             }
 
-            if (!SafeDirectoryExists(root))
+            if (!probe.DirectoryExists(root))
             {
                 yield break;
             }
 
-            string shims = Path.Combine(root, "shims");
-            if (SafeDirectoryExists(shims))
+            var shims = Path.Combine(root, "shims");
+            if (probe.DirectoryExists(shims))
             {
                 yield return shims;
             }
 
-            string versions = Path.Combine(root, "versions");
-            if (!SafeDirectoryExists(versions))
+            var versions = Path.Combine(root, "versions");
+            if (!probe.DirectoryExists(versions))
             {
                 yield break;
             }
 
-            List<(Version Version, string Dir)> ordered = new();
-            List<string> unversioned = new();
+            List<(Version Version, string Dir)> ordered = [];
+            List<string> unversioned = [];
 
-            foreach (string versionDir in SafeEnumerateDirectories(versions))
+            foreach (var versionDir in probe.GetDirectories(versions))
             {
-                string bin = IsWindows ? versionDir : Path.Combine(versionDir, "bin");
-                if (!SafeDirectoryExists(bin))
+                var bin = probe.IsWindows ? versionDir : Path.Combine(versionDir, "bin");
+                if (!probe.DirectoryExists(bin))
                 {
                     continue;
                 }
 
                 // Names look like "3.12.1", "2.7.18", "pypy3.10-7.3.15", "miniconda3-4.7.12".
-                Match match = Regex.Match(Path.GetFileName(versionDir) ?? string.Empty, @"(\d+(?:\.\d+)+)");
-                if (match.Success && Version.TryParse(match.Groups[1].Value, out Version parsed))
+                var match = Regex.Match(Path.GetFileName(versionDir) ?? string.Empty, @"(\d+(?:\.\d+)+)");
+                if (match.Success && Version.TryParse(match.Groups[1].Value, out var parsed))
                 {
                     ordered.Add((parsed, bin));
                 }
@@ -161,38 +211,14 @@ namespace RPA_Parser
                 }
             }
 
-            foreach ((Version _, string dir) in ordered.OrderByDescending(entry => entry.Version))
+            foreach (var (_, dir) in ordered.OrderByDescending(entry => entry.Version))
             {
                 yield return dir;
             }
 
-            foreach (string dir in unversioned)
+            foreach (var dir in unversioned)
             {
                 yield return dir;
-            }
-        }
-
-        private static bool SafeDirectoryExists(string path)
-        {
-            try
-            {
-                return Directory.Exists(path);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private static IEnumerable<string> SafeEnumerateDirectories(string path)
-        {
-            try
-            {
-                return Directory.GetDirectories(path);
-            }
-            catch
-            {
-                return Array.Empty<string>();
             }
         }
     }

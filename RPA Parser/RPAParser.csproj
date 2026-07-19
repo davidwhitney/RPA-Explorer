@@ -12,4 +12,11 @@
       <PackageReference Include="Razorvine.Pickle" Version="1.5.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <!-- Zlib is an internal helper; the test project verifies it directly. -->
+      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+        <_Parameter1>RPAParser.Tests</_Parameter1>
+      </AssemblyAttribute>
+    </ItemGroup>
+
 </Project>

@@ -25,7 +25,7 @@ namespace RPA_Explorer
         {
             bool? result = null;
 
-            Window dialog = new Window
+            var dialog = new Window
             {
                 Title = title,
                 SizeToContent = SizeToContent.WidthAndHeight,
@@ -36,7 +36,7 @@ namespace RPA_Explorer
                 ShowInTaskbar = false
             };
 
-            StackPanel buttons = new StackPanel
+            var buttons = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -45,8 +45,8 @@ namespace RPA_Explorer
 
             if (yesNo)
             {
-                Button yes = new Button { Content = "Yes", MinWidth = 80, HorizontalContentAlignment = HorizontalAlignment.Center };
-                Button no = new Button { Content = "No", MinWidth = 80, HorizontalContentAlignment = HorizontalAlignment.Center };
+                var yes = new Button { Content = "Yes", MinWidth = 80, HorizontalContentAlignment = HorizontalAlignment.Center };
+                var no = new Button { Content = "No", MinWidth = 80, HorizontalContentAlignment = HorizontalAlignment.Center };
                 yes.Click += (_, _) => { result = true; dialog.Close(); };
                 no.Click += (_, _) => { result = false; dialog.Close(); };
                 buttons.Children.Add(yes);
@@ -54,7 +54,7 @@ namespace RPA_Explorer
             }
             else
             {
-                Button ok = new Button { Content = "OK", MinWidth = 80, HorizontalContentAlignment = HorizontalAlignment.Center };
+                var ok = new Button { Content = "OK", MinWidth = 80, HorizontalContentAlignment = HorizontalAlignment.Center };
                 ok.Click += (_, _) => { result = true; dialog.Close(); };
                 buttons.Children.Add(ok);
             }

@@ -7,19 +7,63 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RPA Explorer", "RPA Explore
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RPAParser", "RPA Parser\RPAParser.csproj", "{14B716D7-7DB3-44D2-B093-A1A725C736D1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RPA Parser.Tests", "RPA Parser.Tests", "{20407C21-23FA-F445-FE4F-BA7E8EC3593D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RPAParser.Tests", "RPA Parser.Tests\RPAParser.Tests.csproj", "{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RPA Parser", "RPA Parser", "{41A2B1FA-53B9-9B03-363D-87A79F515EE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Debug|x64.Build.0 = Debug|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Debug|x86.Build.0 = Debug|Any CPU
 		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Release|x64.ActiveCfg = Release|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Release|x64.Build.0 = Release|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Release|x86.ActiveCfg = Release|Any CPU
+		{D2F396AD-92CD-4C2D-97FA-E3D48FECC1D5}.Release|x86.Build.0 = Release|Any CPU
 		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Debug|x64.Build.0 = Debug|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Debug|x86.Build.0 = Debug|Any CPU
 		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Release|x64.ActiveCfg = Release|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Release|x64.Build.0 = Release|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Release|x86.ActiveCfg = Release|Any CPU
+		{14B716D7-7DB3-44D2-B093-A1A725C736D1}.Release|x86.Build.0 = Release|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Debug|x64.Build.0 = Debug|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Debug|x86.Build.0 = Debug|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Release|x64.ActiveCfg = Release|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Release|x64.Build.0 = Release|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Release|x86.ActiveCfg = Release|Any CPU
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4FEFDF10-6F6C-4D57-BBE1-F8561EC10EB0} = {20407C21-23FA-F445-FE4F-BA7E8EC3593D}
 	EndGlobalSection
 EndGlobal

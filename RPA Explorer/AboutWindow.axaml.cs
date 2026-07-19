@@ -9,8 +9,8 @@ namespace RPA_Explorer
 {
     public partial class AboutWindow : Window
     {
-        private static readonly string[] TranslatorsList = { "-" };
-        private static readonly string[] ContributorsList = { "-" };
+        private static readonly string[] TranslatorsList = ["-"];
+        private static readonly string[] ContributorsList = ["-"];
 
         private readonly string _appVersion =
             Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";

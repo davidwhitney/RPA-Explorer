@@ -97,8 +97,8 @@ namespace RPA_Explorer
 
         public static string Get(string abbrev, string name)
         {
-            if (Languages.TryGetValue(abbrev, out Dictionary<string, string> table)
-                && table.TryGetValue(name, out string value))
+            if (Languages.TryGetValue(abbrev, out var table)
+                && table.TryGetValue(name, out var value))
             {
                 return value;
             }

@@ -39,7 +39,7 @@ namespace RPA_Explorer
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    string baseDir = FindMacVlc();
+                    var baseDir = FindMacVlc();
                     if (baseDir == null)
                     {
                         UnavailableReason = InstallHint;
@@ -53,7 +53,7 @@ namespace RPA_Explorer
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    string pluginDir = FindLinuxPlugins();
+                    var pluginDir = FindLinuxPlugins();
                     if (pluginDir != null)
                     {
                         SetNativeEnv("VLC_PLUGIN_PATH", pluginDir);
@@ -64,14 +64,14 @@ namespace RPA_Explorer
                 {
                     // Windows: prefer the natives bundled by VideoLAN.LibVLC.Windows, and
                     // fall back to a system-wide VLC installation when they are absent.
-                    string bundled = BundledWindowsVlc();
+                    var bundled = BundledWindowsVlc();
                     if (bundled != null)
                     {
                         Core.Initialize();
                     }
                     else
                     {
-                        string installed = FindWindowsVlc();
+                        var installed = FindWindowsVlc();
                         if (installed == null)
                         {
                             UnavailableReason = WindowsUnavailableReason();
@@ -107,15 +107,16 @@ namespace RPA_Explorer
         // Returns the VLC.app "Contents/MacOS" directory (which holds lib/ and plugins/).
         private static string FindMacVlc()
         {
-            List<string> candidates = new()
-            {
+            List<string> candidates =
+            [
                 "/Applications/VLC.app/Contents/MacOS",
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                     "Applications/VLC.app/Contents/MacOS"),
-                "/Applications/VLC/VLC.app/Contents/MacOS"
-            };
 
-            foreach (string candidate in candidates)
+                "/Applications/VLC/VLC.app/Contents/MacOS"
+            ];
+
+            foreach (var candidate in candidates)
             {
                 if (File.Exists(Path.Combine(candidate, "lib", "libvlc.dylib"))
                     && Directory.Exists(Path.Combine(candidate, "plugins")))
@@ -131,7 +132,7 @@ namespace RPA_Explorer
         // parameterless Core.Initialize() resolves "libvlc/win-<arch>" relative to the app.
         private static string BundledWindowsVlc()
         {
-            string arch = RuntimeInformation.ProcessArchitecture switch
+            var arch = RuntimeInformation.ProcessArchitecture switch
             {
                 Architecture.X64 => "win-x64",
                 Architecture.X86 => "win-x86",
@@ -144,7 +145,7 @@ namespace RPA_Explorer
                 return null;
             }
 
-            string dir = Path.Combine(AppContext.BaseDirectory, "libvlc", arch);
+            var dir = Path.Combine(AppContext.BaseDirectory, "libvlc", arch);
             return File.Exists(Path.Combine(dir, "libvlc.dll")) ? dir : null;
         }
 
@@ -152,23 +153,23 @@ namespace RPA_Explorer
         // an arm64 process cannot load the x64 DLLs a normal Windows VLC installs.
         private static string FindWindowsVlc()
         {
-            Architecture process = RuntimeInformation.ProcessArchitecture;
+            var process = RuntimeInformation.ProcessArchitecture;
             if (process != Architecture.X64 && process != Architecture.X86)
             {
                 return null;
             }
 
-            List<string> candidates = new();
-            foreach (string variable in new[] { "ProgramFiles", "ProgramFiles(x86)" })
+            List<string> candidates = [];
+            foreach (var variable in new[] { "ProgramFiles", "ProgramFiles(x86)" })
             {
-                string root = Environment.GetEnvironmentVariable(variable);
+                var root = Environment.GetEnvironmentVariable(variable);
                 if (!string.IsNullOrWhiteSpace(root))
                 {
                     candidates.Add(Path.Combine(root, "VideoLAN", "VLC"));
                 }
             }
 
-            foreach (string candidate in candidates)
+            foreach (var candidate in candidates)
             {
                 if (File.Exists(Path.Combine(candidate, "libvlc.dll"))
                     && Directory.Exists(Path.Combine(candidate, "plugins")))
@@ -198,14 +199,14 @@ namespace RPA_Explorer
         private static string FindLinuxPlugins()
         {
             string[] candidates =
-            {
+            [
                 "/usr/lib/x86_64-linux-gnu/vlc/plugins",
                 "/usr/lib64/vlc/plugins",
                 "/usr/lib/vlc/plugins",
                 "/usr/local/lib/vlc/plugins"
-            };
+            ];
 
-            foreach (string candidate in candidates)
+            foreach (var candidate in candidates)
             {
                 if (Directory.Exists(candidate))
                 {
