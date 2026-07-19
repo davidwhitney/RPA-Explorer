@@ -35,7 +35,7 @@ namespace RpaParser
         public int Padding = 0;
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
-        public SortedDictionary<string,ArchiveEntry> Index = new ();
+        public ArchiveIndex Index = new();
 
         
         private IndexLocation _indexLocation;
@@ -58,7 +58,7 @@ namespace RpaParser
             ObfuscationKey = _indexLocation.ObfuscationKey;
             IndexInfo = _indexLocation.IsSeparateFile ? new FileInfo(_indexLocation.FilePath) : null;
 
-            Index = GetIndexes();
+            Index = ArchiveIndex.Read(_indexLocation);
         }
 
         /// <summary>
@@ -148,78 +148,6 @@ namespace RpaParser
                    ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
         }
 
-        
-        private SortedDictionary<string,ArchiveEntry> GetIndexes()
-        {
-            var indexList = new SortedDictionary<string,ArchiveEntry>();
-            object unpickledIndexes;
-
-            using (var reader = new BinaryReader(File.OpenRead(_indexLocation.FilePath), Encoding.UTF8))
-            {
-                reader.BaseStream.Seek(_indexLocation.Offset, SeekOrigin.Begin);
-
-                var blockOffset = _indexLocation.Offset;
-                long blockSize = 2046;
-                var payloadSize = reader.BaseStream.Length;
-                byte[] fileCompressed = [];
-
-                while (blockSize > 0)
-                {
-                    //long remaining = payloadSize - blockOffset;
-                    if (blockOffset + blockSize > payloadSize)
-                    {
-                        blockSize = payloadSize - blockOffset;
-
-                        if (blockSize < 0)
-                        {
-                            blockSize = 0;
-                        }
-                    }
-
-                    if (blockSize != 0)
-                    {
-                        var buffer = reader.ReadBytes((int) blockSize);
-                        fileCompressed = fileCompressed.Concat(buffer).ToArray();
-
-                        blockOffset += blockSize;
-                        reader.BaseStream.Seek(blockOffset, SeekOrigin.Begin);
-                    }
-                }
-
-                var fileUncompressed = Zlib.UncompressBuffer(fileCompressed);
-                using (var unpickler = new Unpickler())
-                {
-                    unpickledIndexes = unpickler.loads(fileUncompressed);
-                }
-            }
-            
-            // Standardize output
-            foreach (DictionaryEntry kvp in (Hashtable) unpickledIndexes)
-            {
-                if (kvp.Value == null)
-                {
-                    continue;
-                }
-
-                var key = Format.UsesObfuscation ? ObfuscationKey : 0;
-                var segments = ((ArrayList) kvp.Value)
-                    .Cast<object[]>()
-                    .Select(value => ArchiveSegment.FromIndexData(value, key))
-                    .ToList();
-
-                var indexEntry = ArchiveEntry.FromIndex((string) kvp.Key, segments);
-                indexList.Add(indexEntry.TreePath, indexEntry);
-            }
-
-            return indexList;
-        }
-
-        /// <summary>
-        /// A snapshot of the index. Entries are immutable, so the copy shares them and only
-        /// the dictionary itself is new.
-        /// </summary>
-        public SortedDictionary<string, ArchiveEntry> CopyIndex(
-            SortedDictionary<string, ArchiveEntry> originalIndex) => new(originalIndex);
         
         public byte[] ExtractData(string fileName)
         {
@@ -332,8 +260,9 @@ namespace RpaParser
 
                     var rnd = new Random();
 
-                    // Update indexes
-                    var indexes = new Hashtable();
+                    // Place each file, remembering where it landed so the index can be
+                    // written once every offset is known.
+                    var storedFiles = new List<StoredFile>();
                     foreach (var index in Index)
                     {
                         var content = ExtractData(index.Key);
@@ -356,28 +285,13 @@ namespace RpaParser
                         stream.Position = archiveOffset;
                         stream.Write(content, 0, content.Length);
 
-                        List<object[]> indexData = [];
-                        if (format.UsesObfuscation)
-                        {
-                            indexData.Add([archiveOffset ^ ObfuscationKey, content.Length ^ ObfuscationKey, ""]); // Last is prefix
-                        }
-                        else
-                        {
-                            indexData.Add([archiveOffset, content.Length]);
-                        }
+                        storedFiles.Add(new StoredFile(index.Value.TreePath, archiveOffset, content.Length));
 
                         archiveOffset += content.Length;
-
-                        indexes.Add(index.Value.TreePath, indexData);
                     }
 
-                    byte[] pickledIndexes;
-                    using (var pickler = new Pickler())
-                    {
-                        pickledIndexes = pickler.dumps(indexes);
-                    }
-
-                    var fileCompressed = Zlib.CompressBuffer(pickledIndexes);
+                    var key = format.UsesObfuscation ? ObfuscationKey : 0;
+                    var fileCompressed = ArchiveIndex.Serialize(storedFiles, key);
 
                     if (!format.HasSeparateIndexFile)
                     {

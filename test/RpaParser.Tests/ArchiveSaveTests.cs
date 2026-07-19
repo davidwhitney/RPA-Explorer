@@ -144,7 +144,7 @@ public class ArchiveSaveTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
+        ArchiveIndex copy = archive.Index.Copy();
         copy.Remove("dir/b.txt");
         copy["a.txt"] = copy["a.txt"] with { TreePath = "changed.txt" };
 
@@ -158,7 +158,7 @@ public class ArchiveSaveTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
+        ArchiveIndex copy = archive.Index.Copy();
 
         // Entries are immutable, so sharing them between the index and its copy is safe:
         // changing one means producing a new entry, which the original never sees.
@@ -173,7 +173,7 @@ public class ArchiveSaveTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
+        ArchiveIndex copy = archive.Index.Copy();
 
         var original = archive.Index["a.txt"];
         var copied = copy["a.txt"];
@@ -190,10 +190,9 @@ public class ArchiveSaveTests
     [Fact]
     public void CopyIndex_EmptyIndex_ReturnsEmptyCopy()
     {
-        var archive = new Archive();
+        var index = new ArchiveIndex();
 
-        SortedDictionary<string, ArchiveEntry> copy =
-            archive.CopyIndex(new SortedDictionary<string, ArchiveEntry>());
+        ArchiveIndex copy = index.Copy();
 
         copy.ShouldBeEmpty();
     }

@@ -30,7 +30,7 @@ namespace RpaExplorer
         private bool _forceClose;
         private volatile bool _operationEnabled = true;
 
-        private SortedDictionary<string, ArchiveEntry> _fileListBackup = new();
+        private ArchiveIndex _fileListBackup = new();
         private readonly Dictionary<string, long> _indexPathSize = new();
         private FileNode _root;
         private int _searchStartIndex;
@@ -428,19 +428,10 @@ namespace RpaExplorer
             {
                 var selectedPath = (Tree.SelectedItem as FileNode)?.FullPath ?? string.Empty;
 
-                long selectedSize = -1;
-                var unsavedCount = 0;
-                foreach (var kvp in _archive.Index)
-                {
-                    if (!kvp.Value.InArchive)
-                    {
-                        unsavedCount++;
-                    }
-                    if (selectedPath == kvp.Key)
-                    {
-                        selectedSize = kvp.Value.Length;
-                    }
-                }
+                var unsavedCount = _archive.Index.Unsaved.Count();
+                var selectedSize = _archive.Index.TryGetValue(selectedPath, out var selectedEntry)
+                    ? selectedEntry.Length
+                    : -1;
 
                 if (_indexPathSize.ContainsKey(selectedPath))
                 {
@@ -1060,7 +1051,7 @@ namespace RpaExplorer
         private void AddFilesToArchive(string[] pathList)
         {
             _fileListBackup.Clear();
-            _fileListBackup = _archive.CopyIndex(_archive.Index);
+            _fileListBackup = _archive.Index.Copy();
             _cancelAdd = false;
 
             foreach (var path in pathList)
@@ -1079,7 +1070,7 @@ namespace RpaExplorer
 
             if (!_cancelAdd)
             {
-                _archive.Index = _archive.CopyIndex(_fileListBackup);
+                _archive.Index = _fileListBackup.Copy();
             }
 
             _fileListBackup.Clear();
