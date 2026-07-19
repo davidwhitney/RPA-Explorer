@@ -18,6 +18,7 @@
                 <Menu VerticalAlignment="Center">
                     <MenuItem x:Name="OptionsMenu" Header="Options">
                         <MenuItem x:Name="AssociateMenuItem" Header="Associate RPA/RPI extensions"/>
+                        <MenuItem x:Name="DownloadUnrpycMenuItem" Header="Download unrpyc"/>
                         <MenuItem x:Name="UnrpycMenuItem" Header="Define unrpyc location"/>
                         <MenuItem x:Name="PythonMenuItem" Header="Define Python 2.7 location"/>
                     </MenuItem>

@@ -148,6 +148,7 @@ namespace RPA_Explorer
             AssociateMenuItem.Click += async (_, _) =>
                 await MessageBox.ShowInfo(this,
                     "File association is only available on Windows.", GetText("Options"));
+            DownloadUnrpycMenuItem.Click += async (_, _) => await DownloadUnrpyc(true);
             UnrpycMenuItem.Click += async (_, _) => await DefineUnrpycLocation();
             PythonMenuItem.Click += async (_, _) => await DefinePythonLocation();
             AboutMenu.Click += (_, _) => new AboutWindow().ShowDialog(this);
@@ -194,6 +195,57 @@ namespace RPA_Explorer
             AboutMenu.Header = GetText("About");
 
             GenerateArchiveInfo();
+        }
+
+        // Fetches unrpyc from GitHub and selects it. Returns true when unrpyc is available
+        // afterwards. When confirm is false the caller has already asked the user.
+        private async Task<bool> DownloadUnrpyc(bool confirm)
+        {
+            if (confirm)
+            {
+                bool proceed = await MessageBox.ShowYesNo(this,
+                    string.Format(GetText("Download_unrpyc_prompt"),
+                        UnrpycInstaller.Version,
+                        UnrpycInstaller.DownloadUrl,
+                        UnrpycInstaller.ToolsDirectory),
+                    GetText("Download_unrpyc"));
+
+                if (!proceed)
+                {
+                    return false;
+                }
+            }
+
+            string previousStatus = StatusText.Text;
+            try
+            {
+                Progress<string> progress = new(message => StatusText.Text = message);
+                StatusText.Text = GetText("Downloading_unrpyc");
+
+                string script = await UnrpycInstaller.EnsureAsync(progress);
+
+                _settings.SetUnrpyc(script);
+                if (_rpaParser != null)
+                {
+                    _rpaParser.UnrpycLocation = script;
+                }
+
+                StatusText.Text = GetText("Ready");
+                await MessageBox.ShowInfo(this,
+                    string.Format(GetText("Unrpyc_ready"),
+                        UnrpycInstaller.Version, script, UnrpycInstaller.MinimumPython),
+                    GetText("Download_unrpyc"));
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = previousStatus;
+                await MessageBox.ShowError(this,
+                    string.Format(GetText("Unrpyc_download_failed"), ex.Message),
+                    GetText("Download_unrpyc"));
+                return false;
+            }
         }
 
         private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -451,8 +503,30 @@ namespace RPA_Explorer
                     if (_rpaParser.CodeExtList.Contains(fileInfo.Extension.ToLower())
                         && ex.Message.StartsWith(_rpaParser.rpycInfoBanner))
                     {
-                        data = new KeyValuePair<string, object>(RpaParser.PreviewTypes.Text,
-                            string.Format(GetText("Preview_failed_reason_hint"), ex.Message));
+                        // unrpyc simply has not been obtained yet: offer to fetch it and
+                        // retry, rather than making the user go and install it by hand.
+                        bool retried = false;
+                        if (string.IsNullOrEmpty(_rpaParser.UnrpycLocation)
+                            && await DownloadUnrpyc(true))
+                        {
+                            try
+                            {
+                                data = _rpaParser.GetPreview(path);
+                                retried = true;
+                            }
+                            catch (Exception retryEx)
+                            {
+                                data = new KeyValuePair<string, object>(RpaParser.PreviewTypes.Text,
+                                    string.Format(GetText("Preview_failed_reason_hint"), retryEx.Message));
+                                retried = true;
+                            }
+                        }
+
+                        if (!retried)
+                        {
+                            data = new KeyValuePair<string, object>(RpaParser.PreviewTypes.Text,
+                                string.Format(GetText("Preview_failed_reason_hint"), ex.Message));
+                        }
                     }
                     else
                     {
@@ -738,6 +812,15 @@ namespace RPA_Explorer
                 if (!string.IsNullOrEmpty(_settings.GetUnrpyc()))
                 {
                     _rpaParser.UnrpycLocation = _settings.GetUnrpyc();
+                }
+                else
+                {
+                    // Silently reuse a previous download instead of prompting again.
+                    string downloaded = UnrpycInstaller.FindExisting();
+                    if (downloaded != null)
+                    {
+                        _rpaParser.UnrpycLocation = downloaded;
+                    }
                 }
 
                 _rpaParser.LoadArchive(chosen);
