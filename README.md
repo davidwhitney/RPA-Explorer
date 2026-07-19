@@ -86,9 +86,18 @@ Pre-built binaries for macOS, Windows and Linux are attached to each
 
 ### Known Issues:
 
-- When selecting/unselecting objects too fast will not update selections for child or parent objects, this seems to be a TreeView bug/shortcomming and there is not much I can do with it.
-- Some video/audio formats will not update time played or total video time and this seems to be LibVLC library issue.
-- When browsing trough videos, after some time (and after some ammount of videos loaded) application freezes. So far I am unable to tell if I am handling objects incorrectly or it is a LibVLC problem.
+The three issues listed here previously were addressed by the Avalonia port:
+
+- ~~Selecting/unselecting objects too fast will not update selections for child or parent
+  objects.~~ The tree is now backed by a data model whose check state is propagated in code
+  rather than by WinForms `TreeView` events, so the result no longer depends on event timing.
+- ~~Some video/audio formats will not update time played or total video time.~~ The total
+  time is now taken from `MediaPlayer.Length` and refreshed on `LengthChanged`, instead of
+  `Media.Duration` which stays at `-1` for media fed through a stream. Where a format genuinely
+  never reports a length, the elapsed time is shown against `--:--:--` rather than a stale total.
+- ~~When browsing through videos the application freezes after a while.~~ Each preview disposes
+  its `Media`, `StreamMediaInput` and `MemoryStream`, a single `MediaPlayer` is reused, and
+  libvlc is released on exit.
 
 #### Images preview:
 ![1](https://user-images.githubusercontent.com/47400898/154856556-1da3d011-5631-4100-972c-f6e844967242.png)

@@ -68,6 +68,7 @@ namespace RPA_Explorer
                     _libVlc = new LibVLC("--input-repeat=9999999"); // Loop playback
                     _mediaPlayer = new MediaPlayer(_libVlc) { Volume = 50 };
                     _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+                    _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
                 }
                 else
                 {
@@ -213,6 +214,7 @@ namespace RPA_Explorer
                     _libVlc = new LibVLC("--input-repeat=9999999");
                     _mediaPlayer = new MediaPlayer(_libVlc) { Volume = (int) VolumeSlider.Value };
                     _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+                    _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
                     _mediaUnavailableReason = string.Empty;
                     return true;
                 }
@@ -669,20 +671,42 @@ namespace RPA_Explorer
 
         private void MediaPlayer_TimeChanged(object sender, MediaPlayerTimeChangedEventArgs e)
         {
-            long duration = _mediaPlayer?.Media?.Duration ?? 0;
-            SetMediaTimeLabel(duration, e.Time);
+            // MediaPlayer.Length is the value libvlc refines while decoding; Media.Duration
+            // stays at -1 for stream-fed media and never updates the total time.
+            SetMediaTimeLabel(_mediaPlayer?.Length ?? 0, e.Time);
+        }
+
+        // Fires once libvlc has worked out the length, which for stream-fed media happens
+        // after playback has already started.
+        private void MediaPlayer_LengthChanged(object sender, MediaPlayerLengthChangedEventArgs e)
+        {
+            SetMediaTimeLabel(e.Length, _mediaPlayer?.Time ?? 0);
         }
 
         private void SetMediaTimeLabel(long totalMs, long currentMs)
         {
-            TimeSpan total = TimeSpan.FromMilliseconds(totalMs < 0 ? 0 : totalMs);
-            TimeSpan current = TimeSpan.FromMilliseconds(currentMs < 0 ? 0 : currentMs);
-            long remainingMs = totalMs - currentMs;
-            TimeSpan remaining = TimeSpan.FromMilliseconds(remainingMs < 0 ? 0 : remainingMs);
-
             const string timeFormat = @"hh\:mm\:ss\.f";
-            string text = current.ToString(timeFormat) + " / " + total.ToString(timeFormat) +
-                          " (-" + remaining.ToString(timeFormat) + ")";
+            const string unknown = "--:--:--.-";
+
+            TimeSpan current = TimeSpan.FromMilliseconds(currentMs < 0 ? 0 : currentMs);
+            string text;
+
+            if (totalMs <= 0)
+            {
+                // Length is not known yet (or at all). Media fed through StreamMediaInput
+                // reports a duration of -1 until libvlc has demuxed enough to work it out,
+                // and some formats never report one; show the elapsed time rather than a
+                // bogus total that never updates.
+                text = current.ToString(timeFormat) + " / " + unknown;
+            }
+            else
+            {
+                TimeSpan total = TimeSpan.FromMilliseconds(totalMs);
+                long remainingMs = totalMs - currentMs;
+                TimeSpan remaining = TimeSpan.FromMilliseconds(remainingMs < 0 ? 0 : remainingMs);
+                text = current.ToString(timeFormat) + " / " + total.ToString(timeFormat) +
+                       " (-" + remaining.ToString(timeFormat) + ")";
+            }
 
             if (Dispatcher.UIThread.CheckAccess())
             {
@@ -1234,6 +1258,34 @@ namespace RPA_Explorer
             }
 
             return _archiveChanged;
+        }
+
+        // Release libvlc explicitly. Its worker threads are native and would otherwise be
+        // torn down non-deterministically at process exit.
+        protected override void OnClosed(EventArgs e)
+        {
+            StopMedia();
+
+            if (_mediaPlayer != null)
+            {
+                _mediaPlayer.TimeChanged -= MediaPlayer_TimeChanged;
+                _mediaPlayer.LengthChanged -= MediaPlayer_LengthChanged;
+                try
+                {
+                    VideoView.MediaPlayer = null;
+                }
+                catch
+                {
+                    // ignored
+                }
+                _mediaPlayer.Dispose();
+                _mediaPlayer = null;
+            }
+
+            _libVlc?.Dispose();
+            _libVlc = null;
+
+            base.OnClosed(e);
         }
 
         private async void OnClosing(object sender, WindowClosingEventArgs e)
