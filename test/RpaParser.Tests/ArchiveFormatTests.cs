@@ -185,6 +185,7 @@ public class ArchiveFormatTests
         using var workspace = new TempWorkspace();
         var archivePath = workspace.WriteFile("game.rpa", "data");
         var indexPath = workspace.WriteFile("game.rpi", "index");
+        // Both halves present, so these files are a version 1 archive.
 
         IndexFileInfo location = ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath));
 
@@ -199,7 +200,7 @@ public class ArchiveFormatTests
     public void LocateIndex_Version1WhenTheNameNamesNoPair_Throws()
     {
         using var workspace = new TempWorkspace();
-        var archivePath = workspace.WriteFile("archive.bin", "data");
+        var archivePath = workspace.WriteFile("archive.bin", ArchiveFormat.Rpa3.BuildHeader(0, 0));
 
         Exception ex = Should.Throw<Exception>(
             () => ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath)));
@@ -211,7 +212,8 @@ public class ArchiveFormatTests
     public void LocateIndex_Version1WithMissingIndexFile_Throws()
     {
         using var workspace = new TempWorkspace();
-        var archivePath = workspace.WriteFile("game.rpa", "data");
+        // A version 3 archive, so it resolves, but with no sibling for version 1 to find.
+        var archivePath = workspace.WriteFile("game.rpa", ArchiveFormat.Rpa3.BuildHeader(0, 0));
 
         Exception ex = Should.Throw<Exception>(
             () => ArchiveFormat.Rpa1.LocateIndex(new ArchiveFileInfo(archivePath)));

@@ -7,11 +7,15 @@ namespace RpaParser.Tests;
 
 public class ArchiveFileInfoTests
 {
+    // Constructing an ArchiveFileInfo recognises the archive, so the fixtures need a real
+    // header rather than placeholder bytes.
+    private static readonly string Header = ArchiveFormat.Rpa3.BuildHeader(0, 0);
+
     [Fact]
     public void Constructor_ArchivePath_DerivesTheSiblingIndexPath()
     {
         using var workspace = new TempWorkspace();
-        var archivePath = workspace.WriteFile("game.rpa", "content");
+        var archivePath = workspace.WriteFile("game.rpa", Header);
 
         var files = new ArchiveFileInfo(archivePath);
 
@@ -23,7 +27,7 @@ public class ArchiveFileInfoTests
     public void Constructor_IndexPath_ResolvesBackToTheArchive()
     {
         using var workspace = new TempWorkspace();
-        workspace.WriteFile("game.rpa", "content");
+        workspace.WriteFile("game.rpa", Header);
         var indexPath = workspace.Path_("game.rpi");
 
         var files = new ArchiveFileInfo(indexPath);
@@ -36,7 +40,7 @@ public class ArchiveFileInfoTests
     public void Constructor_UppercaseExtension_KeepsTheCasingOnTheDerivedPath()
     {
         using var workspace = new TempWorkspace();
-        workspace.WriteFile("GAME.RPA", "content");
+        workspace.WriteFile("GAME.RPA", Header);
 
         var files = new ArchiveFileInfo(workspace.Path_("GAME.RPA"));
 
@@ -48,7 +52,7 @@ public class ArchiveFileInfoTests
     public void Constructor_BothHalvesPresent_ReportsThePair()
     {
         using var workspace = new TempWorkspace();
-        workspace.WriteFile("game.rpa", "content");
+        workspace.WriteFile("game.rpa", Header);
         workspace.WriteFile("game.rpi", "index");
 
         new ArchiveFileInfo(workspace.Path_("game.rpa")).IndexPairExists.ShouldBeTrue();
@@ -58,7 +62,7 @@ public class ArchiveFileInfoTests
     public void Constructor_NoSiblingIndex_ReportsNoPair()
     {
         using var workspace = new TempWorkspace();
-        workspace.WriteFile("game.rpa", "content");
+        workspace.WriteFile("game.rpa", Header);
 
         new ArchiveFileInfo(workspace.Path_("game.rpa")).IndexPairExists.ShouldBeFalse();
     }
@@ -67,7 +71,7 @@ public class ArchiveFileInfoTests
     public void Constructor_NameWithNeitherExtension_NamesNoIndexAtAll()
     {
         using var workspace = new TempWorkspace();
-        var path = workspace.WriteFile("archive.bin", "content");
+        var path = workspace.WriteFile("archive.bin", Header);
 
         var files = new ArchiveFileInfo(path);
 
@@ -87,6 +91,31 @@ public class ArchiveFileInfoTests
     }
 
     [Fact]
+    public void Constructor_FileIsNotAnArchive_Throws()
+    {
+        using var workspace = new TempWorkspace();
+        var path = workspace.WriteFile("game.rpa", "just some text, no header");
+
+        var ex = Should.Throw<Exception>(() => new ArchiveFileInfo(path));
+
+        ex.Message.ShouldContain("not valid RenPy Archive");
+    }
+
+    [Fact]
+    public void Constructor_RecognisedArchive_ReportsItsFormatAndWhereTheIndexLives()
+    {
+        using var workspace = new TempWorkspace();
+        var path = workspace.WriteFile("game.rpa", ArchiveFormat.Rpa3.BuildHeader(4096, 0xDEADBEEF));
+
+        var files = new ArchiveFileInfo(path);
+
+        files.Format.ShouldBeSameAs(ArchiveFormat.Rpa3);
+        files.IndexFile.Offset.ShouldBe(4096);
+        files.IndexFile.ObfuscationKey.ShouldBe(0xDEADBEEF);
+        files.IndexFile.IsSeparateFile.ShouldBeFalse();
+    }
+
+    [Fact]
     public void Constructor_EmptyPath_Throws()
     {
         var ex = Should.Throw<Exception>(() => new ArchiveFileInfo(string.Empty));
@@ -98,7 +127,7 @@ public class ArchiveFileInfoTests
     public void Archive_ResolvedFile_DescribesTheFileOnDisk()
     {
         using var workspace = new TempWorkspace();
-        var archivePath = workspace.WriteFile("game.rpa", "content");
+        var archivePath = workspace.WriteFile("game.rpa", Header);
 
         var files = new ArchiveFileInfo(archivePath);
 

@@ -5,12 +5,13 @@ using System.Text;
 namespace RpaParser
 {
     /// <summary>
-    /// The files an archive is made of on disk.
+    /// Everything an archive's files say about themselves, before any of their contents are
+    /// read: which files they are, which format they are in and where the index lives.
     ///
     /// Version 1 archives are a .rpa/.rpi pair and may be opened by either half, so the
-    /// other is derived here and the archive is checked to exist. Everything downstream
-    /// therefore starts from a resolved, present set of files rather than a path that might
-    /// be anything.
+    /// other is derived here and the archive is checked to exist. Constructing one either
+    /// yields a recognised archive or throws, so everything downstream starts from files
+    /// that are present and a format that is known.
     /// </summary>
     public sealed record ArchiveFileInfo
     {
@@ -40,7 +41,20 @@ namespace RpaParser
             Archive = new FileInfo(archivePath);
             IndexPairExists = !string.IsNullOrEmpty(indexPath) && File.Exists(indexPath);
             FirstLine = ReadFirstLine(archivePath);
+
+            // Everything above describes the files; the format is what they are, and it can
+            // then say where the index sits. Both only read what is already assigned.
+            Format = ArchiveFormat.Detect(this)
+                     ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
+
+            IndexFile = Format.LocateIndex(this);
         }
+
+        /// <summary>The format these files are in.</summary>
+        public ArchiveFormat Format { get; }
+
+        /// <summary>Where this archive's index lives, according to its format.</summary>
+        public IndexFileInfo IndexFile { get; }
 
         /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>
         public string ArchivePath { get; }

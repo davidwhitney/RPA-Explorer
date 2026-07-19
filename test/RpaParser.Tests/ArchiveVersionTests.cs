@@ -65,8 +65,8 @@ public class ArchiveVersionTests
         // version 1 keeps its index in a separate .rpi file
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa1, entries);
 
-        archive.IndexFile.File.ShouldNotBeNull();
-        archive.IndexFile.File.Exists.ShouldBeTrue();
+        archive.Files.IndexFile.File.ShouldNotBeNull();
+        archive.Files.IndexFile.File.Exists.ShouldBeTrue();
         archive.Files.Archive.ShouldNotBeNull();
     }
 
@@ -79,7 +79,7 @@ public class ArchiveVersionTests
 
         var archive = workspace.LoadArchive(format, entries);
 
-        archive.IndexFile.File.ShouldBeNull();
+        archive.Files.IndexFile.File.ShouldBeNull();
     }
 
     [Fact]
