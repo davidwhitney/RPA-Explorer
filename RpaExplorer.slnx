@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RpaExplorer/RpaExplorer.csproj" />
+    <Project Path="src/RpaParser/RpaParser.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/RpaParser.Tests/RpaParser.Tests.csproj" />
+  </Folder>
+</Solution>

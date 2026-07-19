@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RpaExplorer.ArchiveSaveWindow"
+        Width="360" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Archive options">
+    <StackPanel Margin="16" Spacing="10">
+        <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto" >
+            <TextBlock Grid.Row="0" Grid.Column="0" x:Name="VersionLabel" Text="Archive version:"
+                       VerticalAlignment="Center" Margin="0,0,0,8"/>
+            <ComboBox Grid.Row="0" Grid.Column="1" x:Name="VersionCombo"
+                      HorizontalAlignment="Stretch" Margin="0,0,0,8"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" x:Name="PaddingLabel" Text="Data padding:"
+                       VerticalAlignment="Center" Margin="0,0,0,8"/>
+            <TextBox Grid.Row="1" Grid.Column="1" x:Name="PaddingBox" Margin="0,0,0,8"/>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" x:Name="KeyLabel" Text="Obfuscation key:"
+                       VerticalAlignment="Center"/>
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="KeyBox"/>
+        </Grid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="ContinueButton" Content="Continue" MinWidth="90"
+                    HorizontalContentAlignment="Center"/>
+            <Button x:Name="CancelButton" Content="Cancel" MinWidth="90"
+                    HorizontalContentAlignment="Center"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

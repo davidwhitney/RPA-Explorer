@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RpaExplorer.AboutWindow"
+        Width="480" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="About">
+    <StackPanel Margin="16" Spacing="12">
+        <TextBox x:Name="AboutText" IsReadOnly="True" AcceptsReturn="True"
+                 TextWrapping="Wrap" BorderThickness="0" Background="Transparent"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="RepoButton" Content="Open GitHub" MinWidth="110"
+                    HorizontalContentAlignment="Center"/>
+            <Button x:Name="CloseButton" Content="Close" MinWidth="90"
+                    HorizontalContentAlignment="Center"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

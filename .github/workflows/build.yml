@@ -33,7 +33,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Ensure zip is available
         run: command -v zip >/dev/null || (sudo apt-get update && sudo apt-get install -y zip)

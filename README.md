@@ -26,9 +26,9 @@ Pre-built, self-contained binaries for macOS, Windows and Linux are attached to 
 | --- | --- | --- |
 | macOS (Apple Silicon) | `…-osx-arm64.zip` | contains `RPA Explorer.app` |
 | macOS (Intel) | `…-osx-x64.zip` | contains `RPA Explorer.app` |
-| Windows | `…-win-x64.zip` | run `RPA_Explorer.exe`; also used on Windows ARM |
+| Windows | `…-win-x64.zip` | run `RpaExplorer.exe`; also used on Windows ARM |
 | Windows (smaller) | `…-win-x64-novlc.zip` | same, but needs VLC installed - see below |
-| Linux | `…-linux-x64.tar.gz` / `…-linux-arm64.tar.gz` | run `RPA_Explorer` |
+| Linux | `…-linux-x64.tar.gz` / `…-linux-arm64.tar.gz` | run `RpaExplorer` |
 
 The macOS builds are not code-signed or notarised. On first launch use **right-click → Open**, or
 run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
@@ -116,14 +116,14 @@ A few notes on the trickier parts:
 
 ## Building from source
 
-Requires the [.NET SDK 8.0 or newer](https://dotnet.microsoft.com/download).
+Requires the [.NET SDK 10.0 or newer](https://dotnet.microsoft.com/download).
 
 ```bash
-dotnet build "RPA Explorer.sln"
-dotnet run --project "RPA Explorer/RPA Explorer.csproj"
+dotnet build RpaExplorer.slnx
+dotnet run --project src/RpaExplorer/RpaExplorer.csproj
 
 # optionally open an archive directly
-dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
+dotnet run --project src/RpaExplorer/RpaExplorer.csproj -- /path/to/archive.rpa
 ```
 
 ### Producing release binaries

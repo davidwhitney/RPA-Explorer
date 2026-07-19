@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT="$ROOT/RPA Explorer/RPA Explorer.csproj"
+PROJECT="$ROOT/src/RpaExplorer/RpaExplorer.csproj"
 DIST="$ROOT/dist"
 STAGE="$ROOT/build"
 
@@ -64,7 +64,7 @@ make_macos_bundle() {
     cp -R "$publish_dir/." "$bundle_dir/Contents/MacOS/"
 
     # Convert the Windows icon if the macOS tooling is available; purely cosmetic.
-    local icon_src="$ROOT/RPA Explorer/Assets/RPA Explorer.ico"
+    local icon_src="$ROOT/src/RpaExplorer/Assets/RpaExplorer.ico"
     local icon_entry=""
     if command -v sips >/dev/null 2>&1 && [[ -f "$icon_src" ]]; then
         if sips -s format icns "$icon_src" --out "$bundle_dir/Contents/Resources/AppIcon.icns" >/dev/null 2>&1; then
@@ -92,7 +92,7 @@ make_macos_bundle() {
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>
-    <string>RPA_Explorer</string>$icon_entry
+    <string>RpaExplorer</string>$icon_entry
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>LSMinimumSystemVersion</key>
@@ -114,7 +114,7 @@ make_macos_bundle() {
 </dict>
 </plist>
 PLIST
-    chmod +x "$bundle_dir/Contents/MacOS/RPA_Explorer" 2>/dev/null || true
+    chmod +x "$bundle_dir/Contents/MacOS/RpaExplorer" 2>/dev/null || true
 }
 
 for rid in $RIDS; do
@@ -182,7 +182,7 @@ for rid in $RIDS; do
         linux-*)
             cp -R "$publish_dir/." "$pack_dir/"
             cp "$ROOT/README.md" "$ROOT/LICENSE" "$pack_dir/" 2>/dev/null || true
-            chmod +x "$pack_dir/RPA_Explorer" 2>/dev/null || true
+            chmod +x "$pack_dir/RpaExplorer" 2>/dev/null || true
             ( cd "$pack_dir" && tar -czf "$DIST/$name.tar.gz" . )
             ;;
     esac
