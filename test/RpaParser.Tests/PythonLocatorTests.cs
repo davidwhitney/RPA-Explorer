@@ -9,7 +9,7 @@ public class PythonLocatorTests
     [Fact]
     public void Detected_WhenCalled_ReturnsEitherAnExistingFileOrEmpty()
     {
-        string detected = PythonLocator.Detected;
+        var detected = PythonLocator.Detected;
 
         // Detection is best effort: it either points at a real interpreter or reports nothing.
         // It must never hand back a path that does not exist.
@@ -26,8 +26,8 @@ public class PythonLocatorTests
     [Fact]
     public void Detected_CalledRepeatedly_ReturnsCachedResult()
     {
-        string first = PythonLocator.Detected;
-        string second = PythonLocator.Detected;
+        var first = PythonLocator.Detected;
+        var second = PythonLocator.Detected;
 
         second.ShouldBeSameAs(first);
     }
@@ -35,7 +35,7 @@ public class PythonLocatorTests
     [Fact]
     public void Detected_WhenAnInterpreterIsFound_NamesAPythonExecutable()
     {
-        string detected = PythonLocator.Detected;
+        var detected = PythonLocator.Detected;
 
         if (detected.Length > 0)
         {
@@ -46,7 +46,7 @@ public class PythonLocatorTests
     [Fact]
     public void PythonLocation_NewParser_MatchesDetectedInterpreter()
     {
-        Parser parser = new Parser();
+        var parser = new Parser();
 
         parser.PythonLocation.ShouldBe(PythonLocator.Detected);
     }
@@ -54,7 +54,7 @@ public class PythonLocatorTests
     [Fact]
     public void UnrpycLocation_NewParser_IsEmptyUntilConfigured()
     {
-        Parser parser = new Parser();
+        var parser = new Parser();
 
         parser.UnrpycLocation.ShouldBe(string.Empty);
     }

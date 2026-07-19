@@ -15,7 +15,7 @@ namespace RpaParser
     
     public class Parser
     {
-        public class Version
+        public static class Version
         {
             public const double Unknown = -1;
             public const double Rpa1 = 1;
@@ -24,7 +24,7 @@ namespace RpaParser
             public const double Rpa32 = 3.2;
         }
         
-        private class ArchiveMagic
+        private static class ArchiveMagic
         {
             public const string Rpa1Rpa = ".rpa";
             public const string Rpa1Rpi = ".rpi";
@@ -33,7 +33,7 @@ namespace RpaParser
             public const string Rpa32 = "RPA-3.2 ";
         }
         
-        private class RpcMagic
+        private static class RpcMagic
         {
             public const string Rpc2 = "RENPY RPC2";
         }
@@ -72,7 +72,7 @@ namespace RpaParser
             public long Length;
         }
 
-        public class PreviewTypes
+        public static class PreviewTypes
         {
             public const string Unknown = "unknown";
             public const string Image = "image";

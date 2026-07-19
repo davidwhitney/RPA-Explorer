@@ -18,10 +18,10 @@ public class RpaParserExtractTests
     [Fact]
     public void ExtractData_FileStoredInArchive_ReturnsOriginalBytes()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
 
-        byte[] result = parser.ExtractData("images/nested/pic.bin");
+        var result = parser.ExtractData("images/nested/pic.bin");
 
         result.ShouldBe(new byte[] { 9, 8, 7, 6 });
     }
@@ -29,10 +29,10 @@ public class RpaParserExtractTests
     [Fact]
     public void ExtractData_FileNotInIndex_Throws()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
 
-        Exception ex = Should.Throw<Exception>(() => parser.ExtractData("nope.txt"));
+        var ex = Should.Throw<Exception>(() => parser.ExtractData("nope.txt"));
 
         ex.Message.ShouldContain("does not exist in RenPy Archive");
     }
@@ -40,9 +40,9 @@ public class RpaParserExtractTests
     [Fact]
     public void ExtractData_EntryNotYetInArchive_ReadsFromDisk()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        string onDisk = workspace.WriteFile("pending/new.txt", "not yet archived");
-        Parser parser = new Parser();
+        using var workspace = new TempWorkspace();
+        var onDisk = workspace.WriteFile("pending/new.txt", "not yet archived");
+        var parser = new Parser();
         parser.Index.Add("new.txt", new Parser.ArchiveIndex
         {
             InArchive = false,
@@ -51,7 +51,7 @@ public class RpaParserExtractTests
             Length = new FileInfo(onDisk).Length
         });
 
-        byte[] result = parser.ExtractData("new.txt");
+        var result = parser.ExtractData("new.txt");
 
         Encoding.UTF8.GetString(result).ShouldBe("not yet archived");
     }
@@ -59,12 +59,12 @@ public class RpaParserExtractTests
     [Fact]
     public void ExtractData_MultiSegmentEntry_ConcatenatesSegments()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        byte[] payload = Encoding.UTF8.GetBytes("segment payload");
-        Parser parser = workspace.LoadArchive(
+        using var workspace = new TempWorkspace();
+        var payload = Encoding.UTF8.GetBytes("segment payload");
+        var parser = workspace.LoadArchive(
             Parser.Version.Rpa3, new Dictionary<string, byte[]> { ["a.txt"] = payload });
 
-        byte[] result = parser.ExtractData("a.txt");
+        var result = parser.ExtractData("a.txt");
 
         result.ShouldBe(payload);
         parser.Index["a.txt"].Tuples.Count.ShouldBeGreaterThan(0);
@@ -73,12 +73,12 @@ public class RpaParserExtractTests
     [Fact]
     public void Extract_ExportPathGiven_WritesFileUnderThatPath()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
-        string exportDir = workspace.Path_("export");
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var exportDir = workspace.Path_("export");
         Directory.CreateDirectory(exportDir);
 
-        string written = parser.Extract("readme.txt", exportDir);
+        var written = parser.Extract("readme.txt", exportDir);
 
         File.Exists(written).ShouldBeTrue();
         File.ReadAllText(written).ShouldBe("readme contents");
@@ -88,12 +88,12 @@ public class RpaParserExtractTests
     [Fact]
     public void Extract_NestedEntry_CreatesIntermediateDirectories()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
-        string exportDir = workspace.Path_("export-nested");
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var exportDir = workspace.Path_("export-nested");
         Directory.CreateDirectory(exportDir);
 
-        string written = parser.Extract("images/nested/pic.bin", exportDir);
+        var written = parser.Extract("images/nested/pic.bin", exportDir);
 
         File.Exists(written).ShouldBeTrue();
         File.ReadAllBytes(written).ShouldBe(new byte[] { 9, 8, 7, 6 });
@@ -102,10 +102,10 @@ public class RpaParserExtractTests
     [Fact]
     public void Extract_EmptyExportPath_WritesNextToArchive()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
 
-        string written = parser.Extract("readme.txt", string.Empty);
+        var written = parser.Extract("readme.txt", string.Empty);
 
         File.Exists(written).ShouldBeTrue();
         Path.GetDirectoryName(written).ShouldBe(parser.ArchiveInfo.DirectoryName);
@@ -114,10 +114,10 @@ public class RpaParserExtractTests
     [Fact]
     public void Extract_WhitespaceExportPath_WritesNextToArchive()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
 
-        string written = parser.Extract("readme.txt", "   ");
+        var written = parser.Extract("readme.txt", "   ");
 
         File.Exists(written).ShouldBeTrue();
         Path.GetDirectoryName(written).ShouldBe(parser.ArchiveInfo.DirectoryName);
@@ -126,10 +126,10 @@ public class RpaParserExtractTests
     [Fact]
     public void Extract_ExportPathDoesNotExist_Throws()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
 
-        Exception ex = Should.Throw<Exception>(
+        var ex = Should.Throw<Exception>(
             () => parser.Extract("readme.txt", workspace.Path_("no-such-dir")));
 
         ex.Message.ShouldContain("export path does not exist");
@@ -138,8 +138,8 @@ public class RpaParserExtractTests
     [Fact]
     public void Extract_FileNotInIndex_Throws()
     {
-        using TempWorkspace workspace = new TempWorkspace();
-        Parser parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        using var workspace = new TempWorkspace();
+        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
 
         Should.Throw<Exception>(() => parser.Extract("missing.txt", string.Empty));
     }

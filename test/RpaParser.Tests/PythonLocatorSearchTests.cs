@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using RpaParser;
 using Shouldly;
 
 namespace RpaParser.Tests;
@@ -22,8 +17,7 @@ public class PythonLocatorSearchTests
         public HashSet<string> Directories { get; init; } = new();
         public HashSet<string> UnreadableDirectories { get; init; } = new();
 
-        public string GetEnvironmentVariable(string name) =>
-            Variables.TryGetValue(name, out string value) ? value : null;
+        public string? GetEnvironmentVariable(string name) => Variables.GetValueOrDefault(name);
 
         public bool FileExists(string path) => Files.Contains(path);
 
@@ -52,7 +46,7 @@ public class PythonLocatorSearchTests
             Files = { "/usr/bin/python3", "/usr/bin/python2.7", "/usr/bin/python" }
         };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe("/usr/bin/python3");
     }
@@ -66,7 +60,7 @@ public class PythonLocatorSearchTests
             Files = { "/usr/bin/python2.7" }
         };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe("/usr/bin/python2.7");
     }
@@ -76,7 +70,7 @@ public class PythonLocatorSearchTests
     {
         FakeProbe probe = new() { Variables = { ["PATH"] = "/usr/bin" } };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe(string.Empty);
     }
@@ -86,7 +80,7 @@ public class PythonLocatorSearchTests
     {
         // Paths are composed with Path.Combine so the expectation matches however the host
         // separates them; only the IsWindows flag selects the .exe names.
-        string pythonDir = Path.Combine("pythons", "3.12");
+        var pythonDir = Path.Combine("pythons", "3.12");
         FakeProbe probe = new()
         {
             IsWindows = true,
@@ -94,7 +88,7 @@ public class PythonLocatorSearchTests
             Files = { Path.Combine(pythonDir, "python3.exe") }
         };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe(Path.Combine(pythonDir, "python3.exe"));
     }
@@ -102,7 +96,7 @@ public class PythonLocatorSearchTests
     [Fact]
     public void Detect_OnWindowsWithoutPath_SearchesLocalProgramsPython()
     {
-        string programs = Path.Combine(@"C:\Users\tester", "AppData", "Local", "Programs", "Python");
+        var programs = Path.Combine(@"C:\Users\tester", "AppData", "Local", "Programs", "Python");
         FakeProbe probe = new()
         {
             IsWindows = true,
@@ -110,7 +104,7 @@ public class PythonLocatorSearchTests
             Files = { Path.Combine(programs, "python.exe") }
         };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe(Path.Combine(programs, "python.exe"));
     }
@@ -120,7 +114,7 @@ public class PythonLocatorSearchTests
     {
         FakeProbe probe = new() { Files = { "/opt/homebrew/bin/python3" } };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe("/opt/homebrew/bin/python3");
     }
@@ -135,7 +129,7 @@ public class PythonLocatorSearchTests
             Files = { "/home/tester/.pyenv/shims/python3" }
         };
 
-        string result = PythonLocator.Detect(probe);
+        var result = PythonLocator.Detect(probe);
 
         result.ShouldBe("/home/tester/.pyenv/shims/python3");
     }

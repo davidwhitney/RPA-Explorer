@@ -24,7 +24,7 @@ public sealed class TempWorkspace : IDisposable
 
     public string WriteFile(string relativePath, byte[] content)
     {
-        string full = Path_(relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+        var full = Path_(relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(full)!);
         File.WriteAllBytes(full, content);
         return full;
@@ -44,18 +44,18 @@ public sealed class TempWorkspace : IDisposable
         int padding = 0,
         long? obfuscationKey = null)
     {
-        Parser parser = new Parser { ArchiveVersion = version, Padding = padding };
+        var parser = new Parser { ArchiveVersion = version, Padding = padding };
         if (obfuscationKey.HasValue)
         {
             parser.ObfuscationKey = obfuscationKey.Value;
         }
 
-        string sourceDir = Path_("src-" + Guid.NewGuid().ToString("N"));
+        var sourceDir = Path_("src-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(sourceDir);
 
-        foreach (KeyValuePair<string, byte[]> entry in entries)
+        foreach (var entry in entries)
         {
-            string onDisk = System.IO.Path.Combine(
+            var onDisk = System.IO.Path.Combine(
                 sourceDir, entry.Key.Replace('/', System.IO.Path.DirectorySeparatorChar));
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(onDisk)!);
             File.WriteAllBytes(onDisk, entry.Value);
@@ -76,8 +76,8 @@ public sealed class TempWorkspace : IDisposable
     /// <summary>Loads an archive created by <see cref="CreateArchive"/>.</summary>
     public Parser LoadArchive(double version, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
     {
-        string path = CreateArchive(version, entries, archiveName);
-        Parser parser = new Parser();
+        var path = CreateArchive(version, entries, archiveName);
+        var parser = new Parser();
         parser.LoadArchive(path);
         return parser;
     }
