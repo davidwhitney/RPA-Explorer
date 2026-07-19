@@ -6,6 +6,40 @@ Graphical explorer for RenPy Archives. This tool brings ability to extract, crea
 
 This is a fan made application and there is no guarantee of further development or fixes. For video support LibVLC library is used and this library has ~300MiB in size so this is the reason why this application is so big, I haven't found a better way around this yet.
 
+#### Cross-platform (modern .NET + Avalonia):
+
+The application has been ported from Windows Forms (.NET Framework 4.6.1) to [Avalonia UI](https://avaloniaui.net/) on **.NET 8**, so it now runs on **macOS (incl. Apple Silicon), Linux and Windows**.
+
+What changed under the hood:
+- UI rebuilt in Avalonia (was Windows Forms).
+- `Ionic.Zlib` replaced with the built-in `System.IO.Compression.ZLibStream`.
+- Image/WebP decoding uses [ImageSharp](https://github.com/SixLabors/ImageSharp) instead of `System.Drawing` + the native WebP wrapper.
+- Video/audio preview uses `LibVLCSharp.Avalonia` with native libs from `VideoLAN.LibVLC.Mac` (and the platform-appropriate package on other OSes).
+- Python 2.7 detection is now cross-platform (searches `PATH` and common install locations); you can still override it via **Options**.
+- Windows-only features that don't apply elsewhere (registry file-association) are hidden on non-Windows platforms.
+
+##### Requirements
+
+- [.NET SDK 8.0 or newer](https://dotnet.microsoft.com/download)
+
+##### Build & run
+
+```bash
+# from the repository root
+dotnet build "RPA Explorer.sln"
+dotnet run --project "RPA Explorer/RPA Explorer.csproj"
+
+# optionally open an archive directly
+dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
+```
+
+To produce a self-contained macOS build:
+
+```bash
+dotnet publish "RPA Explorer/RPA Explorer.csproj" -c Release -r osx-arm64 --self-contained
+# (use osx-x64, linux-x64 or win-x64 for other targets)
+```
+
 ### Supported file types for preview:
 
 - Text: py, rpy~, rpy, txt, log, nfo, htm, html, xml, json, yaml, csv

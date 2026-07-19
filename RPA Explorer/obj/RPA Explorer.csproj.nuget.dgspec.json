@@ -1,33 +1,36 @@
 {
   "format": 1,
   "restore": {
-    "W:\\Projects\\.NET\\RPA Explorer\\RPA Explorer\\RPA Explorer.csproj": {}
+    "/Users/david/dev/RPA-Explorer/RPA Explorer/RPA Explorer.csproj": {}
   },
   "projects": {
-    "W:\\Projects\\.NET\\RPA Explorer\\RPA Explorer\\RPA Explorer.csproj": {
+    "/Users/david/dev/RPA-Explorer/RPA Explorer/RPA Explorer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "W:\\Projects\\.NET\\RPA Explorer\\RPA Explorer\\RPA Explorer.csproj",
-        "projectName": "RPA Explorer",
-        "projectPath": "W:\\Projects\\.NET\\RPA Explorer\\RPA Explorer\\RPA Explorer.csproj",
-        "packagesPath": "C:\\Users\\KayaNatsumi\\.nuget\\packages\\",
-        "outputPath": "W:\\Projects\\.NET\\RPA Explorer\\RPA Explorer\\obj\\",
+        "projectUniqueName": "/Users/david/dev/RPA-Explorer/RPA Explorer/RPA Explorer.csproj",
+        "projectName": "RPA_Explorer",
+        "projectPath": "/Users/david/dev/RPA-Explorer/RPA Explorer/RPA Explorer.csproj",
+        "packagesPath": "/Users/david/.nuget/packages/",
+        "outputPath": "/Users/david/dev/RPA-Explorer/RPA Explorer/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\KayaNatsumi\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/david/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net461"
+          "net8.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {},
+          "https://nuget.pkg.github.com/newdaycards/index.json": {},
+          "https://nuget.pkg.github.com/newdaystratus/index.json": {},
+          "https://nuget.pkg.github.com/newdaytechnology/index.json": {}
         },
         "frameworks": {
-          "net461": {
-            "targetAlias": "net461",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {
-              "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\RPAParser.csproj": {
-                "projectPath": "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\RPAParser.csproj"
+              "/Users/david/dev/RPA-Explorer/RPA Parser/RPAParser.csproj": {
+                "projectPath": "/Users/david/dev/RPA-Explorer/RPA Parser/RPAParser.csproj"
               }
             }
           }
@@ -36,64 +39,109 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
-        "net461": {
-          "targetAlias": "net461",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "dependencies": {
-            "LibVLCSharp": {
+            "Avalonia": {
               "target": "Package",
-              "version": "[3.6.5, )"
+              "version": "[11.3.13, )"
             },
-            "LibVLCSharp.WinForms": {
+            "Avalonia.Desktop": {
               "target": "Package",
-              "version": "[3.6.5, )"
+              "version": "[11.3.13, )"
             },
-            "Microsoft.NETFramework.ReferenceAssemblies": {
-              "suppressParent": "All",
+            "Avalonia.Diagnostics": {
               "target": "Package",
-              "version": "[1.0.2, )",
-              "autoReferenced": true
+              "version": "[11.3.13, )"
             },
-            "NeoSmart.PrettySize": {
+            "Avalonia.Fonts.Inter": {
               "target": "Package",
-              "version": "[2.1.0, )"
+              "version": "[11.3.13, )"
             },
-            "System.Resources.Extensions": {
+            "Avalonia.Themes.Fluent": {
               "target": "Package",
-              "version": "[6.0.2-mauipre.1.22054.8, )"
+              "version": "[11.3.13, )"
             },
-            "VideoLAN.LibVLC.Windows": {
+            "LibVLCSharp.Avalonia": {
               "target": "Package",
-              "version": "[3.0.16, )"
+              "version": "[3.10.0, )"
+            },
+            "SixLabors.ImageSharp": {
+              "target": "Package",
+              "version": "[3.1.11, )"
+            },
+            "VideoLAN.LibVLC.Mac": {
+              "target": "Package",
+              "version": "[3.1.3.1, )"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\KayaNatsumi\\.dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.osx-arm64",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\RPAParser.csproj": {
+    "/Users/david/dev/RPA-Explorer/RPA Parser/RPAParser.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\RPAParser.csproj",
+        "projectUniqueName": "/Users/david/dev/RPA-Explorer/RPA Parser/RPAParser.csproj",
         "projectName": "RPAParser",
-        "projectPath": "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\RPAParser.csproj",
-        "packagesPath": "C:\\Users\\KayaNatsumi\\.nuget\\packages\\",
-        "outputPath": "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\obj\\",
+        "projectPath": "/Users/david/dev/RPA-Explorer/RPA Parser/RPAParser.csproj",
+        "packagesPath": "/Users/david/.nuget/packages/",
+        "outputPath": "/Users/david/dev/RPA-Explorer/RPA Parser/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\KayaNatsumi\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/david/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net461"
+          "net8.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {},
+          "https://nuget.pkg.github.com/newdaycards/index.json": {},
+          "https://nuget.pkg.github.com/newdaystratus/index.json": {},
+          "https://nuget.pkg.github.com/newdaytechnology/index.json": {}
         },
         "frameworks": {
-          "net461": {
-            "targetAlias": "net461",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -101,28 +149,50 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
-        "net461": {
-          "targetAlias": "net461",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "dependencies": {
-            "Ionic.Zlib": {
-              "target": "Package",
-              "version": "[1.9.1.5, )"
-            },
-            "Microsoft.NETFramework.ReferenceAssemblies": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[1.0.2, )",
-              "autoReferenced": true
-            },
             "Razorvine.Pickle": {
               "target": "Package",
-              "version": "[1.2.1, )"
+              "version": "[1.5.0, )"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\KayaNatsumi\\.dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -1,73 +1,37 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net461</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>RPA_Explorer</RootNamespace>
-        <UseWindowsForms>true</UseWindowsForms>
-        <LangVersion>default</LangVersion>
+        <AssemblyName>RPA_Explorer</AssemblyName>
         <Nullable>disable</Nullable>
-        <ApplicationIcon>images\RPA Explorer.ico</ApplicationIcon>
-        <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
-        <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <DefineConstants>TRACE;</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <DefineConstants>TRACE;</DefineConstants>
+        <LangVersion>latest</LangVersion>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Assets/RPA Explorer.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="LibVLCSharp" Version="3.6.5" />
-      <PackageReference Include="LibVLCSharp.WinForms" Version="3.6.5" />
-      <PackageReference Include="NeoSmart.PrettySize" Version="2.1.0" />
-      <PackageReference Include="System.Resources.Extensions" Version="6.0.2-mauipre.1.22054.8" />
-      <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.16" />
+        <AvaloniaResource Include="Assets/**" />
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="RPA_Explorer.Designer.cs">
-        <DependentUpon>RPA_Explorer.cs</DependentUpon>
-      </Compile>
-      <EmbeddedResource Include="About.resx" />
-      <EmbeddedResource Include="Lang.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>Lang.resx.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Include="Resources.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-      <EmbeddedResource Include="RPA_Explorer.resx">
-        <DependentUpon>RPA_Explorer.cs</DependentUpon>
-        <SubType>Designer</SubType>
-      </EmbeddedResource>
-      <Compile Update="ArchiveSave.cs">
-        <SubType>Form</SubType>
-      </Compile>
-      <EmbeddedResource Include="ArchiveSave.resx" />
-      <Compile Update="Resources.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>resources.resx</DependentUpon>
-      </Compile>
-      <Compile Update="Lang.resx.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>Lang</DependentUpon>
-      </Compile>
-      <Compile Update="About.cs">
-        <SubType>Form</SubType>
-      </Compile>
+        <PackageReference Include="Avalonia" Version="11.3.13" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.13" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.13">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="LibVLCSharp.Avalonia" Version="3.10.0" />
+        <PackageReference Include="VideoLAN.LibVLC.Mac" Version="3.1.3.1" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RPA Parser\RPAParser.csproj" />
+        <ProjectReference Include="..\RPA Parser\RPAParser.csproj" />
     </ItemGroup>
 
 </Project>

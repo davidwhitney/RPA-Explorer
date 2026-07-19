@@ -2,15 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using Ionic.Zlib;
-using Microsoft.Win32;
 using Razorvine.Pickle;
-using WebPWrapper;
 
 namespace RPA_Parser
 {
@@ -152,96 +149,50 @@ namespace RPA_Parser
             ".rpymc"
         };
         
-        // Original: https://stackoverflow.com/a/60757602/3650856
-        private static string GetPythonPath(string requiredVersion = "", string maxVersion = "") {
-            string[] possiblePythonLocations = new string[3] {
-                @"HKLM\SOFTWARE\Python\PythonCore\",
-                @"HKCU\SOFTWARE\Python\PythonCore\",
-                @"HKLM\SOFTWARE\Wow6432Node\Python\PythonCore\"
-            };
+        // Cross-platform best-effort detection of a Python 2.7 interpreter.
+        // The user can always override this via Options in the UI (stored in settings).
+        private static string GetPythonPath(string requiredVersion = "", string maxVersion = "")
+        {
+            string[] candidateNames = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? new[] { "python2.7.exe", "python2.exe", "python.exe" }
+                : new[] { "python2.7", "python2", "python" };
 
-            //Version number, install path
-            Dictionary<string, string> pythonLocations = new Dictionary<string, string>();
-
-            foreach (string possibleLocation in possiblePythonLocations) {
-                string regKey = possibleLocation.Substring(0, 4), actualPath = possibleLocation.Substring(5);
-                RegistryKey theKey = (regKey == "HKLM" ? Registry.LocalMachine : Registry.CurrentUser);
-                RegistryKey theValue = theKey.OpenSubKey(actualPath);
-
-                if (theValue != null)
-                {
-                    foreach (string value in theValue.GetSubKeyNames())
-                    {
-                        RegistryKey productKey = theValue.OpenSubKey(value);
-                        if (productKey != null)
-                        {
-                            try
-                            {
-                                string pythonExePath = productKey.OpenSubKey("InstallPath")
-                                    ?.GetValue("ExecutablePath")
-                                    ?.ToString();
-
-                                // Get (Default) value instead if not found in ExecutablePath value
-                                if (string.IsNullOrEmpty(pythonExePath))
-                                {
-                                    pythonExePath = productKey.OpenSubKey("InstallPath")
-                                        ?.GetValue("")
-                                        .ToString();
-                                    if (!string.IsNullOrEmpty(pythonExePath))
-                                    {
-                                        pythonExePath += "python.exe";
-                                    }
-                                }
-
-                                if (!string.IsNullOrEmpty(pythonExePath))
-                                {
-                                    if (!pythonLocations.ContainsKey(value) && File.Exists(pythonExePath))
-                                    {
-                                        Debug.WriteLine("Got python version; " + value + " at path; " + pythonExePath);
-                                        pythonLocations.Add(value, pythonExePath);
-                                    }
-                                }
-                            }
-                            catch
-                            {
-                                // Object doesn't exist
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (pythonLocations.Count > 0)
+            List<string> searchDirs = new List<string>();
+            string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? String.Empty;
+            searchDirs.AddRange(pathEnv.Split(Path.PathSeparator));
+            // Common install locations that a GUI app may not have on its PATH.
+            searchDirs.AddRange(new[]
             {
-                System.Version desiredVersion = new System.Version(requiredVersion == "" ? "0.0.1" : requiredVersion);
-                System.Version maxPVersion = new System.Version(maxVersion == "" ? "999.999.999" : maxVersion);
+                "/usr/bin",
+                "/usr/local/bin",
+                "/opt/homebrew/bin",
+                "/opt/local/bin"
+            });
 
-                string highestVersion = "";
-                string highestVersionPath = "";
+            // Prefer an explicit 2.7 / 2.x interpreter anywhere before falling back to a bare "python".
+            foreach (string name in candidateNames)
+            {
+                foreach (string dir in searchDirs)
+                {
+                    if (string.IsNullOrWhiteSpace(dir))
+                    {
+                        continue;
+                    }
 
-                foreach (KeyValuePair<string, string> pVersion in pythonLocations) {
-                    // TODO: if on 64-bit machine, prefer the 64 bit version over 32 and vice versa
-                    int index = pVersion.Key.IndexOf("-", StringComparison.Ordinal);
-                    string formattedVersion = Regex.Replace(index > 0 ? pVersion.Key.Substring(0, index) : pVersion.Key, @"[^0-9.]", "");
-
-                    System.Version thisVersion = new System.Version(formattedVersion);
-                    int comparison = desiredVersion.CompareTo(thisVersion);
-                    int maxComparison = maxPVersion.CompareTo(thisVersion);
-
-                    if (comparison <= 0) {
-                        // Version is greater or equal
-                        if (maxComparison >= 0) {
-                            desiredVersion = thisVersion;
-
-                            highestVersion = pVersion.Key;
-                            highestVersionPath = pVersion.Value;
+                    try
+                    {
+                        string full = Path.Combine(dir, name);
+                        if (File.Exists(full))
+                        {
+                            Debug.WriteLine("Found python candidate at: " + full);
+                            return full;
                         }
                     }
+                    catch
+                    {
+                        // Ignore malformed PATH entries
+                    }
                 }
-
-                Debug.WriteLine(highestVersion);
-                Debug.WriteLine(highestVersionPath);
-                return highestVersionPath;
             }
 
             return String.Empty;
@@ -453,7 +404,7 @@ namespace RPA_Parser
                     }
                 }
 
-                byte[] fileUncompressed = ZlibStream.UncompressBuffer(fileCompressed);
+                byte[] fileUncompressed = Zlib.UncompressBuffer(fileCompressed);
                 using (Unpickler unpickler = new Unpickler())
                 {
                     unpickledIndexes = unpickler.loads(fileUncompressed);
@@ -700,20 +651,8 @@ namespace RPA_Parser
 
             if (ImageExtList.Contains(fileInfo.Extension.ToLower()))
             {
-                byte[] magicBytes = new byte[16];
-                Buffer.BlockCopy(bytes,0, magicBytes,0,16);
-
-                Image image;
-                if (fileInfo.Extension.ToLower() == ".webp" || Encoding.UTF8.GetString(magicBytes, 0, magicBytes.Length).Contains("WEBP"))
-                {
-                    image = new WebP().Decode(bytes);
-                }
-                else
-                {
-                    image = Image.FromStream(new MemoryStream(bytes));
-                }
-
-                data = new KeyValuePair<string, object>(PreviewTypes.Image, image);
+                // Return raw bytes; the UI decodes them cross-platform (WebP included).
+                data = new KeyValuePair<string, object>(PreviewTypes.Image, bytes);
             }
             else if (TextExtList.Contains(fileInfo.Extension.ToLower()))
             {
@@ -816,10 +755,12 @@ namespace RPA_Parser
         public string Extract(string fileName, string exportPath)
         {
             byte[] finalData = ExtractData(fileName);
-            string finalPath;
+            // Archive tree paths always use '/'; convert to the local separator.
+            string relativePath = fileName.Replace('/', Path.DirectorySeparatorChar);
+            string baseDir;
             if (exportPath.Trim() == String.Empty)
             {
-                finalPath = ArchiveInfo.DirectoryName + @"\" + fileName;
+                baseDir = ArchiveInfo.DirectoryName;
             }
             else
             {
@@ -827,13 +768,15 @@ namespace RPA_Parser
                 {
                     throw new Exception("Selected export path does not exist.");
                 }
-                finalPath = exportPath.Trim() + @"\" + fileName;
+                baseDir = exportPath.Trim();
             }
+
+            string finalPath = Path.Combine(baseDir, relativePath);
 
             Directory.CreateDirectory(Path.GetDirectoryName(finalPath) ?? throw new InvalidOperationException());
             File.WriteAllBytes(finalPath, finalData);
 
-            return ArchiveInfo.DirectoryName + @"\" + fileName;
+            return finalPath;
         }
 
         public string SaveArchive(string archivePath)
@@ -950,7 +893,7 @@ namespace RPA_Parser
                         pickledIndexes = pickler.dumps(indexes);
                     }
 
-                    byte[] fileCompressed = ZlibStream.CompressBuffer(pickledIndexes);
+                    byte[] fileCompressed = Zlib.CompressBuffer(pickledIndexes);
 
                     if (!CheckVersion(ArchiveVersion, Version.RPA_1))
                     {
@@ -1186,7 +1129,7 @@ namespace RPA_Parser
                     case 'H':
                         if (endianFlip)
                         {
-                            var deezBytes = bytes.Reverse().Skip(byteArrayPosition).Take(2).ToArray();
+                            var deezBytes = Enumerable.Reverse(bytes).Skip(byteArrayPosition).Take(2).ToArray();
                             outputList.Add(BitConverter.ToUInt16(deezBytes, 0));
                         }
                         else
@@ -1245,7 +1188,7 @@ namespace RPA_Parser
             foreach (object o in items)
             {
                 byte[] theseBytes = TypeAgnosticGetBytes(o);
-                if (endianFlip) theseBytes = theseBytes.Reverse().ToArray();
+                if (endianFlip) theseBytes = Enumerable.Reverse(theseBytes).ToArray();
                 outString += GetFormatSpecifierFor(o);
                 outputBytes.AddRange(theseBytes);
             }

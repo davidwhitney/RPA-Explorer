@@ -1,17 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net461</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>RPA_Parser</RootNamespace>
-        <UseWindowsForms>true</UseWindowsForms>
-        <LangVersion>default</LangVersion>
-        <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
-        <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Ionic.Zlib" Version="1.9.1.5" />
-      <PackageReference Include="Razorvine.Pickle" Version="1.2.1" />
+      <PackageReference Include="Razorvine.Pickle" Version="1.5.0" />
     </ItemGroup>
 
 </Project>

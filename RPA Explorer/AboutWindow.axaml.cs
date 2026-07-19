@@ -1,0 +1,60 @@
+using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+
+namespace RPA_Explorer
+{
+    public partial class AboutWindow : Window
+    {
+        private static readonly string[] TranslatorsList = { "-" };
+        private static readonly string[] ContributorsList = { "-" };
+
+        private readonly string _appVersion =
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
+        private readonly string _appCreator = "Martin Suchy";
+        private readonly string _appRepository = "https://github.com/UniverseDevel/RPA-Explorer";
+
+        public AboutWindow()
+        {
+            InitializeComponent();
+
+            Title = MainWindow.GetText("About");
+            AboutText.Text = string.Format(
+                MainWindow.GetText("About_text"),
+                _appVersion,
+                _appCreator,
+                _appRepository,
+                string.Join(", ", TranslatorsList),
+                string.Join(", ", ContributorsList));
+
+            RepoButton.Click += (_, _) => OpenUrl(_appRepository);
+            CloseButton.Click += (_, _) => Close();
+        }
+
+        private static void OpenUrl(string url)
+        {
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    Process.Start("open", url);
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                else
+                {
+                    Process.Start("xdg-open", url);
+                }
+            }
+            catch
+            {
+                // Best effort only.
+            }
+        }
+    }
+}

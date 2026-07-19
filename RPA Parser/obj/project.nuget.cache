@@ -1,17 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "50woqOCc34o=",
+  "dgSpecHash": "XqL+vDHSgvQ=",
   "success": true,
-  "projectFilePath": "W:\\Projects\\.NET\\RPA Explorer\\RPA Parser\\RPAParser.csproj",
+  "projectFilePath": "/Users/david/dev/RPA-Explorer/RPA Parser/RPAParser.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\ionic.zlib\\1.9.1.5\\ionic.zlib.1.9.1.5.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\microsoft.netframework.referenceassemblies\\1.0.2\\microsoft.netframework.referenceassemblies.1.0.2.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\microsoft.netframework.referenceassemblies.net461\\1.0.2\\microsoft.netframework.referenceassemblies.net461.1.0.2.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\razorvine.pickle\\1.2.1\\razorvine.pickle.1.2.1.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\system.buffers\\4.4.0\\system.buffers.4.4.0.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\system.memory\\4.5.2\\system.memory.4.5.2.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\system.numerics.vectors\\4.4.0\\system.numerics.vectors.4.4.0.nupkg.sha512",
-    "C:\\Users\\KayaNatsumi\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.5.2\\system.runtime.compilerservices.unsafe.4.5.2.nupkg.sha512"
+    "/Users/david/.nuget/packages/razorvine.pickle/1.5.0/razorvine.pickle.1.5.0.nupkg.sha512",
+    "/Users/david/.nuget/packages/system.memory/4.5.5/system.memory.4.5.5.nupkg.sha512",
+    "/Users/david/.nuget/packages/microsoft.netcore.app.ref/8.0.23/microsoft.netcore.app.ref.8.0.23.nupkg.sha512",
+    "/Users/david/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.23/microsoft.aspnetcore.app.ref.8.0.23.nupkg.sha512"
   ],
   "logs": []
 }

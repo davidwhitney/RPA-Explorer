@@ -1,0 +1,22 @@
+## Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+publish/
+
+## Rider / VS
+.idea/
+.vs/
+*.user
+*.suo
+*.DotSettings.user
+
+## macOS
+.DS_Store
+
+## Rider-generated
+*.sln.DotSettings.user
