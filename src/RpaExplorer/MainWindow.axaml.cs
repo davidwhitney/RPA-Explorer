@@ -1023,7 +1023,7 @@ namespace RpaExplorer
                     StatusText.Text = GetText("Exporting_file") + file;
                 });
 
-                _archive.Extract(file, destination);
+                _archive.Export(file, destination);
 
                 if (!_operationEnabled)
                 {

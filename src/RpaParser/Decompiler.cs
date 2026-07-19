@@ -56,7 +56,8 @@ namespace RpaParser
                     CreateNoWindow = true
                 };
 
-                using (var process = Process.Start(start))
+                using (var process = Process.Start(start)
+                                     ?? throw new Exception($"Could not start {Options.PythonPath}."))
                 {
                     using (var reader = process.StandardOutput)
                     {

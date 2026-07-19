@@ -24,7 +24,7 @@ namespace RpaParser
 
         public PreviewResult Create(Archive archive, string fileName) =>
             archive.Index.ContainsKey(fileName)
-                ? Create(fileName, archive.ExtractData(fileName))
+                ? Create(fileName, archive.Read(fileName))
                 : new PreviewResult(ContentFormat.Unknown, null);
 
         /// <summary>The bytes as stored, tagged with the format that claims them.</summary>
@@ -35,7 +35,7 @@ namespace RpaParser
                 return new PreviewResult(ContentFormat.Unknown, null);
             }
 
-            var data = archive.ExtractData(fileName);
+            var data = archive.Read(fileName);
             return new PreviewResult(Create(fileName, data).Format, data);
         }
     }

@@ -8,17 +8,18 @@ namespace RpaParser
 {
     public sealed class Archive
     {
-        public ArchiveFileInfo Files { get; private set; }
+        /// <summary>The files this archive was read from. Null for one built in memory.</summary>
+        public ArchiveFileInfo? Files { get; }
+
         public ArchiveIndex Index { get; set; } = new();
-        public ArchiveFormat Format { get; set; }
+
+        /// <summary>Null until a format is chosen, which for a new archive is at save time.</summary>
+        public ArchiveFormat? Format { get; set; }
         
         public int Padding = 0;
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
 
-        /// <summary>
-        /// A new, empty archive whose format is chosen later, when it is saved.
-        /// </summary>
         public Archive()
         {
         }
@@ -28,11 +29,6 @@ namespace RpaParser
             Format = format;
         }
 
-        /// <summary>
-        /// Reads an archive, or throws. Construction is all-or-nothing, so a reference to an
-        /// Archive is always a reference to one that was read successfully - a failed read
-        /// cannot leave a half-populated instance behind for the caller to discover later.
-        /// </summary>
         public Archive(string filePath)
         {
             Files = new ArchiveFileInfo(filePath);
@@ -42,7 +38,7 @@ namespace RpaParser
             Index = ArchiveIndex.Read(Files.IndexFile);
         }
 
-        public byte[] ExtractData(string fileName)
+        public byte[] Read(string fileName)
         {
             if (!Index.ContainsKey(fileName))
             {
@@ -51,7 +47,10 @@ namespace RpaParser
 
             if (Index[fileName].InArchive)
             {
-                using var reader = new BinaryReader(File.OpenRead(Files.ArchivePath), Encoding.UTF8);
+                // An entry can only be marked as stored if this archive was read from a file.
+                var files = Files ?? throw new Exception("Archive was not read from a file.");
+
+                using var reader = new BinaryReader(File.OpenRead(files.ArchivePath), Encoding.UTF8);
                 byte[] finalData = [];
 
                 foreach (var segment in Index[fileName].Segments)
@@ -72,15 +71,17 @@ namespace RpaParser
             return File.ReadAllBytes(Index[fileName].FullPath);
         }
 
-        public string Extract(string fileName, string exportPath)
+        public string Export(string fileName, string exportPath)
         {
-            var finalData = ExtractData(fileName);
+            var finalData = Read(fileName);
             // Archive tree paths always use '/'; convert to the local separator.
             var relativePath = fileName.Replace('/', Path.DirectorySeparatorChar);
+            
             string baseDir;
             if (exportPath.Trim() == string.Empty)
             {
-                baseDir = Files.Archive.DirectoryName;
+                baseDir = Files?.Archive.DirectoryName
+                          ?? throw new Exception("No export path given and the archive has no directory of its own.");
             }
             else
             {
@@ -133,22 +134,16 @@ namespace RpaParser
 
                 using (Stream stream = File.Open(tmpPath + ".rpa", FileMode.Truncate))
                 {
-                    var format = Format
-                                 ?? throw new Exception("Specified version is not supported.");
-
-                    // File data starts immediately after the header.
+                    var format = Format ?? throw new Exception("Specified version is not supported.");
+                    
                     var archiveOffset = format.HeaderLength;
-
                     stream.Position = archiveOffset;
 
                     var rnd = new Random();
-
-                    // Place each file, remembering where it landed so the index can be
-                    // written once every offset is known.
                     var storedFiles = new List<StoredFile>();
                     foreach (var index in Index)
                     {
-                        var content = ExtractData(index.Key);
+                        var content = Read(index.Key);
 
                         if (Padding > 0)
                         {

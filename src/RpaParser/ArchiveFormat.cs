@@ -12,11 +12,12 @@ namespace RpaParser
     /// </summary>
     public sealed record IndexFileInfo
     {
-        private IndexFileInfo()
+        private IndexFileInfo(string filePath)
         {
+            FilePath = filePath;
         }
 
-        public string FilePath { get; private init; }
+        public string FilePath { get; }
 
         /// <summary>Where the index starts in that file. Zero when it is the whole file.</summary>
         public long Offset { get; private init; }
@@ -30,22 +31,22 @@ namespace RpaParser
         /// The index's own file, or null when the index sits inside the archive and so has
         /// no file of its own to describe.
         /// </summary>
-        public FileInfo File { get; private init; }
+        public FileInfo? File { get; private init; }
 
-        public static IndexFileInfo InsideArchive(string archivePath, long offset, long obfuscationKey) => new()
-        {
-            FilePath = archivePath,
-            Offset = offset,
-            ObfuscationKey = obfuscationKey
-        };
+        public static IndexFileInfo InsideArchive(string archivePath, long offset, long obfuscationKey) =>
+            new(archivePath)
+            {
+                Offset = offset,
+                ObfuscationKey = obfuscationKey
+            };
 
         /// <summary>An index that is the whole of a separate file, so unkeyed and unoffset.</summary>
-        public static IndexFileInfo SeparateFile(string indexPath) => new()
-        {
-            FilePath = indexPath,
-            IsSeparateFile = true,
-            File = new FileInfo(indexPath)
-        };
+        public static IndexFileInfo SeparateFile(string indexPath) =>
+            new(indexPath)
+            {
+                IsSeparateFile = true,
+                File = new FileInfo(indexPath)
+            };
     }
 
     /// <summary>
@@ -135,7 +136,9 @@ namespace RpaParser
         /// </summary>
         public virtual IndexFileInfo LocateIndex(ArchiveFileInfo files)
         {
-            var headerFields = files.FirstLine.Split(' ');
+            // Only version 1 has no header line, and it overrides this.
+            var headerFields = (files.FirstLine ?? throw new Exception("Archive has no header line."))
+                .Split(' ');
 
             return IndexFileInfo.InsideArchive(
                 files.ArchivePath,
@@ -154,14 +157,14 @@ namespace RpaParser
         /// <summary>
         /// The format matching the archive, or null when nothing recognises it.
         /// </summary>
-        public static ArchiveFormat Detect(string firstLine, bool indexPairExists) =>
+        public static ArchiveFormat? Detect(string? firstLine, bool indexPairExists) =>
             All.FirstOrDefault(format => format.Matches(firstLine ?? string.Empty, indexPairExists));
 
-        public static ArchiveFormat Detect(ArchiveFileInfo files) =>
+        public static ArchiveFormat? Detect(ArchiveFileInfo files) =>
             Detect(files.FirstLine, files.IndexPairExists);
 
         /// <summary>The format for a numeric version, or null when it is not supported.</summary>
-        public static ArchiveFormat ForVersion(double version) =>
+        public static ArchiveFormat? ForVersion(double version) =>
             All.FirstOrDefault(format => format.Version == version);
 
         public override string ToString() => DisplayName;

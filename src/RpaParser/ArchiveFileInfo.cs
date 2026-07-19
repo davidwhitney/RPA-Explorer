@@ -4,15 +4,6 @@ using System.Text;
 
 namespace RpaParser
 {
-    /// <summary>
-    /// Everything an archive's files say about themselves, before any of their contents are
-    /// read: which files they are, which format they are in and where the index lives.
-    ///
-    /// Version 1 archives are a .rpa/.rpi pair and may be opened by either half, so the
-    /// other is derived here and the archive is checked to exist. Constructing one either
-    /// yields a recognised archive or throws, so everything downstream starts from files
-    /// that are present and a format that is known.
-    /// </summary>
     public sealed record ArchiveFileInfo
     {
         private const string ArchiveExtension = ".rpa";
@@ -51,7 +42,6 @@ namespace RpaParser
         }
 
         public ArchiveFormat Format { get; }
-
         public IndexFileInfo IndexFile { get; }
 
         /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>
@@ -61,13 +51,12 @@ namespace RpaParser
         /// The sibling .rpi, or null when the name carried neither extension and so names
         /// no pair.
         /// </summary>
-        public string IndexPath { get; }
+        public string? IndexPath { get; }
 
         public FileInfo Archive { get; }
 
         /// <summary>
-        /// True when both halves are present, which is how a version 1 archive is
-        /// recognised - it carries no magic bytes of its own.
+        /// True when both halves are present.
         /// </summary>
         public bool IndexPairExists { get; }
 
@@ -75,9 +64,9 @@ namespace RpaParser
         /// The archive's header line, which is what identifies its format. Null for an
         /// empty file.
         /// </summary>
-        public string FirstLine { get; }
+        public string? FirstLine { get; }
 
-        private static string ReadFirstLine(string archivePath)
+        private static string? ReadFirstLine(string archivePath)
         {
             using var reader = new StreamReader(archivePath, Encoding.UTF8);
             return reader.ReadLine();
@@ -87,7 +76,7 @@ namespace RpaParser
         /// Given either half of the pair, works out the other. The two cases are mutually
         /// exclusive - a path cannot end in both extensions.
         /// </summary>
-        private static (string ArchivePath, string IndexPath) ResolvePair(string path)
+        private static (string ArchivePath, string? IndexPath) ResolvePair(string path)
         {
             if (path.EndsWith(ArchiveExtension, StringComparison.OrdinalIgnoreCase))
             {

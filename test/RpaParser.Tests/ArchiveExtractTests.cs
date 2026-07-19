@@ -21,7 +21,7 @@ public class ArchiveExtractTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        var result = archive.ExtractData("images/nested/pic.bin");
+        var result = archive.Read("images/nested/pic.bin");
 
         result.ShouldBe(new byte[] { 9, 8, 7, 6 });
     }
@@ -32,7 +32,7 @@ public class ArchiveExtractTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        var ex = Should.Throw<Exception>(() => archive.ExtractData("nope.txt"));
+        var ex = Should.Throw<Exception>(() => archive.Read("nope.txt"));
 
         ex.Message.ShouldContain("does not exist in RenPy Archive");
     }
@@ -45,7 +45,7 @@ public class ArchiveExtractTests
         var archive = new Archive();
         archive.Index.Add("new.txt", ArchiveEntry.FromFilename(onDisk, workspace.Path_("pending")));
 
-        var result = archive.ExtractData("new.txt");
+        var result = archive.Read("new.txt");
 
         Encoding.UTF8.GetString(result).ShouldBe("not yet archived");
     }
@@ -58,7 +58,7 @@ public class ArchiveExtractTests
         var archive = workspace.LoadArchive(
             ArchiveFormat.Rpa3, new Dictionary<string, byte[]> { ["a.txt"] = payload });
 
-        var result = archive.ExtractData("a.txt");
+        var result = archive.Read("a.txt");
 
         result.ShouldBe(payload);
         archive.Index["a.txt"].Segments.Count.ShouldBeGreaterThan(0);
@@ -72,7 +72,7 @@ public class ArchiveExtractTests
         var exportDir = workspace.Path_("export");
         Directory.CreateDirectory(exportDir);
 
-        var written = archive.Extract("readme.txt", exportDir);
+        var written = archive.Export("readme.txt", exportDir);
 
         File.Exists(written).ShouldBeTrue();
         File.ReadAllText(written).ShouldBe("readme contents");
@@ -87,7 +87,7 @@ public class ArchiveExtractTests
         var exportDir = workspace.Path_("export-nested");
         Directory.CreateDirectory(exportDir);
 
-        var written = archive.Extract("images/nested/pic.bin", exportDir);
+        var written = archive.Export("images/nested/pic.bin", exportDir);
 
         File.Exists(written).ShouldBeTrue();
         File.ReadAllBytes(written).ShouldBe(new byte[] { 9, 8, 7, 6 });
@@ -99,10 +99,10 @@ public class ArchiveExtractTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        var written = archive.Extract("readme.txt", string.Empty);
+        var written = archive.Export("readme.txt", string.Empty);
 
         File.Exists(written).ShouldBeTrue();
-        Path.GetDirectoryName(written).ShouldBe(archive.Files.Archive.DirectoryName);
+        Path.GetDirectoryName(written).ShouldBe(archive.Files!.Archive.DirectoryName);
     }
 
     [Fact]
@@ -111,10 +111,10 @@ public class ArchiveExtractTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        var written = archive.Extract("readme.txt", "   ");
+        var written = archive.Export("readme.txt", "   ");
 
         File.Exists(written).ShouldBeTrue();
-        Path.GetDirectoryName(written).ShouldBe(archive.Files.Archive.DirectoryName);
+        Path.GetDirectoryName(written).ShouldBe(archive.Files!.Archive.DirectoryName);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class ArchiveExtractTests
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var ex = Should.Throw<Exception>(
-            () => archive.Extract("readme.txt", workspace.Path_("no-such-dir")));
+            () => archive.Export("readme.txt", workspace.Path_("no-such-dir")));
 
         ex.Message.ShouldContain("export path does not exist");
     }
@@ -135,6 +135,6 @@ public class ArchiveExtractTests
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        Should.Throw<Exception>(() => archive.Extract("missing.txt", string.Empty));
+        Should.Throw<Exception>(() => archive.Export("missing.txt", string.Empty));
     }
 }

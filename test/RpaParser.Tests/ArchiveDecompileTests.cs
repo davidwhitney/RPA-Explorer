@@ -111,7 +111,7 @@ public class ArchiveDecompileTests
         PreviewResult preview = archive.Preview("code.rpyc", options);
 
         preview.Format.ShouldBeOfType<TextContent>();
-        preview.AsText().ShouldContain("label decompiled:");
+        preview.AsText()!.ShouldContain("label decompiled:");
     }
 
     [Fact]

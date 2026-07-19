@@ -74,7 +74,7 @@ public class ArchiveSaveTests
         reloaded.Index.Count.ShouldBe(entries.Count);
         foreach (var entry in entries)
         {
-            reloaded.ExtractData(entry.Key).ShouldBe(entry.Value);
+            reloaded.Read(entry.Key).ShouldBe(entry.Value);
         }
     }
 
@@ -88,7 +88,7 @@ public class ArchiveSaveTests
         var second = new Archive(resaved);
 
         second.Index.Count.ShouldBe(2);
-        Encoding.UTF8.GetString(second.ExtractData("dir/b.txt")).ShouldBe("second");
+        Encoding.UTF8.GetString(second.Read("dir/b.txt")).ShouldBe("second");
     }
 
     [Fact]

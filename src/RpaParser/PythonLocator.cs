@@ -25,7 +25,7 @@ namespace RpaParser
         internal interface IEnvironmentProbe
         {
             bool IsWindows { get; }
-            string GetEnvironmentVariable(string name);
+            string? GetEnvironmentVariable(string name);
             string UserProfile { get; }
             bool FileExists(string path);
             bool DirectoryExists(string path);
@@ -38,7 +38,7 @@ namespace RpaParser
 
             public bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-            public string GetEnvironmentVariable(string name) => Environment.GetEnvironmentVariable(name);
+            public string? GetEnvironmentVariable(string name) => Environment.GetEnvironmentVariable(name);
 
             public string UserProfile =>
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

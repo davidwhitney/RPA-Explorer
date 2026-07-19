@@ -8,9 +8,9 @@ namespace RpaParser.Tests;
 /// </summary>
 internal static class PreviewExtensions
 {
-    public static PreviewResult Preview(this Archive archive, string fileName, DecompilerOptions options = null) =>
+    public static PreviewResult Preview(this Archive archive, string fileName, DecompilerOptions? options = null) =>
         new PreviewFactory(options ?? new DecompilerOptions()).Create(archive, fileName);
 
-    public static PreviewResult PreviewRaw(this Archive archive, string fileName, DecompilerOptions options = null) =>
+    public static PreviewResult PreviewRaw(this Archive archive, string fileName, DecompilerOptions? options = null) =>
         new PreviewFactory(options ?? new DecompilerOptions()).CreateRaw(archive, fileName);
 }

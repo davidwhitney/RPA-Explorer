@@ -139,7 +139,7 @@ public class ArchivePreviewTests
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
 
-        var text = archive.Preview("a.txt").AsText();
+        var text = archive.Preview("a.txt").AsText()!;
 
         // Every separator that survives must be the platform's own.
         text.Replace(Environment.NewLine, string.Empty).ShouldNotContain("\r");

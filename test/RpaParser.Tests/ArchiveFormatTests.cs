@@ -40,7 +40,7 @@ public class ArchiveFormatTests
     [MemberData(nameof(KnownHeaders))]
     public void Detect_HeaderWithKnownMagic_ReturnsMatchingFormat(string firstLine, ArchiveFormat expected)
     {
-        ArchiveFormat format = ArchiveFormat.Detect(firstLine, indexPairExists: false);
+        var format = ArchiveFormat.Detect(firstLine, indexPairExists: false);
 
         format.ShouldBeSameAs(expected);
     }

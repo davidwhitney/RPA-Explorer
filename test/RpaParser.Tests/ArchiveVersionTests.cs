@@ -53,7 +53,7 @@ public class ArchiveVersionTests
         archive.Index.Count.ShouldBe(2);
         archive.Index.Keys.ShouldContain("script.rpy");
         archive.Index.Keys.ShouldContain("images/logo.bin");
-        archive.ExtractData("images/logo.bin").ShouldBe(new byte[] { 1, 2, 3, 4, 5 });
+        archive.Read("images/logo.bin").ShouldBe(new byte[] { 1, 2, 3, 4, 5 });
     }
 
     [Fact]
@@ -65,9 +65,9 @@ public class ArchiveVersionTests
         // version 1 keeps its index in a separate .rpi file
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa1, entries);
 
-        archive.Files.IndexFile.File.ShouldNotBeNull();
-        archive.Files.IndexFile.File.Exists.ShouldBeTrue();
-        archive.Files.Archive.ShouldNotBeNull();
+        archive.Files!.IndexFile.File.ShouldNotBeNull();
+        archive.Files!.IndexFile.File.Exists.ShouldBeTrue();
+        archive.Files!.Archive.ShouldNotBeNull();
     }
 
     [Theory]
@@ -79,7 +79,7 @@ public class ArchiveVersionTests
 
         var archive = workspace.LoadArchive(format, entries);
 
-        archive.Files.IndexFile.File.ShouldBeNull();
+        archive.Files!.IndexFile.File.ShouldBeNull();
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class ArchiveVersionTests
         var archive = new Archive(archivePath);
 
         archive.ObfuscationKey.ShouldBe(0x1234ABCD);
-        archive.ExtractData("a.txt").ShouldBe(payload);
+        archive.Read("a.txt").ShouldBe(payload);
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class ArchiveVersionTests
             ArchiveFormat.Rpa3, entries, "padded.rpa", padding: 32);
         var archive = new Archive(archivePath);
 
-        archive.ExtractData("a.txt").ShouldBe(payload);
+        archive.Read("a.txt").ShouldBe(payload);
     }
 
     [Fact]

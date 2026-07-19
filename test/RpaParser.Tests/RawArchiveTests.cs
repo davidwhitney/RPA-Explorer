@@ -65,7 +65,7 @@ public class RawArchiveTests
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length + prefix.Length, prefix, key));
         var archive = new Archive(path);
 
-        Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("PREBODY");
+        Encoding.UTF8.GetString(archive.Read("a.txt")).ShouldBe("PREBODY");
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class RawArchiveTests
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length + 3, "PRE", key));
         var archive = new Archive(path);
 
-        Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("PREBODY");
+        Encoding.UTF8.GetString(archive.Read("a.txt")).ShouldBe("PREBODY");
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class RawArchiveTests
         });
         var archive = new Archive(path);
 
-        Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("BODY");
+        Encoding.UTF8.GetString(archive.Read("a.txt")).ShouldBe("BODY");
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class RawArchiveTests
         });
         var archive = new Archive(path);
 
-        Encoding.UTF8.GetString(archive.ExtractData("a.txt")).ShouldBe("HELLOWORLD");
+        Encoding.UTF8.GetString(archive.Read("a.txt")).ShouldBe("HELLOWORLD");
         archive.Index["a.txt"].Segments.Count.ShouldBe(2);
         archive.Index["a.txt"].Length.ShouldBe(10);
     }

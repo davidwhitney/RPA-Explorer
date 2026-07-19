@@ -7,7 +7,7 @@ using System.Text;
 namespace RpaParser
 {
     /// <summary>A previewable file, together with whatever the format made of its bytes.</summary>
-    public sealed class PreviewResult(ContentFormat format, object content)
+    public sealed class PreviewResult(ContentFormat format, object? content)
     {
         /// <summary>The format the content is presented as. Never null.</summary>
         public ContentFormat Format { get; } = format;
@@ -16,11 +16,11 @@ namespace RpaParser
         /// Decoded text for text formats, the raw bytes for everything else, and null when
         /// the file is not in the archive.
         /// </summary>
-        public object Content { get; } = content;
+        public object? Content { get; } = content;
 
-        public string AsText() => Content as string;
+        public string? AsText() => Content as string;
 
-        public byte[] AsBytes() => Content as byte[];
+        public byte[]? AsBytes() => Content as byte[];
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ namespace RpaParser
         /// <summary>
         /// The format claiming this file name, falling back to <see cref="Unknown"/>.
         /// </summary>
-        public static ContentFormat Detect(string fileName)
+        public static ContentFormat Detect(string? fileName)
         {
             var extension = Path.GetExtension(fileName ?? string.Empty);
             return All.FirstOrDefault(format => format.Matches(extension)) ?? Unknown;
