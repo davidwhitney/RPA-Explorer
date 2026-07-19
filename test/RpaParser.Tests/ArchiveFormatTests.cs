@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text;
 using RpaParser;
@@ -150,6 +151,65 @@ public class ArchiveFormatTests
     {
         format.DisplayName.ShouldNotBeNullOrWhiteSpace();
         format.ToString().ShouldBe(format.DisplayName);
+    }
+
+    [Theory]
+    [MemberData(nameof(FormatsWithHeaders))]
+    public void LocateIndex_EmbeddedIndex_PointsAtTheArchiveItself(ArchiveFormat format)
+    {
+        string header = format.BuildHeader(4096, 0xDEADBEEF).TrimEnd('\n');
+
+        IndexLocation location = format.LocateIndex("game.rpa", header, "game.rpi");
+
+        location.FilePath.ShouldBe("game.rpa");
+        location.Offset.ShouldBe(4096);
+        location.IsSeparateFile.ShouldBeFalse();
+    }
+
+    [Theory]
+    [MemberData(nameof(ObfuscatedFormats))]
+    public void LocateIndex_ObfuscatedFormat_CarriesTheKeyFromTheHeader(ArchiveFormat format)
+    {
+        string header = format.BuildHeader(4096, 0xDEADBEEF).TrimEnd('\n');
+
+        IndexLocation location = format.LocateIndex("game.rpa", header, null);
+
+        location.ObfuscationKey.ShouldBe(0xDEADBEEF);
+    }
+
+    [Fact]
+    public void LocateIndex_Version1_PointsAtTheSiblingIndexFile()
+    {
+        using var workspace = new TempWorkspace();
+        string indexPath = workspace.WriteFile("game.rpi", "index");
+
+        IndexLocation location = ArchiveFormat.Rpa1.LocateIndex(workspace.Path_("game.rpa"), string.Empty, indexPath);
+
+        location.FilePath.ShouldBe(indexPath);
+        location.IsSeparateFile.ShouldBeTrue();
+        // The index is the whole file, so there is nothing to seek past and no key.
+        location.Offset.ShouldBe(0);
+        location.ObfuscationKey.ShouldBe(0);
+    }
+
+    [Fact]
+    public void LocateIndex_Version1WithoutAnIndexPath_Throws()
+    {
+        Exception ex = Should.Throw<Exception>(
+            () => ArchiveFormat.Rpa1.LocateIndex("game.rpa", string.Empty, null));
+
+        ex.Message.ShouldContain("No index file provided");
+    }
+
+    [Fact]
+    public void LocateIndex_Version1WithMissingIndexFile_Throws()
+    {
+        using var workspace = new TempWorkspace();
+
+        Exception ex = Should.Throw<Exception>(() =>
+            ArchiveFormat.Rpa1.LocateIndex(workspace.Path_("game.rpa"), string.Empty, workspace.Path_("absent.rpi")));
+
+        ex.Message.ShouldContain("Index file does not exist");
     }
 
     [Fact]

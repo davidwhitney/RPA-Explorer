@@ -1,9 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace RpaParser
 {
+    /// <summary>Where an archive's index lives and what is needed to decode it.</summary>
+    public sealed record IndexLocation(string FilePath, long Offset, long ObfuscationKey)
+    {
+        /// <summary>True when the index is a file of its own rather than part of the archive.</summary>
+        public bool IsSeparateFile { get; init; }
+    }
+
     /// <summary>
     /// One archive format, recognised once and thereafter trusted.
     ///
@@ -47,6 +55,21 @@ namespace RpaParser
         /// Formats without obfuscation have no key.
         /// </summary>
         public virtual long ReadObfuscationKey(string[] headerFields) => 0;
+
+        /// <summary>
+        /// Locates the index of an archive that has just been recognised. Formats that
+        /// embed their index take its position and key from the header line; only version 1
+        /// looks elsewhere.
+        /// </summary>
+        public virtual IndexLocation LocateIndex(string archivePath, string firstLine, string indexPath)
+        {
+            var headerFields = firstLine.Split(' ');
+
+            return new IndexLocation(
+                archivePath,
+                Convert.ToInt64(headerFields[1], 16),
+                ReadObfuscationKey(headerFields));
+        }
 
         public static ArchiveFormat Rpa1 { get; } = new Rpa1Format();
         public static ArchiveFormat Rpa2 { get; } = new Rpa2Format();
@@ -94,6 +117,25 @@ namespace RpaParser
         public override string BuildHeader(long indexOffset, long obfuscationKey) =>
             throw new InvalidOperationException(
                 "Version 1 archives have no header; the index is written to a separate .rpi file.");
+
+        /// <summary>
+        /// The index is the whole of the sibling .rpi file, so there is no offset to seek to
+        /// and no key to undo.
+        /// </summary>
+        public override IndexLocation LocateIndex(string archivePath, string firstLine, string indexPath)
+        {
+            if (string.IsNullOrEmpty(indexPath))
+            {
+                throw new Exception("No index file provided.");
+            }
+
+            if (!File.Exists(indexPath))
+            {
+                throw new Exception("Index file does not exist.");
+            }
+
+            return new IndexLocation(indexPath, 0, 0) { IsSeparateFile = true };
+        }
     }
 
     /// <summary>Version 2: magic and index offset, no obfuscation.</summary>

@@ -38,11 +38,10 @@ namespace RpaParser
         public SortedDictionary<string,ArchiveEntry> Index = new ();
 
         
-        private long _offset;
+        private IndexLocation _indexLocation;
         private string _archivePath;
         private string _indexPath;
         private string _firstLine;
-        private string[] _metadata;
 
         
         
@@ -55,16 +54,9 @@ namespace RpaParser
             _firstLine = GetFirstLine();
             Format = DetectFormat();
 
-            if (Format.HasSeparateIndexFile)
-            {
-                IndexInfo = GetIndexInfo();
-            }
-            else
-            {
-                _metadata = GetMetadata();
-                _offset = GetOffset();
-                ObfuscationKey = Format.ReadObfuscationKey(_metadata);
-            }
+            _indexLocation = Format.LocateIndex(_archivePath, _firstLine, _indexPath);
+            ObfuscationKey = _indexLocation.ObfuscationKey;
+            IndexInfo = _indexLocation.IsSeparateFile ? new FileInfo(_indexLocation.FilePath) : null;
 
             Index = GetIndexes();
         }
@@ -138,21 +130,6 @@ namespace RpaParser
             return new FileInfo(_archivePath);
         }
 
-        private FileInfo GetIndexInfo()
-        {
-            if (string.IsNullOrEmpty(_indexPath))
-            {
-                throw new Exception("No index file provided.");
-            }
-
-            if (!File.Exists(_indexPath))
-            {
-                throw new Exception("Index file does not exist.");
-            }
-
-            return new FileInfo(_indexPath);
-        }
-
         private string GetFirstLine()
         {
             using var streamReader = new StreamReader(_archivePath, Encoding.UTF8);
@@ -171,32 +148,17 @@ namespace RpaParser
                    ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
         }
 
-        private string[] GetMetadata()
-        {
-            return _firstLine.Split(' ');
-        }
-
-        private long GetOffset()
-        {
-            return Convert.ToInt64(_metadata[1], 16);
-        }
-
         
         private SortedDictionary<string,ArchiveEntry> GetIndexes()
         {
             var indexList = new SortedDictionary<string,ArchiveEntry>();
             object unpickledIndexes;
 
-            var filePath = Format.HasSeparateIndexFile ? _indexPath : _archivePath;
-            
-            using (var reader = new BinaryReader(File.OpenRead(filePath), Encoding.UTF8))
+            using (var reader = new BinaryReader(File.OpenRead(_indexLocation.FilePath), Encoding.UTF8))
             {
-                if (!Format.HasSeparateIndexFile)
-                {
-                    reader.BaseStream.Seek(_offset, SeekOrigin.Begin);
-                }
+                reader.BaseStream.Seek(_indexLocation.Offset, SeekOrigin.Begin);
 
-                var blockOffset = _offset;
+                var blockOffset = _indexLocation.Offset;
                 long blockSize = 2046;
                 var payloadSize = reader.BaseStream.Length;
                 byte[] fileCompressed = [];
