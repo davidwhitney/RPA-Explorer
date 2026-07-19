@@ -30,8 +30,13 @@ Pre-built, self-contained binaries for macOS, Windows and Linux are attached to 
 | Windows (smaller) | `…-win-x64-novlc.zip` | same, but needs VLC installed - see below |
 | Linux | `…-linux-x64.tar.gz` / `…-linux-arm64.tar.gz` | run `RpaExplorer` |
 
-The macOS builds are not code-signed or notarised. On first launch use **right-click → Open**, or
-run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
+The macOS builds are ad-hoc signed but not notarised, so the first launch needs
+**right-click → Open** once (double-clicking shows "unidentified developer"). After that it
+opens normally.
+
+If macOS says the app **"is damaged and can't be opened"**, the download is from v1.1.0 or
+earlier, where the bundle was archived in a way that discarded its signature. Use v1.1.1 or
+later, or run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
 
 ### Which Windows download?
 

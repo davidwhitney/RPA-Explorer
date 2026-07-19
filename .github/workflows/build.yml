@@ -24,7 +24,10 @@ permissions:
 jobs:
   build:
     name: Build all platforms
-    runs-on: ubuntu-latest
+    # macOS, not Linux: the .app bundle has to be code-signed or macOS refuses to open the
+    # download as "damaged", and codesign exists only here. Every other target is
+    # cross-compiled from this one machine, which build.sh already did.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,9 +37,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-
-      - name: Ensure zip is available
-        run: command -v zip >/dev/null || (sudo apt-get update && sudo apt-get install -y zip)
 
       - name: Build
         run: ./build.sh

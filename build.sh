@@ -76,6 +76,9 @@ echo
 rm -rf "$DIST" "$STAGE"
 mkdir -p "$DIST"
 
+# Set when a macOS bundle could not be signed; fails the build at the end.
+MACOS_UNSIGNED="false"
+
 # Writes the .app bundle macOS users expect, instead of a bare folder of files.
 make_macos_bundle() {
     local publish_dir="$1" bundle_dir="$2"
@@ -134,6 +137,51 @@ make_macos_bundle() {
 </plist>
 PLIST
     chmod +x "$bundle_dir/Contents/MacOS/RpaExplorer" 2>/dev/null || true
+
+    # The SDK ad-hoc signs the bare executable, but that signature seals no bundle: once the
+    # binary is inside a .app with an Info.plist and resources, macOS sees a signature that
+    # promises resources it cannot find and refuses to launch it as "damaged". Signing the
+    # assembled bundle seals what is actually there.
+    #
+    # Ad-hoc (-) rather than a Developer ID: it is enough to launch, though without
+    # notarization the first run still needs right-click -> Open. codesign is macOS-only, so
+    # a bundle built anywhere else cannot be made to work and says so rather than shipping
+    # something that fails on the user's machine.
+    if command -v codesign >/dev/null 2>&1; then
+        codesign --force --deep --sign - --timestamp=none "$bundle_dir"
+        echo "    signed: $(basename "$bundle_dir")"
+    else
+        echo "    WARNING: codesign unavailable - $(basename "$bundle_dir") will be rejected" >&2
+        echo "             by macOS as damaged. Build macOS targets on macOS." >&2
+        MACOS_UNSIGNED="true"
+    fi
+}
+
+# Unpacks the archive exactly as a user would and checks the signature survived, because
+# that is the state that decides whether macOS calls the download damaged.
+verify_macos_archive() {
+    local archive="$1"
+    command -v codesign >/dev/null 2>&1 || return 0
+
+    local check_dir="$STAGE/verify/$(basename "$archive")"
+    rm -rf "$check_dir"
+    mkdir -p "$check_dir"
+
+    if command -v ditto >/dev/null 2>&1; then
+        ditto -x -k "$archive" "$check_dir"
+    else
+        unzip -q "$archive" -d "$check_dir"
+    fi
+
+    if codesign --verify --deep --strict "$check_dir/RPA Explorer.app" 2>/dev/null; then
+        echo "    signature verified after archiving"
+    else
+        echo "ERROR: $(basename "$archive") loses its signature when unpacked;" >&2
+        echo "       macOS will refuse to open it as damaged." >&2
+        exit 1
+    fi
+
+    rm -rf "$check_dir"
 }
 
 for rid in $RIDS; do
@@ -162,7 +210,17 @@ for rid in $RIDS; do
         osx-*)
             make_macos_bundle "$publish_dir" "$pack_dir/RPA Explorer.app"
             cp "$ROOT/README.md" "$ROOT/LICENSE" "$pack_dir/" 2>/dev/null || true
-            ( cd "$pack_dir" && zip -qry "$DIST/$name.zip" . )
+
+            # ditto, not zip: a .app's signature depends on metadata that plain zip drops,
+            # so a zipped bundle verifies fine before archiving and fails once unpacked.
+            # This is also what Finder uses, so it is what the user's download goes through.
+            if command -v ditto >/dev/null 2>&1; then
+                ditto -c -k --sequesterRsrc "$pack_dir" "$DIST/$name.zip"
+            else
+                ( cd "$pack_dir" && zip -qry "$DIST/$name.zip" . )
+            fi
+
+            verify_macos_archive "$DIST/$name.zip"
             ;;
         win-*)
             # VideoLAN.LibVLC.Windows ships win-x86 and win-x64 natives side by side
@@ -216,3 +274,9 @@ done
 echo
 echo "==> Artifacts in ./dist"
 ls -lh "$DIST"
+
+if [[ "$MACOS_UNSIGNED" == "true" ]]; then
+    echo
+    echo "ERROR: macOS bundles were produced without a signature and will not launch." >&2
+    exit 1
+fi
