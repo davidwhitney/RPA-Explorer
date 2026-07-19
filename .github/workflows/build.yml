@@ -44,10 +44,10 @@ jobs:
       - name: Verify artifacts were produced
         run: |
           ls -lh dist
-          # One archive per target plus the checksum file.
+          # One archive per target, plus the extra Windows no-VLC variant.
           count=$(find dist -maxdepth 1 -type f \( -name '*.zip' -o -name '*.tar.gz' \) | wc -l)
           echo "archives: $count"
-          test "$count" -eq 5
+          test "$count" -eq 6
 
       - uses: actions/upload-artifact@v4
         with:

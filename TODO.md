@@ -3,7 +3,7 @@
 ## Done
 
 - **Find a good way to distribute this application.**
-  `build.sh` cross-compiles all six targets from one machine, and a `v*` tag builds and
+  `build.sh` cross-compiles every target from one machine, and a `v*` tag builds and
   publishes them to a GitHub release automatically. Builds are self-contained, so users need
   no .NET install; macOS ships as a `.app` bundle.
 
@@ -11,7 +11,8 @@
   Mostly solved. macOS and Linux no longer ship VLC at all - the app binds to a system
   installation and prompts with a download link if one is missing, so those downloads are
   ~40MB. Windows still bundles the natives, but only for the architecture that can actually
-  load them, which took the x64 download from 128MB to 87MB.
+  load them, which took the x64 download from 128MB to 87MB. A second Windows package without
+  them is published as well, at 43MB, for people who already have VLC installed.
 
 - **Windows on ARM had no media preview.**
   Investigating showed the original plan - falling back to a system-wide VLC - could not work:
@@ -27,11 +28,6 @@
   automatically including pyenv installations. Neither has to be located by hand.
 
 ## Open
-
-- **Add documentation to the code so the library and explorer are easier to understand.**
-  Improved during the port - the non-obvious parts (archive format handling, VLC discovery,
-  the native video surface lifecycle, Python detection) are commented - but the parser could
-  still use proper API documentation.
 
 - **macOS builds are not code-signed or notarised.**
   Users have to right-click → Open on first launch. Fixing this needs an Apple Developer

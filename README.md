@@ -27,10 +27,20 @@ Pre-built, self-contained binaries for macOS, Windows and Linux are attached to 
 | macOS (Apple Silicon) | `…-osx-arm64.zip` | contains `RPA Explorer.app` |
 | macOS (Intel) | `…-osx-x64.zip` | contains `RPA Explorer.app` |
 | Windows | `…-win-x64.zip` | run `RPA_Explorer.exe`; also used on Windows ARM |
+| Windows (smaller) | `…-win-x64-novlc.zip` | same, but needs VLC installed - see below |
 | Linux | `…-linux-x64.tar.gz` / `…-linux-arm64.tar.gz` | run `RPA_Explorer` |
 
 The macOS builds are not code-signed or notarised. On first launch use **right-click → Open**, or
 run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
+
+### Which Windows download?
+
+`win-x64.zip` (87MB) bundles VLC's libraries, so audio and video preview work out of the box with
+nothing else to install. `win-x64-novlc.zip` (43MB) is the same application without them, for
+people who already have [VLC](https://www.videolan.org/vlc/) installed or would rather install it
+separately - the app finds a system-wide VLC on Windows just as it does on macOS and Linux, and
+prompts with a download link if there is not one. Everything other than media preview behaves
+identically in both.
 
 Each release includes a `SHA256SUMS` file if you want to verify a download:
 
@@ -128,7 +138,8 @@ dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
 ./build.sh --framework-dependent            # smaller, requires .NET on the target
 ```
 
-Targets: `osx-arm64`, `osx-x64`, `win-x64`, `linux-x64`, `linux-arm64`. macOS
+Targets: `osx-arm64`, `osx-x64`, `win-x64`, `linux-x64`, `linux-arm64`, plus a second Windows
+package without the bundled VLC natives. macOS
 artifacts are packaged as a `RPA Explorer.app` bundle, Windows as a zip and Linux as a tarball,
 alongside a `SHA256SUMS` file.
 

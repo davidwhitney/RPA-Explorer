@@ -167,6 +167,17 @@ for rid in $RIDS; do
             cp -R "$publish_dir/." "$pack_dir/"
             cp "$ROOT/README.md" "$ROOT/LICENSE" "$pack_dir/" 2>/dev/null || true
             ( cd "$pack_dir" && zip -qry "$DIST/$name.zip" . )
+
+            # Secondary, much smaller download without the bundled VLC natives, for users
+            # who already have VLC installed. The app falls back to a system-wide install
+            # on Windows, and prompts with a download link when there is not one.
+            if [[ -d "$pack_dir/libvlc" ]]; then
+                lite_dir="$STAGE/pack/$rid-novlc"
+                mkdir -p "$lite_dir"
+                cp -R "$pack_dir/." "$lite_dir/"
+                rm -rf "$lite_dir/libvlc"
+                ( cd "$lite_dir" && zip -qry "$DIST/$name-novlc.zip" . )
+            fi
             ;;
         linux-*)
             cp -R "$publish_dir/." "$pack_dir/"
