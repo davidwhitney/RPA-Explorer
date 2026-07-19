@@ -69,7 +69,7 @@ namespace RpaExplorer
             ["Options"] = "Options",
             ["File_association"] = "Associate RPA/RPI extensions",
             ["About"] = "About",
-            ["About_text"] = "RPA Explorer v{0}\nCreated by {1}\nGitHub: {2}\n\nInspired by rpatool and unrpyc.\n\nTranslations credits:\n{3}\n\nContributors credits:\n{4}",
+            ["About_text"] = "RPA Explorer v{0}\n\nOriginal tool by {1}\n{2}\n\nCross-platform port by {3}\n{4}\n\nInspired by rpatool and unrpyc.\n\nTranslations credits:\n{5}\n\nContributors credits:\n{6}",
             ["UNRPYC_script"] = "unrpyc script",
             ["Locate_unrpyc_script"] = "Locate unrpyc script",
             ["Python_interpreter"] = "Python interpreter",

@@ -3,7 +3,7 @@
 Graphical explorer for RenPy Archives. This tool brings ability to extract, create new or change existing RPA archives all in one window. It also provides content preview for most common files in these packages.
 
 > **This is a cross-platform fork.** The application has been ported from Windows Forms
-> (.NET Framework 4.6.1) to [Avalonia UI](https://avaloniaui.net/) on **.NET 8**, so it now runs
+> (.NET Framework 4.6.1) to [Avalonia UI](https://avaloniaui.net/) on **.NET 10**, so it now runs
 > natively on **macOS (Apple Silicon and Intel), Linux and Windows**.
 >
 > Upstream project: [UniverseDevel/RPA-Explorer](https://github.com/UniverseDevel/RPA-Explorer)
@@ -94,7 +94,7 @@ Anything auto-detected can be overridden under **Options**, and your choice alwa
 | Area | Before | Now |
 | --- | --- | --- |
 | UI | Windows Forms | Avalonia UI 11 |
-| Runtime | .NET Framework 4.6.1 | .NET 8 |
+| Runtime | .NET Framework 4.6.1 | .NET 10 |
 | Compression | `Ionic.Zlib` | built-in `System.IO.Compression.ZLibStream` |
 | Images / WebP | `System.Drawing` + native WebP wrapper | [ImageSharp](https://github.com/SixLabors/ImageSharp) |
 | Media | `LibVLCSharp.WinForms` | `LibVLCSharp.Avalonia` |
