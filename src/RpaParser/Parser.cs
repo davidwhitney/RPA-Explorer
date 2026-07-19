@@ -175,28 +175,44 @@ namespace RpaParser
             Index = GetIndexes();
         }
 
-        public bool CheckVersion(double version, double check)
-        {
-            var difference = version - check;
-            if (difference == 0)
-            {
-                return true;
-            }
+        public static bool CheckVersion(double version, double check) => version - check == 0;
 
-            return false;
-        }
-
+        /// <summary>
+        /// A version 1 archive is a .rpa/.rpi pair, so given either half the other is derived.
+        /// The two cases are mutually exclusive - a path cannot end in both extensions.
+        /// </summary>
         private void GetIndexAndArchive()
         {
-            if (_archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpa))
+            if (_archivePath.EndsWith(ArchiveMagic.Rpa1Rpa, StringComparison.OrdinalIgnoreCase))
             {
-                _indexPath = Regex.Replace(_archivePath, @"\.rpa$", ".rpi", RegexOptions.IgnoreCase);
+                _indexPath = SwapExtension(_archivePath, ArchiveMagic.Rpa1Rpi);
             }
-            if (_archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpi))
+            else if (_archivePath.EndsWith(ArchiveMagic.Rpa1Rpi, StringComparison.OrdinalIgnoreCase))
             {
                 _indexPath = _archivePath;
-                _archivePath = Regex.Replace(_archivePath, @"\.rpi$", ".rpa", RegexOptions.IgnoreCase);
+                _archivePath = SwapExtension(_archivePath, ArchiveMagic.Rpa1Rpa);
             }
+        }
+
+        /// <summary>
+        /// Replaces the trailing extension while keeping the casing it is given. The
+        /// extensions are matched case insensitively, so writing a lower case one back would
+        /// derive "GAME.rpa" from "GAME.RPI" and find nothing on a case sensitive filesystem.
+        /// Both extensions are the same length, so the casing can be copied per character.
+        /// </summary>
+        private static string SwapExtension(string path, string replacement)
+        {
+            var existing = path[^replacement.Length..];
+            var swapped = new char[replacement.Length];
+
+            for (var i = 0; i < replacement.Length; i++)
+            {
+                swapped[i] = char.IsUpper(existing[i])
+                    ? char.ToUpperInvariant(replacement[i])
+                    : replacement[i];
+            }
+
+            return path[..^replacement.Length] + new string(swapped);
         }
 
         public double CheckSupportedVersion(double version)
@@ -218,7 +234,7 @@ namespace RpaParser
 
         private FileInfo GetArchiveInfo()
         {
-            if (_archivePath == string.Empty)
+            if (string.IsNullOrEmpty(_archivePath))
             {
                 throw new Exception("No archive file provided.");
             }
@@ -233,7 +249,7 @@ namespace RpaParser
 
         private FileInfo GetIndexInfo()
         {
-            if (_indexPath == string.Empty)
+            if (string.IsNullOrEmpty(_indexPath))
             {
                 throw new Exception("No index file provided.");
             }
@@ -269,9 +285,10 @@ namespace RpaParser
                 return 2;
             }
 
-            if (_archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpa) || _archivePath.ToLower().EndsWith(ArchiveMagic.Rpa1Rpi))
+            if (_archivePath.EndsWith(ArchiveMagic.Rpa1Rpa, StringComparison.OrdinalIgnoreCase)
+                || _archivePath.EndsWith(ArchiveMagic.Rpa1Rpi, StringComparison.OrdinalIgnoreCase))
             {
-                GetIndexAndArchive();
+                // LoadArchive has already resolved the pair before reaching this point.
                 if (File.Exists(_archivePath) && File.Exists(_indexPath))
                 {
                     return 1;

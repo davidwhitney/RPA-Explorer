@@ -41,7 +41,7 @@ public class RpaParserVersionTests
     {
         var parser = new Parser();
 
-        var result = parser.CheckVersion(Parser.Version.Rpa3, Parser.Version.Rpa3);
+        var result = Parser.CheckVersion(Parser.Version.Rpa3, Parser.Version.Rpa3);
 
         result.ShouldBeTrue();
     }
@@ -51,7 +51,7 @@ public class RpaParserVersionTests
     {
         var parser = new Parser();
 
-        var result = parser.CheckVersion(Parser.Version.Rpa3, Parser.Version.Rpa2);
+        var result = Parser.CheckVersion(Parser.Version.Rpa3, Parser.Version.Rpa2);
 
         result.ShouldBeFalse();
     }

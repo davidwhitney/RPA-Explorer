@@ -443,7 +443,7 @@ namespace RpaExplorer
                     selectedSize = _indexPathSize[selectedPath];
                 }
 
-                if (!_rpaParser.CheckVersion(_rpaParser.ArchiveVersion, Parser.Version.Unknown))
+                if (!Parser.CheckVersion(_rpaParser.ArchiveVersion, Parser.Version.Unknown))
                 {
                     info += GetText("Archive_version") + _rpaParser.ArchiveVersion + Environment.NewLine;
                     info += GetText("Archive_file_location") + _rpaParser.ArchiveInfo.FullName + Environment.NewLine;

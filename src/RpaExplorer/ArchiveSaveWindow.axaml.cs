@@ -28,7 +28,7 @@ namespace RpaExplorer
             VersionCombo.Items.Add(Parser.Version.Rpa1);
 
             VersionCombo.SelectedItem =
-                _rpaParser.CheckVersion(_rpaParser.ArchiveVersion, Parser.Version.Unknown)
+                Parser.CheckVersion(_rpaParser.ArchiveVersion, Parser.Version.Unknown)
                     ? Parser.Version.Rpa3
                     : _rpaParser.ArchiveVersion;
 
