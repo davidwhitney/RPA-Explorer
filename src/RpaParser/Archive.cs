@@ -16,7 +16,6 @@ namespace RpaParser
     public sealed class Archive
     {
         
-        public FileInfo ArchiveInfo;
         public FileInfo IndexInfo;
         /// <summary>
         /// The archive format: detected when loading, chosen by the caller when saving.
@@ -30,17 +29,17 @@ namespace RpaParser
 
         
         private IndexLocation _indexLocation;
-        private ArchiveFileInfo _files;
+        /// <summary>The files this archive was opened from. Null until it is loaded.</summary>
+        public ArchiveFileInfo Files { get; private set; }
         
         private void Read(string filePath)
         {
-            _files = new ArchiveFileInfo(filePath);
-            ArchiveInfo = _files.Archive;
+            Files = new ArchiveFileInfo(filePath);
 
-            Format = ArchiveFormat.Detect(_files)
+            Format = ArchiveFormat.Detect(Files)
                      ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
 
-            _indexLocation = Format.LocateIndex(_files);
+            _indexLocation = Format.LocateIndex(Files);
             ObfuscationKey = _indexLocation.ObfuscationKey;
             IndexInfo = _indexLocation.IsSeparateFile ? new FileInfo(_indexLocation.FilePath) : null;
 
@@ -76,7 +75,7 @@ namespace RpaParser
 
             if (Index[fileName].InArchive)
             {
-                using var reader = new BinaryReader(File.OpenRead(_files.ArchivePath), Encoding.UTF8);
+                using var reader = new BinaryReader(File.OpenRead(Files.ArchivePath), Encoding.UTF8);
                 byte[] finalData = [];
 
                 foreach (var segment in Index[fileName].Segments)
@@ -105,7 +104,7 @@ namespace RpaParser
             string baseDir;
             if (exportPath.Trim() == string.Empty)
             {
-                baseDir = ArchiveInfo.DirectoryName;
+                baseDir = Files.Archive.DirectoryName;
             }
             else
             {

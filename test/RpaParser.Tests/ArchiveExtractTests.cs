@@ -102,7 +102,7 @@ public class ArchiveExtractTests
         var written = archive.Extract("readme.txt", string.Empty);
 
         File.Exists(written).ShouldBeTrue();
-        Path.GetDirectoryName(written).ShouldBe(archive.ArchiveInfo.DirectoryName);
+        Path.GetDirectoryName(written).ShouldBe(archive.Files.Archive.DirectoryName);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class ArchiveExtractTests
         var written = archive.Extract("readme.txt", "   ");
 
         File.Exists(written).ShouldBeTrue();
-        Path.GetDirectoryName(written).ShouldBe(archive.ArchiveInfo.DirectoryName);
+        Path.GetDirectoryName(written).ShouldBe(archive.Files.Archive.DirectoryName);
     }
 
     [Fact]

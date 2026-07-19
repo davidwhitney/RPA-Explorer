@@ -441,8 +441,8 @@ namespace RpaExplorer
                 if (_archive.Format != null)
                 {
                     info += GetText("Archive_version") + _archive.Format + Environment.NewLine;
-                    info += GetText("Archive_file_location") + _archive.ArchiveInfo.FullName + Environment.NewLine;
-                    info += GetText("Archive_file_size") + FormatSize(_archive.ArchiveInfo.Length) + Environment.NewLine;
+                    info += GetText("Archive_file_location") + _archive.Files.Archive.FullName + Environment.NewLine;
+                    info += GetText("Archive_file_size") + FormatSize(_archive.Files.Archive.Length) + Environment.NewLine;
                     if (_archive.IndexInfo != null)
                     {
                         info += GetText("Index_file_location") + _archive.IndexInfo.FullName + Environment.NewLine;
@@ -939,7 +939,7 @@ namespace RpaExplorer
                 [
                     new FilePickerFileType(GetText("RPA_RPI_files")) { Patterns = ["*.rpa", "*.rpi"] }
                 ],
-                SuggestedStartLocation = await StartLocation(_archive.ArchiveInfo?.DirectoryName)
+                SuggestedStartLocation = await StartLocation(_archive.Files?.Archive.DirectoryName)
             });
 
             if (save == null)
@@ -984,7 +984,7 @@ namespace RpaExplorer
             {
                 Title = GetText("Export_checked"),
                 AllowMultiple = false,
-                SuggestedStartLocation = await StartLocation(_archive.ArchiveInfo?.DirectoryName)
+                SuggestedStartLocation = await StartLocation(_archive.Files?.Archive.DirectoryName)
             });
 
             if (folders.Count == 0)

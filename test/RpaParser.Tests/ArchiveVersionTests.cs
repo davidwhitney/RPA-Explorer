@@ -67,7 +67,7 @@ public class ArchiveVersionTests
 
         archive.IndexInfo.ShouldNotBeNull();
         archive.IndexInfo.Exists.ShouldBeTrue();
-        archive.ArchiveInfo.ShouldNotBeNull();
+        archive.Files.Archive.ShouldNotBeNull();
     }
 
     [Theory]

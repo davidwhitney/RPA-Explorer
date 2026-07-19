@@ -39,7 +39,7 @@ public class ArchivePathResolutionTests
         Archive archive = Archive.Load(indexPath);
 
         // Lower casing the extension here is what breaks on a case sensitive filesystem.
-        Path.GetFileName(archive.ArchiveInfo.FullName).ShouldBe("GAME.RPA");
+        Path.GetFileName(archive.Files.Archive.FullName).ShouldBe("GAME.RPA");
         archive.Index.Keys.ShouldContain("a.txt");
     }
 
@@ -60,7 +60,7 @@ public class ArchivePathResolutionTests
         (string archivePath, string indexPath) = BuildPair(workspace, "game.rpa", "game.rpi");
         Archive archive = Archive.Load(indexPath);
 
-        Path.GetFileName(archive.ArchiveInfo.FullName).ShouldBe("game.rpa");
+        Path.GetFileName(archive.Files.Archive.FullName).ShouldBe("game.rpa");
         Path.GetFileName(archive.IndexInfo.FullName).ShouldBe("game.rpi");
     }
 
