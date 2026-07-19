@@ -4,6 +4,7 @@
     <Project Path="src/RpaParser/RpaParser.csproj" />
   </Folder>
   <Folder Name="/test/">
+    <Project Path="test/RpaExplorer.Tests/RpaExplorer.Tests.csproj" />
     <Project Path="test/RpaParser.Tests/RpaParser.Tests.csproj" />
   </Folder>
 </Solution>
