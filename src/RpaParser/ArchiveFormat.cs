@@ -85,6 +85,9 @@ namespace RpaParser
         /// </summary>
         protected virtual IEnumerable<long> FieldsAfterOffset(long obfuscationKey) => [];
 
+        /// <summary>False only for <see cref="Unknown"/>, which stands in for no format.</summary>
+        public virtual bool IsKnown => true;
+
         public virtual bool HasSeparateIndexFile => false;
 
         public virtual bool SupportsPadding => true;
@@ -150,6 +153,7 @@ namespace RpaParser
         public static ArchiveFormat Rpa2 { get; } = new Rpa2Format();
         public static ArchiveFormat Rpa3 { get; } = new Rpa3Format();
         public static ArchiveFormat Rpa32 { get; } = new Rpa32Format();
+        public static ArchiveFormat Unknown { get; } = new UnknownFormat();
 
         /// <summary>Every known format, most specific first.</summary>
         public static IReadOnlyList<ArchiveFormat> All { get; } = [Rpa32, Rpa3, Rpa2, Rpa1];
@@ -157,15 +161,18 @@ namespace RpaParser
         /// <summary>
         /// The format matching the archive, or null when nothing recognises it.
         /// </summary>
-        public static ArchiveFormat? Detect(string? firstLine, bool indexPairExists) =>
-            All.FirstOrDefault(format => format.Matches(firstLine ?? string.Empty, indexPairExists));
+        /// <summary>
+        /// The format of the bytes in hand, or <see cref="Unknown"/> when nothing claims
+        /// them. Total, so a caller always holds a format and can ask it questions.
+        /// </summary>
+        public static ArchiveFormat Detect(string? firstLine, bool indexPairExists) =>
+            All.FirstOrDefault(format => format.Matches(firstLine ?? string.Empty, indexPairExists)) ?? Unknown;
 
-        public static ArchiveFormat? Detect(ArchiveFileInfo files) =>
+        public static ArchiveFormat Detect(ArchiveFileInfo files) =>
             Detect(files.FirstLine, files.IndexPairExists);
 
-        /// <summary>The format for a numeric version, or null when it is not supported.</summary>
-        public static ArchiveFormat? ForVersion(double version) =>
-            All.FirstOrDefault(format => format.Version == version);
+        public static ArchiveFormat ForVersion(double version) =>
+            All.FirstOrDefault(format => format.Version == version) ?? Unknown;
 
         public override string ToString() => DisplayName;
 
@@ -249,5 +256,30 @@ namespace RpaParser
         protected override int KeyFieldIndex => 3;
 
         protected override IEnumerable<long> FieldsAfterOffset(long obfuscationKey) => [0, obfuscationKey];
+    }
+
+    /// <summary>
+    /// Stands in for a format that has not been established: a new archive whose version is
+    /// chosen at save time, or bytes nothing recognised. It answers the questions that have
+    /// an answer and refuses the ones that do not, so no caller has to null check a format.
+    /// </summary>
+    public sealed class UnknownFormat : ArchiveFormat
+    {
+        public override double Version => 0;
+        public override string DisplayName => "Unknown";
+        protected override string Magic => string.Empty;
+
+        public override bool IsKnown => false;
+        public override bool SupportsPadding => false;
+
+        public override bool Matches(string firstLine, bool indexPairExists) => false;
+
+        public override int HeaderLength => throw Unsupported();
+
+        public override string BuildHeader(long indexOffset, long obfuscationKey) => throw Unsupported();
+
+        public override IndexFileInfo LocateIndex(ArchiveFileInfo files) => throw Unsupported();
+
+        private static Exception Unsupported() => new("Specified version is not supported.");
     }
 }

@@ -25,14 +25,14 @@ namespace RpaParser
         public PreviewResult Create(Archive archive, string fileName) =>
             archive.Index.ContainsKey(fileName)
                 ? Create(fileName, archive.Read(fileName))
-                : new PreviewResult(ContentFormat.Unknown, null);
+                : PreviewResult.Missing;
 
         /// <summary>The bytes as stored, tagged with the format that claims them.</summary>
         public PreviewResult CreateRaw(Archive archive, string fileName)
         {
             if (!archive.Index.ContainsKey(fileName))
             {
-                return new PreviewResult(ContentFormat.Unknown, null);
+                return PreviewResult.Missing;
             }
 
             var data = archive.Read(fileName);

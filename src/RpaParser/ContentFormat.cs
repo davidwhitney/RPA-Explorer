@@ -7,20 +7,21 @@ using System.Text;
 namespace RpaParser
 {
     /// <summary>A previewable file, together with whatever the format made of its bytes.</summary>
-    public sealed class PreviewResult(ContentFormat format, object? content)
+    public sealed class PreviewResult(ContentFormat format, object content)
     {
-        /// <summary>The format the content is presented as. Never null.</summary>
+        /// <summary>A file that is not in the archive: unknown format, nothing to show.</summary>
+        public static PreviewResult Missing { get; } = new(ContentFormat.Unknown, Array.Empty<byte>());
+
         public ContentFormat Format { get; } = format;
 
-        /// <summary>
-        /// Decoded text for text formats, the raw bytes for everything else, and null when
-        /// the file is not in the archive.
-        /// </summary>
-        public object? Content { get; } = content;
+        /// <summary>Decoded text for text formats, the raw bytes for everything else.</summary>
+        public object Content { get; } = content;
 
-        public string? AsText() => Content as string;
+        /// <summary>The content as text, or empty when it is not text.</summary>
+        public string AsText() => Content as string ?? string.Empty;
 
-        public byte[]? AsBytes() => Content as byte[];
+        /// <summary>The content as bytes, or empty when it is text.</summary>
+        public byte[] AsBytes() => Content as byte[] ?? [];
     }
 
     /// <summary>

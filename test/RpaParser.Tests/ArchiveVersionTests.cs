@@ -30,7 +30,8 @@ public class ArchiveVersionTests
     {
         var archive = new Archive();
 
-        archive.Format.ShouldBeNull();
+        archive.Format.ShouldBeSameAs(ArchiveFormat.Unknown);
+        archive.Format.IsKnown.ShouldBeFalse();
         archive.Index.ShouldBeEmpty();
         archive.OptionsConfirmed.ShouldBeFalse();
         archive.Padding.ShouldBe(0);

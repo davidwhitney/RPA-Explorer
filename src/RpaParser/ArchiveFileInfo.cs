@@ -35,8 +35,11 @@ namespace RpaParser
 
             // Everything above describes the files; the format is what they are, and it can
             // then say where the index sits. Both only read what is already assigned.
-            Format = ArchiveFormat.Detect(this)
-                     ?? throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
+            Format = ArchiveFormat.Detect(this);
+            if (!Format.IsKnown)
+            {
+                throw new Exception("File is either not valid RenPy Archive or version is not recognized.");
+            }
 
             IndexFile = Format.LocateIndex(this);
         }

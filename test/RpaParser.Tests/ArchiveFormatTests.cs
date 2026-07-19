@@ -52,15 +52,15 @@ public class ArchiveFormatTests
     }
 
     [Fact]
-    public void Detect_NoMagicAndNoIndexPair_ReturnsNull()
+    public void Detect_NoMagicAndNoIndexPair_ReturnsUnknown()
     {
-        ArchiveFormat.Detect("not an archive", indexPairExists: false).ShouldBeNull();
+        ArchiveFormat.Detect("not an archive", indexPairExists: false).ShouldBeSameAs(ArchiveFormat.Unknown);
     }
 
     [Fact]
     public void Detect_NullFirstLine_DoesNotThrow()
     {
-        ArchiveFormat.Detect(null, indexPairExists: false).ShouldBeNull();
+        ArchiveFormat.Detect(null, indexPairExists: false).ShouldBeSameAs(ArchiveFormat.Unknown);
     }
 
     [Fact]
@@ -82,9 +82,27 @@ public class ArchiveFormatTests
     [InlineData(-1)]
     [InlineData(0)]
     [InlineData(4)]
-    public void ForVersion_UnsupportedVersion_ReturnsNull(double version)
+    public void ForVersion_UnsupportedVersion_ReturnsUnknown(double version)
     {
-        ArchiveFormat.ForVersion(version).ShouldBeNull();
+        ArchiveFormat.ForVersion(version).IsKnown.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Unknown_AskedToWriteAHeader_Throws()
+    {
+        Should.Throw<Exception>(() => ArchiveFormat.Unknown.BuildHeader(0, 0));
+        Should.Throw<Exception>(() => ArchiveFormat.Unknown.HeaderLength);
+    }
+
+    [Fact]
+    public void Unknown_QuestionsThatHaveAnAnswer_AreAnswered()
+    {
+        ArchiveFormat.Unknown.IsKnown.ShouldBeFalse();
+        ArchiveFormat.Unknown.UsesObfuscation.ShouldBeFalse();
+        ArchiveFormat.Unknown.SupportsPadding.ShouldBeFalse();
+        ArchiveFormat.Unknown.HasSeparateIndexFile.ShouldBeFalse();
+        ArchiveFormat.Unknown.Matches("RPA-3.0 ", true).ShouldBeFalse();
+        ArchiveFormat.All.ShouldNotContain(ArchiveFormat.Unknown);
     }
 
     /// <summary>

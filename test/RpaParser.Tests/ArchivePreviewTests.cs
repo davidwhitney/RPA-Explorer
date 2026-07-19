@@ -92,15 +92,17 @@ public class ArchivePreviewTests
     }
 
     [Fact]
-    public void GetPreview_FileNotInIndex_ReturnsUnknownWithNullValue()
+    public void GetPreview_FileNotInIndex_ReturnsTheMissingPreview()
     {
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes("a"));
 
         PreviewResult preview = archive.Preview("absent.txt");
 
+        preview.ShouldBeSameAs(PreviewResult.Missing);
         preview.Format.ShouldBeOfType<UnknownContent>();
-        preview.Content.ShouldBeNull();
+        preview.AsBytes().ShouldBeEmpty();
+        preview.AsText().ShouldBeEmpty();
     }
 
     [Fact]
@@ -139,7 +141,7 @@ public class ArchivePreviewTests
         using var workspace = new TempWorkspace();
         var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
 
-        var text = archive.Preview("a.txt").AsText()!;
+        var text = archive.Preview("a.txt").AsText();
 
         // Every separator that survives must be the platform's own.
         text.Replace(Environment.NewLine, string.Empty).ShouldNotContain("\r");

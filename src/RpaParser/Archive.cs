@@ -13,8 +13,11 @@ namespace RpaParser
 
         public ArchiveIndex Index { get; set; } = new();
 
-        /// <summary>Null until a format is chosen, which for a new archive is at save time.</summary>
-        public ArchiveFormat? Format { get; set; }
+        /// <summary>
+        /// <see cref="ArchiveFormat.Unknown"/> until a format is established, which for a new
+        /// archive is at save time. Never null, so callers can always ask it questions.
+        /// </summary>
+        public ArchiveFormat Format { get; set; } = ArchiveFormat.Unknown;
         
         public int Padding = 0;
         public long ObfuscationKey = 0xDEADBEEF;
@@ -134,9 +137,8 @@ namespace RpaParser
 
                 using (Stream stream = File.Open(tmpPath + ".rpa", FileMode.Truncate))
                 {
-                    var format = Format ?? throw new Exception("Specified version is not supported.");
-                    
-                    var archiveOffset = format.HeaderLength;
+                    // Unknown refuses this, which is how saving without a format fails.
+                    var archiveOffset = Format.HeaderLength;
                     stream.Position = archiveOffset;
 
                     var rnd = new Random();
@@ -168,15 +170,15 @@ namespace RpaParser
                         archiveOffset += content.Length;
                     }
 
-                    var key = format.UsesObfuscation ? ObfuscationKey : 0;
+                    var key = Format.UsesObfuscation ? ObfuscationKey : 0;
                     var fileCompressed = ArchiveIndex.Serialize(storedFiles, key);
 
-                    if (!format.HasSeparateIndexFile)
+                    if (!Format.HasSeparateIndexFile)
                     {
                         stream.Position = archiveOffset;
                         stream.Write(fileCompressed, 0, fileCompressed.Length);
 
-                        var headerContent = format.BuildHeader(archiveOffset, ObfuscationKey);
+                        var headerContent = Format.BuildHeader(archiveOffset, ObfuscationKey);
 
                         var headerContentByte = Encoding.UTF8.GetBytes(headerContent);
 

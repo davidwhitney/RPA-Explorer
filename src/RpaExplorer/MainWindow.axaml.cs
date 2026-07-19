@@ -436,7 +436,7 @@ namespace RpaExplorer
                     selectedSize = _indexPathSize[selectedPath];
                 }
 
-                if (_archive.Format != null)
+                if (_archive.Format.IsKnown)
                 {
                     info += GetText("Archive_version") + _archive.Format + Environment.NewLine;
                     info += GetText("Archive_file_location") + _archive.Files.Archive.FullName + Environment.NewLine;

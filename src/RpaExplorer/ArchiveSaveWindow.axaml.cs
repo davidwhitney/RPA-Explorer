@@ -29,7 +29,7 @@ namespace RpaExplorer
                 VersionCombo.Items.Add(format);
             }
 
-            VersionCombo.SelectedItem = _archive.Format ?? ArchiveFormat.Rpa3;
+            VersionCombo.SelectedItem = _archive.Format.IsKnown ? _archive.Format : ArchiveFormat.Rpa3;
 
             PaddingBox.Text = _archive.Padding.ToString();
             KeyBox.Text = _archive.ObfuscationKey.ToString();
