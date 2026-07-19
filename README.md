@@ -1,35 +1,99 @@
 # RPA Explorer
 
-Graphical explorer for RenPy Archives. This tool brings ability to extract, create new or change existing RPA archives all in one window. It also provides content preview for most common files in these packages. Initial parser code was inspired by [RPATools](https://github.com/Shizmob/rpatool), so in case you find this tool useful, go give them a thumbs up as well. Now it even can try to preview compiled RenPy files (conditions apply, see <sup>[[1]](#reference1)</sup>).
+Graphical explorer for RenPy Archives. This tool brings ability to extract, create new or change existing RPA archives all in one window. It also provides content preview for most common files in these packages.
 
-#### Note:
+> **This is a cross-platform fork.** The application has been ported from Windows Forms
+> (.NET Framework 4.6.1) to [Avalonia UI](https://avaloniaui.net/) on **.NET 8**, so it now runs
+> natively on **macOS (Apple Silicon and Intel), Linux and Windows**.
+>
+> Upstream project: [UniverseDevel/RPA-Explorer](https://github.com/UniverseDevel/RPA-Explorer)
+> by Martin Suchy. The archive format handling is his; this fork changes the UI layer and the
+> platform-specific plumbing. Initial parser code was inspired by
+> [RPATools](https://github.com/Shizmob/rpatool).
 
-This is a fan made application and there is no guarantee of further development or fixes. For video support LibVLC library is used and this library has ~300MiB in size so this is the reason why this application is so big, I haven't found a better way around this yet.
+---
 
-#### Cross-platform (modern .NET + Avalonia):
+## Running it
 
-The application has been ported from Windows Forms (.NET Framework 4.6.1) to [Avalonia UI](https://avaloniaui.net/) on **.NET 8**, so it now runs on **macOS (incl. Apple Silicon), Linux and Windows**.
+Pre-built, self-contained binaries for macOS, Windows and Linux are attached to each
+[release](https://github.com/davidwhitney/RPA-Explorer/releases) — no .NET installation required.
 
-What changed under the hood:
-- UI rebuilt in Avalonia (was Windows Forms).
-- `Ionic.Zlib` replaced with the built-in `System.IO.Compression.ZLibStream`.
-- Image/WebP decoding uses [ImageSharp](https://github.com/SixLabors/ImageSharp) instead of `System.Drawing` + the native WebP wrapper.
-- Video/audio preview uses `LibVLCSharp.Avalonia`. On **macOS and Linux** it binds to a system-wide VLC installation; on **Windows** the native libraries come from the `VideoLAN.LibVLC.Windows` package. (The `VideoLAN.LibVLC.Mac` NuGet package is deliberately not used: it ships only an x86_64 `libvlc.dylib` with no plugin set, so it cannot work on Apple Silicon.)
-- Python 2.7 detection is now cross-platform (searches `PATH` and common install locations); you can still override it via **Options**.
-- Windows-only features that don't apply elsewhere (registry file-association) are hidden on non-Windows platforms.
+| Platform | Download | Notes |
+| --- | --- | --- |
+| macOS (Apple Silicon) | `…-osx-arm64.zip` | contains `RPA Explorer.app` |
+| macOS (Intel) | `…-osx-x64.zip` | contains `RPA Explorer.app` |
+| Windows | `…-win-x64.zip` / `…-win-arm64.zip` | run `RPA_Explorer.exe` |
+| Linux | `…-linux-x64.tar.gz` / `…-linux-arm64.tar.gz` | run `RPA_Explorer` |
 
-##### Requirements
+The macOS builds are not code-signed or notarised. On first launch use **right-click → Open**, or
+run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
 
-- [.NET SDK 8.0 or newer](https://dotnet.microsoft.com/download)
-- **For audio/video preview on macOS and Linux:** [VLC](https://www.videolan.org/vlc/) must be installed
-  (on macOS, `VLC.app` in `/Applications`; or `brew install --cask vlc`). The app locates it automatically
-  and uses its libraries and codec plugins. Everything else (browsing, extracting, creating archives,
-  image and text preview) works without VLC.
+## Set-up is automatic
 
-##### Build & run
+Everything core — browsing, extracting, creating and saving archives, image and text preview —
+works with no additional software at all. The two optional previews configure themselves:
+
+**🎬 VLC is found for you.** Audio and video preview needs VLC on macOS and Linux. The app locates
+an existing installation (`/Applications/VLC.app`, `~/Applications`, or the standard Linux plugin
+directories) and wires up its libraries and codec plugins itself. If VLC is missing you get a
+prompt with a download link — and the Homebrew one-liner when `brew` is detected — instead of a
+dead end. Detection re-runs when you open a media file, so installing VLC while the app is running
+just works, with no restart. On Windows the native libraries are bundled outright.
+
+**🐍 Python is found for you, pyenv included.** Compiled script preview needs a Python interpreter.
+The app searches `PATH`, [pyenv](https://github.com/pyenv/pyenv) (`$PYENV_ROOT`/`~/.pyenv` shims
+first, then `versions/*/bin` newest-first) and the usual system locations, preferring Python 3.
+The pyenv support matters because an app launched from Finder or the Dock does not inherit your
+shell `PATH`, so pyenv would otherwise be invisible even though `python3` works in your terminal.
+
+**📦 unrpyc downloads itself.** Rather than making you find and install it,
+**Options → Download unrpyc** fetches a pinned release of
+[unrpyc](https://github.com/CensoredUsername/unrpyc) and selects it. You are also offered the
+download inline the first time you open a `.rpyc`, and the preview is retried automatically once
+it lands. An existing download is reused silently.
+
+Anything auto-detected can be overridden under **Options**, and your choice always wins.
+
+## Supported file types for preview
+
+- Text: py, rpy~, rpy, txt, log, nfo, htm, html, xml, json, yaml, csv
+- Video: 3gp, flv, mov, mp4, ogv, swf, mpg, mpeg, avi, mkv, wmv, webm
+- Audio: aac, ac3, flac, mp3, wma, wav, ogg, cpc
+- Images: jpeg, jpg, bmp, tiff, png, webp, exif, ico, gif
+- Compiled scripts: rpyc~, rpymc~, rpyc, rpymc
+
+---
+
+## What changed in the port
+
+| Area | Before | Now |
+| --- | --- | --- |
+| UI | Windows Forms | Avalonia UI 11 |
+| Runtime | .NET Framework 4.6.1 | .NET 8 |
+| Compression | `Ionic.Zlib` | built-in `System.IO.Compression.ZLibStream` |
+| Images / WebP | `System.Drawing` + native WebP wrapper | [ImageSharp](https://github.com/SixLabors/ImageSharp) |
+| Media | `LibVLCSharp.WinForms` | `LibVLCSharp.Avalonia` |
+| Python discovery | Windows registry | `PATH`, pyenv and common install locations |
+| File associations | registry | Windows only; hidden elsewhere |
+
+A few notes on the trickier parts:
+
+- **Media on macOS/Linux binds to a system VLC install.** The `VideoLAN.LibVLC.Mac` NuGet package
+  is deliberately not used: it ships a single x86_64 `libvlc.dylib` with no plugin set, so it
+  cannot work on Apple Silicon and has no codecs anywhere. Windows uses
+  `VideoLAN.LibVLC.Windows`, which is gated on the *target* runtime identifier so that
+  cross-compiled Windows builds still bundle the natives.
+- **Python 3 is preferred** when auto-detecting an interpreter, because current unrpyc releases
+  require it and Ren'Py 8 games produce Python 3 `.rpyc` files. Python 2.7 is still accepted as a
+  fallback for legacy unrpyc with older archives.
+- **Archive handling is unchanged in behaviour.** RPA versions 1, 2, 3 and 3.2 are read and
+  written as before; the round-trip is byte-exact.
+
+## Building from source
+
+Requires the [.NET SDK 8.0 or newer](https://dotnet.microsoft.com/download).
 
 ```bash
-# from the repository root
 dotnet build "RPA Explorer.sln"
 dotnet run --project "RPA Explorer/RPA Explorer.csproj"
 
@@ -37,10 +101,10 @@ dotnet run --project "RPA Explorer/RPA Explorer.csproj"
 dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
 ```
 
-##### Producing release binaries
+### Producing release binaries
 
 `build.sh` cross-compiles every supported platform from a single machine into `./dist`
-(git-ignored). Builds are self-contained, so users do not need the .NET runtime installed.
+(git-ignored). Builds are self-contained.
 
 ```bash
 ./build.sh                                  # all platforms, version from the current git tag
@@ -49,55 +113,20 @@ dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
 ./build.sh --framework-dependent            # smaller, requires .NET on the target
 ```
 
-Targets: `osx-arm64`, `osx-x64`, `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`.
-macOS artifacts are packaged as a `RPA Explorer.app` bundle, Windows as a zip and Linux as a
-tarball, alongside a `SHA256SUMS` file.
+Targets: `osx-arm64`, `osx-x64`, `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`. macOS
+artifacts are packaged as a `RPA Explorer.app` bundle, Windows as a zip and Linux as a tarball,
+alongside a `SHA256SUMS` file.
 
-Pushing a `v*` tag runs the same script in GitHub Actions and publishes the artifacts to a
-GitHub release (see `.github/workflows/build.yml`).
-
-> The macOS builds are not code-signed or notarised. On first launch use right-click → Open,
-> or run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
-
-### Supported file types for preview:
-
-- Text: py, rpy~, rpy, txt, log, nfo, htm, html, xml, json, yaml, csv
-- Video: 3gp, flv, mov, mp4, ogv, swf, mpg, mpeg, avi, mkv, wmv, webm
-- Audio: aac, ac3, flac, mp3, wma, wav, ogg, cpc
-- Images: jpeg, jpg, bmp, tiff, png, webp, exif, ico, gif
-- Compilations<sup>[[1]](#reference1)</sup>: rpyc~, rpymc~, rpyc, rpymc
-
-### References
-
-<a name="reference1"></a>[1]: Path to Python 2.7 environment and [unrpyc](https://github.com/CensoredUsername/unrpyc) on your local machine must be provided to attempt decompilation.
+Pushing a `v*` tag runs the same script in GitHub Actions and publishes the artifacts to a GitHub
+release — see [`.github/workflows/build.yml`](.github/workflows/build.yml).
 
 ---
 
-### Download link:
+## TODO
 
-Pre-built binaries for macOS, Windows and Linux are attached to each
-[GitHub release](https://github.com/UniverseDevel/RPA-Explorer/releases).
+See [TODO.md](TODO.md).
 
 ---
-
-### TODO List:
-
-[TODO.md](https://github.com/UniverseDevel/RPA-Explorer/blob/master/TODO.md)
-
-### Known Issues:
-
-The three issues listed here previously were addressed by the Avalonia port:
-
-- ~~Selecting/unselecting objects too fast will not update selections for child or parent
-  objects.~~ The tree is now backed by a data model whose check state is propagated in code
-  rather than by WinForms `TreeView` events, so the result no longer depends on event timing.
-- ~~Some video/audio formats will not update time played or total video time.~~ The total
-  time is now taken from `MediaPlayer.Length` and refreshed on `LengthChanged`, instead of
-  `Media.Duration` which stays at `-1` for media fed through a stream. Where a format genuinely
-  never reports a length, the elapsed time is shown against `--:--:--` rather than a stale total.
-- ~~When browsing through videos the application freezes after a while.~~ Each preview disposes
-  its `Media`, `StreamMediaInput` and `MemoryStream`, a single `MediaPlayer` is reused, and
-  libvlc is released on exit.
 
 #### Images preview:
 ![1](https://user-images.githubusercontent.com/47400898/154856556-1da3d011-5631-4100-972c-f6e844967242.png)
@@ -105,5 +134,9 @@ The three issues listed here previously were addressed by the Avalonia port:
 ![2](https://user-images.githubusercontent.com/47400898/154856560-71837ed7-899c-43bb-ab0d-3a10dd7844e8.png)
 #### Text files preview:
 ![3](https://user-images.githubusercontent.com/47400898/154856564-1a588bdd-3412-491d-a070-078e17c42d19.png)
+
+---
+
+This is a fan made application and there is no guarantee of further development or fixes.
 
 The software is provided "as is", without a warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
