@@ -1105,15 +1105,7 @@ namespace RpaExplorer
 
             if (File.Exists(path) && !_cancelAdd)
             {
-                var index = new ArchiveEntry
-                {
-                    InArchive = false,
-                    FullPath = path.Replace('\\', '/')
-                };
-                var originalNormalized = (originalPath ?? string.Empty).Replace('\\', '/');
-                index.TreePath = index.FullPath.Replace(originalNormalized + "/", string.Empty);
-                index.ParentPath = Path.GetDirectoryName(index.TreePath);
-                index.Length = new FileInfo(path).Length;
+                var index = ArchiveEntry.FromFilename(path, originalPath);
 
                 if (_fileListBackup.ContainsKey(index.TreePath))
                 {

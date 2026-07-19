@@ -60,14 +60,7 @@ public sealed class TempWorkspace : IDisposable
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(onDisk)!);
             File.WriteAllBytes(onDisk, entry.Value);
 
-            archive.Index.Add(entry.Key, new ArchiveEntry
-            {
-                InArchive = false,
-                FullPath = onDisk.Replace('\\', '/'),
-                TreePath = entry.Key,
-                ParentPath = System.IO.Path.GetDirectoryName(entry.Key),
-                Length = entry.Value.Length
-            });
+            archive.Index.Add(entry.Key, ArchiveEntry.FromFilename(onDisk, sourceDir));
         }
 
         return archive.Save(Path_(archiveName));

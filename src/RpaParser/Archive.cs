@@ -239,59 +239,25 @@ namespace RpaParser
                     continue;
                 }
 
-                var indexEntry = new ArchiveEntry
-                {
-                    TreePath = (string) kvp.Key,
-                    ParentPath = Path.GetDirectoryName((string) kvp.Key),
-                    InArchive = true
-                };
                 var key = Format.UsesObfuscation ? ObfuscationKey : 0;
-                var counter = 0;
-                foreach (object[] value in (ArrayList) kvp.Value)
-                {
-                    indexEntry.Segments.Add(counter, ArchiveSegment.FromIndexData(value, key));
-                    counter++;
-                }
-                indexList.Add(indexEntry.TreePath, indexEntry);
-            }
+                var segments = ((ArrayList) kvp.Value)
+                    .Cast<object[]>()
+                    .Select(value => ArchiveSegment.FromIndexData(value, key))
+                    .ToList();
 
-            foreach (var kvp in indexList)
-            {
-                foreach (var segment in kvp.Value.Segments.Values)
-                {
-                    kvp.Value.Length += segment.Length;
-                }
+                var indexEntry = ArchiveEntry.FromIndex((string) kvp.Key, segments);
+                indexList.Add(indexEntry.TreePath, indexEntry);
             }
 
             return indexList;
         }
 
-        public SortedDictionary<string, ArchiveEntry> CopyIndex(SortedDictionary<string, ArchiveEntry> originalIndex)
-        {
-            var indexCopy = new SortedDictionary<string, ArchiveEntry>();
-            
-            foreach (var kvp in originalIndex)
-            {
-                var archIndex = new ArchiveEntry
-                {
-                    FullPath = kvp.Value.FullPath,
-                    InArchive = kvp.Value.InArchive,
-                    TreePath = kvp.Value.TreePath,
-                    ParentPath = kvp.Value.ParentPath,
-                    Length = kvp.Value.Length
-                };
-                
-                foreach (var kvpI in kvp.Value.Segments)
-                {
-                    // Segments are immutable, so the copy can share them.
-                    archIndex.Segments.Add(kvpI.Key, kvpI.Value);
-                }
-                
-                indexCopy.Add(kvp.Key, archIndex);
-            }
-            
-            return indexCopy;
-        }
+        /// <summary>
+        /// A snapshot of the index. Entries are immutable, so the copy shares them and only
+        /// the dictionary itself is new.
+        /// </summary>
+        public SortedDictionary<string, ArchiveEntry> CopyIndex(
+            SortedDictionary<string, ArchiveEntry> originalIndex) => new(originalIndex);
         
         public byte[] ExtractData(string fileName)
         {
@@ -305,11 +271,11 @@ namespace RpaParser
                 using var reader = new BinaryReader(File.OpenRead(_archivePath), Encoding.UTF8);
                 byte[] finalData = [];
 
-                foreach (var kvpI in Index[fileName].Segments)
+                foreach (var segment in Index[fileName].Segments)
                 {
-                    reader.BaseStream.Seek(kvpI.Value.Offset, SeekOrigin.Begin);
-                    var prefixData = kvpI.Value.Prefix;
-                    var fileData = reader.ReadBytes((int) kvpI.Value.Length - kvpI.Value.Prefix.Length); // Exported file max size ~2.14 GB
+                    reader.BaseStream.Seek(segment.Offset, SeekOrigin.Begin);
+                    var prefixData = segment.Prefix;
+                    var fileData = reader.ReadBytes((int) segment.Length - segment.Prefix.Length); // Exported file max size ~2.14 GB
                     var partData = new byte[finalData.Length + prefixData.Length + fileData.Length];
                     Buffer.BlockCopy(finalData, 0, partData, 0, finalData.Length);
                     Buffer.BlockCopy(prefixData, 0, partData, finalData.Length, prefixData.Length);

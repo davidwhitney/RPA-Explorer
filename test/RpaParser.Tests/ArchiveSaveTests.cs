@@ -139,21 +139,36 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void DeepCopyIndex_ModifyingCopy_LeavesOriginalUnchanged()
+    public void CopyIndex_ModifyingCopy_LeavesOriginalUnchanged()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
-        copy["a.txt"].TreePath = "changed.txt";
         copy.Remove("dir/b.txt");
+        copy["a.txt"] = copy["a.txt"] with { TreePath = "changed.txt" };
 
         archive.Index["a.txt"].TreePath.ShouldBe("a.txt");
         archive.Index.ShouldContainKey("dir/b.txt");
     }
 
     [Fact]
-    public void DeepCopyIndex_CopiedEntry_CarriesAllFieldsAndSegments()
+    public void CopyIndex_SharedEntry_CannotBeMutatedThroughTheCopy()
+    {
+        using var workspace = new TempWorkspace();
+        var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
+
+        SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
+
+        // Entries are immutable, so sharing them between the index and its copy is safe:
+        // changing one means producing a new entry, which the original never sees.
+        copy["a.txt"].ShouldBeSameAs(archive.Index["a.txt"]);
+        (copy["a.txt"] with { Length = 99 }).ShouldNotBeSameAs(archive.Index["a.txt"]);
+        archive.Index["a.txt"].Length.ShouldNotBe(99);
+    }
+
+    [Fact]
+    public void CopyIndex_CopiedEntry_CarriesAllFieldsAndSegments()
     {
         using var workspace = new TempWorkspace();
         var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
@@ -173,7 +188,7 @@ public class ArchiveSaveTests
     }
 
     [Fact]
-    public void DeepCopyIndex_EmptyIndex_ReturnsEmptyCopy()
+    public void CopyIndex_EmptyIndex_ReturnsEmptyCopy()
     {
         var archive = new Archive();
 
