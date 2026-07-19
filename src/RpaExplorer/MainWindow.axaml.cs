@@ -65,7 +65,7 @@ namespace RpaExplorer
             {
                 if (VlcSetup.Initialize())
                 {
-                    _libVlc = new LibVLC("--input-repeat=9999999"); // Loop playback
+                    _libVlc = new LibVLC(VlcSetup.PlayerOptions());
                     _mediaPlayer = new MediaPlayer(_libVlc) { Volume = 50 };
                     _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
                     _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
@@ -211,7 +211,7 @@ namespace RpaExplorer
             {
                 if (VlcSetup.Initialize())
                 {
-                    _libVlc = new LibVLC("--input-repeat=9999999");
+                    _libVlc = new LibVLC(VlcSetup.PlayerOptions());
                     _mediaPlayer = new MediaPlayer(_libVlc) { Volume = (int) VolumeSlider.Value };
                     _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
                     _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;

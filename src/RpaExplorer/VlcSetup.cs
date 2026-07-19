@@ -27,6 +27,27 @@ namespace RpaExplorer
             "Audio/video preview requires VLC to be installed.\n\n" +
             "Install VLC from " + DownloadUrl + " (on macOS, drag VLC.app into /Applications).";
 
+        /// <summary>
+        /// Options for the LibVLC instance.
+        ///
+        /// VLC probes every access and demux module when media is opened, and a module that
+        /// declines still logs at error level. The imem module reports "Invalid get/release
+        /// function pointers" on every media switch because the app feeds libvlc through
+        /// stream callbacks rather than imem, which is harmless but fills the console.
+        /// Silence it by default, and allow it back for troubleshooting.
+        /// </summary>
+        public static string[] PlayerOptions()
+        {
+            List<string> options = ["--input-repeat=9999999"]; // loop playback
+
+            if (Environment.GetEnvironmentVariable("RPA_VLC_VERBOSE") != "1")
+            {
+                options.Add("--quiet");
+            }
+
+            return options.ToArray();
+        }
+
         public static bool Initialize()
         {
             // Safe to call again: the user may have installed VLC since start-up.
