@@ -32,6 +32,13 @@ Pre-built, self-contained binaries for macOS, Windows and Linux are attached to 
 The macOS builds are not code-signed or notarised. On first launch use **right-click → Open**, or
 run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
 
+Each release includes a `SHA256SUMS` file if you want to verify a download:
+
+```bash
+shasum -a 256 -c SHA256SUMS --ignore-missing   # macOS
+sha256sum -c SHA256SUMS --ignore-missing       # Linux
+```
+
 There is no separate Windows ARM download. VideoLAN publishes no Windows arm64 build of VLC, so
 an arm64 binary could never play media; Windows on ARM runs the x64 build under emulation with
 everything working, so that is the one to use.
