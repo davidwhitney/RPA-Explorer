@@ -37,6 +37,7 @@ namespace RPA_Explorer
         private MemoryStream _memoryStreamVlc;
         private StreamMediaInput _streamMediaInputVlc;
         private Media _mediaVlc;
+        private string _mediaUnavailableReason = string.Empty;
 
         private readonly string _settingsPath;
         private static Settings _settings;
@@ -62,15 +63,23 @@ namespace RPA_Explorer
             // LibVLC initiation
             try
             {
-                Core.Initialize();
-                _libVlc = new LibVLC("--input-repeat=9999999"); // Loop playback
-                _mediaPlayer = new MediaPlayer(_libVlc) { Volume = 50 };
-                _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+                if (VlcSetup.Initialize())
+                {
+                    _libVlc = new LibVLC("--input-repeat=9999999"); // Loop playback
+                    _mediaPlayer = new MediaPlayer(_libVlc) { Volume = 50 };
+                    _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+                }
+                else
+                {
+                    _mediaUnavailableReason = VlcSetup.UnavailableReason;
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // Media playback unavailable (e.g. native libs missing); previews of other
-                // types still work and the media tab will report the failure when used.
+                // Media playback unavailable; previews of other types still work and the
+                // media tab reports the actual reason when the user opens a media file.
+                _mediaUnavailableReason = ex.Message + Environment.NewLine + Environment.NewLine +
+                                          VlcSetup.InstallHint;
                 _libVlc = null;
                 _mediaPlayer = null;
             }
@@ -428,6 +437,7 @@ namespace RPA_Explorer
             }
 
             bool unsupported = true;
+            string failureMessage = null;
             try
             {
                 KeyValuePair<string, object> data = default;
@@ -467,7 +477,9 @@ namespace RPA_Explorer
                 {
                     if (_libVlc == null || _mediaPlayer == null)
                     {
-                        throw new Exception("Media playback is not available on this system.");
+                        throw new Exception(string.IsNullOrEmpty(_mediaUnavailableReason)
+                            ? VlcSetup.InstallHint
+                            : _mediaUnavailableReason);
                     }
 
                     _memoryStreamVlc = new MemoryStream((byte[]) data.Value);
@@ -483,6 +495,7 @@ namespace RPA_Explorer
             }
             catch (Exception ex)
             {
+                failureMessage = ex.Message;
                 await MessageBox.ShowError(this,
                     string.Format(GetText("Preview_failed_reason"), ex.Message), GetText("Preview_failed"));
             }
@@ -490,7 +503,7 @@ namespace RPA_Explorer
             if (unsupported)
             {
                 Tabs.SelectedItem = TabNone;
-                UsageLabel.Text = GetText("Preview_is_not_supported");
+                UsageLabel.Text = failureMessage ?? GetText("Preview_is_not_supported");
             }
         }
 

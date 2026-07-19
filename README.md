@@ -14,13 +14,17 @@ What changed under the hood:
 - UI rebuilt in Avalonia (was Windows Forms).
 - `Ionic.Zlib` replaced with the built-in `System.IO.Compression.ZLibStream`.
 - Image/WebP decoding uses [ImageSharp](https://github.com/SixLabors/ImageSharp) instead of `System.Drawing` + the native WebP wrapper.
-- Video/audio preview uses `LibVLCSharp.Avalonia` with native libs from `VideoLAN.LibVLC.Mac` (and the platform-appropriate package on other OSes).
+- Video/audio preview uses `LibVLCSharp.Avalonia`. On **macOS and Linux** it binds to a system-wide VLC installation; on **Windows** the native libraries come from the `VideoLAN.LibVLC.Windows` package. (The `VideoLAN.LibVLC.Mac` NuGet package is deliberately not used: it ships only an x86_64 `libvlc.dylib` with no plugin set, so it cannot work on Apple Silicon.)
 - Python 2.7 detection is now cross-platform (searches `PATH` and common install locations); you can still override it via **Options**.
 - Windows-only features that don't apply elsewhere (registry file-association) are hidden on non-Windows platforms.
 
 ##### Requirements
 
 - [.NET SDK 8.0 or newer](https://dotnet.microsoft.com/download)
+- **For audio/video preview on macOS and Linux:** [VLC](https://www.videolan.org/vlc/) must be installed
+  (on macOS, `VLC.app` in `/Applications`; or `brew install --cask vlc`). The app locates it automatically
+  and uses its libraries and codec plugins. Everything else (browsing, extracting, creating archives,
+  image and text preview) works without VLC.
 
 ##### Build & run
 
