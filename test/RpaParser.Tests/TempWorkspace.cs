@@ -44,7 +44,8 @@ public sealed class TempWorkspace : IDisposable
         int padding = 0,
         long? obfuscationKey = null)
     {
-        var archive = new Archive { Format = format, Padding = padding };
+        var archive = Archive.Create(format);
+        archive.Padding = padding;
         if (obfuscationKey.HasValue)
         {
             archive.ObfuscationKey = obfuscationKey.Value;

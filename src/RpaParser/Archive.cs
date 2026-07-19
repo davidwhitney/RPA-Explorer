@@ -16,10 +16,11 @@ namespace RpaParser
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
 
-        
-        /// <summary>The files this archive was opened from. Null until it is loaded.</summary>
-        
-        private void Read(string filePath)
+        private Archive()
+        {
+        }
+
+        private Archive(string filePath)
         {
             Files = new ArchiveFileInfo(filePath);
             Format = Files.Format;
@@ -29,15 +30,11 @@ namespace RpaParser
         }
 
         /// <summary>
-        /// A version 1 archive is a .rpa/.rpi pair, so given either half the other is derived.
-        /// The two cases are mutually exclusive - a path cannot end in both extensions.
+        /// Reads an archive, or throws. Construction is all-or-nothing, so a reference to an
+        /// Archive is always a reference to one that was read successfully - a failed load
+        /// cannot leave a half-populated instance behind for the caller to discover later.
         /// </summary>
-        public static Archive Load(string path)
-        {
-            var archive = new Archive();
-            archive.Read(path);
-            return archive;
-        }
+        public static Archive Load(string path) => new(path);
 
         public static Archive Create(ArchiveFormat format) => new() { Format = format };
 
@@ -201,8 +198,7 @@ namespace RpaParser
                 try
                 {
                     // Test if archive is corrupted or not
-                    var testParse = new Archive();
-                    testParse.Read(tmpPath + ".rpa");
+                    _ = new Archive(tmpPath + ".rpa");
                 }
                 catch (Exception ex)
                 {

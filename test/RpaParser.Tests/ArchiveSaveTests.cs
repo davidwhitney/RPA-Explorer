@@ -95,7 +95,7 @@ public class ArchiveSaveTests
     public void SaveArchive_NoFormatChosen_Throws()
     {
         using var workspace = new TempWorkspace();
-        var archive = new Archive();  // no format chosen
+        var archive = Archive.Create();  // no format chosen
         archive.Index.Add("a.txt", new ArchiveEntry
         {
             InArchive = false,
@@ -111,7 +111,7 @@ public class ArchiveSaveTests
     public void SaveArchive_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
     {
         using var workspace = new TempWorkspace();
-        var archive = new Archive { Format = ArchiveFormat.Rpa3 };
+        var archive = Archive.Create(ArchiveFormat.Rpa3);
         archive.Index.Add("ghost.txt", new ArchiveEntry
         {
             InArchive = false,

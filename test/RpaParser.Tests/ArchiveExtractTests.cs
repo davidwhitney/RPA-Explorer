@@ -42,7 +42,7 @@ public class ArchiveExtractTests
     {
         using var workspace = new TempWorkspace();
         var onDisk = workspace.WriteFile("pending/new.txt", "not yet archived");
-        var archive = new Archive();
+        var archive = Archive.Create();
         archive.Index.Add("new.txt", ArchiveEntry.FromFilename(onDisk, workspace.Path_("pending")));
 
         var result = archive.ExtractData("new.txt");
