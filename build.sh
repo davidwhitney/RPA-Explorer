@@ -35,21 +35,40 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Version: explicit flag, else the current git tag, else a dev version.
+#
+# MinVer derives the version the assembly reports (see Directory.Build.props). It is only
+# overridden when the two must agree exactly - a release, or an explicit --version - so an
+# untagged development build keeps MinVer's more precise "next patch, N commits on"
+# rather than being pinned to a guess made here.
+PIN_ASSEMBLY_VERSION="true"
+
 if [[ -z "$VERSION" ]]; then
     if git -C "$ROOT" describe --tags --exact-match >/dev/null 2>&1; then
         VERSION="$(git -C "$ROOT" describe --tags --exact-match)"
-    elif git -C "$ROOT" describe --tags --abbrev=0 >/dev/null 2>&1; then
-        VERSION="$(git -C "$ROOT" describe --tags --abbrev=0)-dev"
+    elif git -C "$ROOT" describe --tags >/dev/null 2>&1; then
+        VERSION="$(git -C "$ROOT" describe --tags)"
+        PIN_ASSEMBLY_VERSION="false"
     else
         VERSION="0.0.1-dev"
+        PIN_ASSEMBLY_VERSION="false"
     fi
 fi
-# Strip a leading "v" so the value is a valid assembly version prefix.
-NUMERIC_VERSION="$(printf '%s' "${VERSION#v}" | sed 's/[^0-9.].*$//')"
+# MinVer wants a bare SemVer, so drop any leading "v" from the tag.
+SEMVER="${VERSION#v}"
+VERSION_ARGS=()
+if [[ "$PIN_ASSEMBLY_VERSION" == "true" ]]; then
+    VERSION_ARGS+=(-p:MinVerVersionOverride="$SEMVER")
+fi
+# The macOS Info.plist wants strictly numeric fields, with no pre-release suffix.
+NUMERIC_VERSION="$(printf '%s' "$SEMVER" | sed 's/[^0-9.].*$//')"
 [[ -z "$NUMERIC_VERSION" ]] && NUMERIC_VERSION="0.0.1"
 
 echo "==> RPA Explorer build"
-echo "    version        : $VERSION (assembly $NUMERIC_VERSION)"
+if [[ "$PIN_ASSEMBLY_VERSION" == "true" ]]; then
+    echo "    version        : $VERSION (assembly $SEMVER)"
+else
+    echo "    version        : $VERSION (assembly version left to MinVer)"
+fi
 echo "    self-contained : $SELF_CONTAINED"
 echo "    platforms      : $RIDS"
 echo
@@ -126,8 +145,7 @@ for rid in $RIDS; do
         --runtime "$rid" \
         --self-contained "$SELF_CONTAINED" \
         --output "$publish_dir" \
-        -p:Version="$NUMERIC_VERSION" \
-        -p:InformationalVersion="$VERSION" \
+        ${VERSION_ARGS[@]+"${VERSION_ARGS[@]}"} \
         -p:DebugType=none \
         -p:PublishTrimmed=false \
         --nologo \

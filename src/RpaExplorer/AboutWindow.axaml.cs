@@ -10,8 +10,9 @@ namespace RpaExplorer
         // Credited from the commit history of both repositories.
         private static readonly string[] ContributorsList = ["jensbrak"];
 
-        private readonly string _appVersion =
-            Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
+        // The informational version is the git tag MinVer derived, so it keeps any
+        // pre-release suffix that the four-part assembly version would drop.
+        private readonly string _appVersion = InformationalVersion();
 
         // The archive format handling is the original author's; this fork is the UI layer
         // and the cross-platform plumbing, so both are credited and both links are offered.
@@ -38,6 +39,19 @@ namespace RpaExplorer
             RepoButton.Click += (_, _) => Platform.OpenUrl(PortRepository);
             UpstreamButton.Click += (_, _) => Platform.OpenUrl(OriginalRepository);
             CloseButton.Click += (_, _) => Close();
+        }
+
+        private static string InformationalVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+
+            var informational = assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+            // MinVer appends "+<commit sha>", which is noise in a dialog.
+            return informational?.Split('+')[0]
+                   ?? assembly.GetName().Version?.ToString()
+                   ?? "0.0.0";
         }
     }
 }

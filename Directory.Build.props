@@ -1,0 +1,19 @@
+<Project>
+
+    <PropertyGroup>
+        <!-- Versions come from git tags (v1.2.3) rather than a number checked into a file,
+             so the version About reports is the one that was actually released, and nobody
+             has to remember to bump anything. build.sh passes MinVerVersionOverride so a
+             build started through it agrees with the name on the artifact. -->
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+
+        <!-- An untagged commit is a pre-release of the *next* patch, so a development build
+             never claims to be the last release. -->
+        <MinVerDefaultPreReleaseIdentifiers>dev.0</MinVerDefaultPreReleaseIdentifiers>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    </ItemGroup>
+
+</Project>
