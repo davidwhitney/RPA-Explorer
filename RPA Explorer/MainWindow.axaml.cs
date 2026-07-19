@@ -727,13 +727,12 @@ namespace RPA_Explorer
             {
                 _rpaParser = new RpaParser();
 
+                // An explicitly configured interpreter always wins. Auto-detection is
+                // deliberately not written back to the settings file: persisting a guess
+                // makes it sticky and stops improved detection from ever taking effect.
                 if (!string.IsNullOrEmpty(_settings.GetPython()))
                 {
                     _rpaParser.PythonLocation = _settings.GetPython();
-                }
-                else if (!string.IsNullOrEmpty(_rpaParser.PythonLocation))
-                {
-                    _settings.SetPython(_rpaParser.PythonLocation);
                 }
 
                 if (!string.IsNullOrEmpty(_settings.GetUnrpyc()))

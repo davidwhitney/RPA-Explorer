@@ -47,7 +47,7 @@ namespace RPA_Parser
         public bool OptionsConfirmed = false;
         public SortedDictionary<string,ArchiveIndex> Index = new ();
 
-        public string PythonLocation = GetPythonPath("2.7", "2.7");
+        public string PythonLocation = PythonLocator.Detected;
         public string UnrpycLocation = String.Empty;
         
         private long _offset;
@@ -149,59 +149,6 @@ namespace RPA_Parser
             ".rpymc"
         };
         
-        // Cross-platform best-effort detection of a Python interpreter.
-        //
-        // Python 3 is preferred: current unrpyc releases require it, and Ren'Py 8 games
-        // (the common case today) produce Python 3 .rpyc files. Python 2.7 is still
-        // accepted as a fallback for legacy unrpyc with Ren'Py 7 and older archives.
-        // The user can always override this via Options in the UI (stored in settings).
-        private static string GetPythonPath(string requiredVersion = "", string maxVersion = "")
-        {
-            string[] candidateNames = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? new[] { "python3.exe", "python.exe", "python2.7.exe", "python2.exe" }
-                : new[] { "python3", "python", "python2.7", "python2" };
-
-            List<string> searchDirs = new List<string>();
-            string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? String.Empty;
-            searchDirs.AddRange(pathEnv.Split(Path.PathSeparator));
-            // Common install locations that a GUI app may not have on its PATH.
-            searchDirs.AddRange(new[]
-            {
-                "/usr/bin",
-                "/usr/local/bin",
-                "/opt/homebrew/bin",
-                "/opt/local/bin"
-            });
-
-            // Prefer an explicit 2.7 / 2.x interpreter anywhere before falling back to a bare "python".
-            foreach (string name in candidateNames)
-            {
-                foreach (string dir in searchDirs)
-                {
-                    if (string.IsNullOrWhiteSpace(dir))
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        string full = Path.Combine(dir, name);
-                        if (File.Exists(full))
-                        {
-                            Debug.WriteLine("Found python candidate at: " + full);
-                            return full;
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore malformed PATH entries
-                    }
-                }
-            }
-
-            return String.Empty;
-        }
-
         public void LoadArchive(string filePath)
         {
             _archivePath = filePath;
