@@ -37,12 +37,27 @@ dotnet run --project "RPA Explorer/RPA Explorer.csproj"
 dotnet run --project "RPA Explorer/RPA Explorer.csproj" -- /path/to/archive.rpa
 ```
 
-To produce a self-contained macOS build:
+##### Producing release binaries
+
+`build.sh` cross-compiles every supported platform from a single machine into `./dist`
+(git-ignored). Builds are self-contained, so users do not need the .NET runtime installed.
 
 ```bash
-dotnet publish "RPA Explorer/RPA Explorer.csproj" -c Release -r osx-arm64 --self-contained
-# (use osx-x64, linux-x64 or win-x64 for other targets)
+./build.sh                                  # all platforms, version from the current git tag
+./build.sh --version 1.2.3                  # explicit version
+./build.sh --rids "osx-arm64 win-x64"       # subset of platforms
+./build.sh --framework-dependent            # smaller, requires .NET on the target
 ```
+
+Targets: `osx-arm64`, `osx-x64`, `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`.
+macOS artifacts are packaged as a `RPA Explorer.app` bundle, Windows as a zip and Linux as a
+tarball, alongside a `SHA256SUMS` file.
+
+Pushing a `v*` tag runs the same script in GitHub Actions and publishes the artifacts to a
+GitHub release (see `.github/workflows/build.yml`).
+
+> The macOS builds are not code-signed or notarised. On first launch use right-click → Open,
+> or run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
 
 ### Supported file types for preview:
 
@@ -60,7 +75,8 @@ dotnet publish "RPA Explorer/RPA Explorer.csproj" -c Release -r osx-arm64 --self
 
 ### Download link:
 
-[RPA Explorer.7z](https://github.com/UniverseDevel/RPA-Explorer/blob/master/RPA%20Explorer/bin/Release/net461/RPA%20Explorer.7z)
+Pre-built binaries for macOS, Windows and Linux are attached to each
+[GitHub release](https://github.com/UniverseDevel/RPA-Explorer/releases).
 
 ---
 

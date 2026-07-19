@@ -29,8 +29,10 @@
         <!-- VideoLAN.LibVLC.Mac is deliberately NOT referenced: it ships only an x86_64
              libvlc.dylib with no plugins, so it is unusable on Apple Silicon. On macOS and
              Linux the app uses the system-wide VLC installation instead (see VlcSetup.cs). -->
+        <!-- Keyed off the *target* RID, not the host OS, so cross-compiling Windows
+             binaries from macOS/Linux CI still bundles the native libraries. -->
         <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21"
-                          Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+                          Condition="$(RuntimeIdentifier.StartsWith('win')) Or ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('Windows')))" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
 
