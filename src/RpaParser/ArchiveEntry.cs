@@ -70,7 +70,6 @@ namespace RpaParser
         /// <summary>The runs making up this file, in order. Empty for a staged file.</summary>
         public IReadOnlyList<ArchiveSegment> Segments { get; init; } = [];
 
-        /// <summary>An entry read from an archive's index.</summary>
         public static ArchiveEntry FromIndex(string treePath, IReadOnlyList<ArchiveSegment> segments) => new()
         {
             TreePath = treePath,

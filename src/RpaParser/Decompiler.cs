@@ -28,7 +28,6 @@ namespace RpaParser
 
         public DecompilerOptions Options { get; } = options ?? new DecompilerOptions();
 
-        /// <summary>True when both tools are present, so a preview can be attempted.</summary>
         public bool IsAvailable =>
             !string.IsNullOrEmpty(Options.PythonPath) && File.Exists(Options.PythonPath)
             && !string.IsNullOrEmpty(Options.UnrpycPath) && File.Exists(Options.UnrpycPath);

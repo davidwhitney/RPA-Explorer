@@ -63,7 +63,6 @@ namespace RpaExplorer
             return null;
         }
 
-        // Downloads and extracts unrpyc, returning the path to unrpyc.py.
         // Re-uses a previous download when one is already present.
         public static async Task<string> EnsureAsync(IProgress<string> progress = null)
         {

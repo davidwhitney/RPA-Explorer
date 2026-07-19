@@ -111,7 +111,6 @@ namespace RpaExplorer
             SetIsChecked(state, false, true);
         }
 
-        // Depth-first enumeration of this node and all descendants.
         public IEnumerable<FileNode> All()
         {
             foreach (var child in Children)

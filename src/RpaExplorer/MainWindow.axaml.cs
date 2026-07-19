@@ -64,7 +64,6 @@ namespace RpaExplorer
 
             LoadTexts();
 
-            // LibVLC initiation
             try
             {
                 if (VlcSetup.Initialize())
@@ -382,7 +381,6 @@ namespace RpaExplorer
                 _indexPathSize[string.Empty] += length;
             }
 
-            // Mark unsaved (new) entries green and propagate to ancestors.
             foreach (var node in _root.All())
             {
                 if (!node.IsFolder && !node.InArchive)

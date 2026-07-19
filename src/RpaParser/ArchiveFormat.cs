@@ -24,7 +24,6 @@ namespace RpaParser
         /// <summary>Zero for formats that do not obfuscate.</summary>
         public long ObfuscationKey { get; private init; }
 
-        /// <summary>True when the index is a file of its own rather than part of the archive.</summary>
         public bool IsSeparateFile { get; private init; }
 
         /// <summary>
@@ -33,7 +32,6 @@ namespace RpaParser
         /// </summary>
         public FileInfo File { get; private init; }
 
-        /// <summary>An index embedded in the archive, starting at an offset.</summary>
         public static IndexFileInfo InsideArchive(string archivePath, long offset, long obfuscationKey) => new()
         {
             FilePath = archivePath,
@@ -68,13 +66,10 @@ namespace RpaParser
         private const int OffsetDigits = 16;
         private const int FieldDigits = 8;
 
-        /// <summary>Numeric version, as reported by <see cref="Archive.Format"/>.</summary>
         public abstract double Version { get; }
 
-        /// <summary>Name shown to the user.</summary>
         public abstract string DisplayName { get; }
 
-        /// <summary>Bytes identifying the format at the start of the header.</summary>
         protected abstract string Magic { get; }
 
         /// <summary>
@@ -89,10 +84,8 @@ namespace RpaParser
         /// </summary>
         protected virtual IEnumerable<long> FieldsAfterOffset(long obfuscationKey) => [];
 
-        /// <summary>True when the index is a separate .rpi file rather than part of the archive.</summary>
         public virtual bool HasSeparateIndexFile => false;
 
-        /// <summary>True when random padding may be inserted between stored files.</summary>
         public virtual bool SupportsPadding => true;
 
         /// <summary>True when index offsets and lengths are XORed with the obfuscation key.</summary>
@@ -105,11 +98,9 @@ namespace RpaParser
         /// </summary>
         public virtual int HeaderLength => Encoding.UTF8.GetByteCount(BuildHeader(0, 0));
 
-        /// <summary>Whether this format recognises the archive in hand.</summary>
         public virtual bool Matches(string firstLine, bool indexPairExists) =>
             firstLine.StartsWith(Magic, StringComparison.Ordinal);
 
-        /// <summary>The header written ahead of the file data.</summary>
         public virtual string BuildHeader(long indexOffset, long obfuscationKey)
         {
             var fields = FieldsAfterOffset(obfuscationKey)
@@ -166,7 +157,6 @@ namespace RpaParser
         public static ArchiveFormat Detect(string firstLine, bool indexPairExists) =>
             All.FirstOrDefault(format => format.Matches(firstLine ?? string.Empty, indexPairExists));
 
-        /// <summary>The format of an archive whose files have been resolved.</summary>
         public static ArchiveFormat Detect(ArchiveFileInfo files) =>
             Detect(files.FirstLine, files.IndexPairExists);
 

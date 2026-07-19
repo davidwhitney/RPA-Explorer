@@ -50,10 +50,8 @@ namespace RpaParser
             IndexFile = Format.LocateIndex(this);
         }
 
-        /// <summary>The format these files are in.</summary>
         public ArchiveFormat Format { get; }
 
-        /// <summary>Where this archive's index lives, according to its format.</summary>
         public IndexFileInfo IndexFile { get; }
 
         /// <summary>The .rpa file, whichever half of the pair was asked for.</summary>

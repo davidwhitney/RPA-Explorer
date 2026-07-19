@@ -1,18 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Razorvine.Pickle;
 
 namespace RpaParser
 {
-    // Inspired by: https://github.com/Shizmob/rpatool
-    // Inspired by: https://github.com/CensoredUsername/unrpyc
-    
     public sealed class Archive
     {
         public ArchiveFileInfo Files { get; private set; }
@@ -39,7 +32,6 @@ namespace RpaParser
         /// A version 1 archive is a .rpa/.rpi pair, so given either half the other is derived.
         /// The two cases are mutually exclusive - a path cannot end in both extensions.
         /// </summary>
-        /// <summary>Opens an archive from disk.</summary>
         public static Archive Load(string path)
         {
             var archive = new Archive();
@@ -47,7 +39,6 @@ namespace RpaParser
             return archive;
         }
 
-        /// <summary>Starts a new, empty archive in the given format.</summary>
         public static Archive Create(ArchiveFormat format) => new() { Format = format };
 
         /// <summary>

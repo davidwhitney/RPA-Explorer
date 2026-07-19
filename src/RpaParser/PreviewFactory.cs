@@ -22,7 +22,6 @@ namespace RpaParser
         public PreviewResult Create(string fileName, byte[] data) =>
             ContentFormat.Detect(fileName).CreatePreview(data, Decompiler);
 
-        /// <summary>Reads a file out of the archive and presents it.</summary>
         public PreviewResult Create(Archive archive, string fileName) =>
             archive.Index.ContainsKey(fileName)
                 ? Create(fileName, archive.ExtractData(fileName))

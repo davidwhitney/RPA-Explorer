@@ -97,7 +97,6 @@ namespace RpaExplorer
                     }
                 }
             } 
-            // Else use defaults
 
             _loadingPending = false;
         }
@@ -120,11 +119,9 @@ namespace RpaExplorer
             }
         }
         
-        // Set language values and add to langList to enable language
         private static readonly Language English = new Language("English", "EN");
         private static readonly Language Test = new Language("TEST", "TST");
 
-        // List of enabled languages
         public readonly Language[] LangList =
         [
             English
@@ -156,7 +153,6 @@ namespace RpaExplorer
 
             if (!isValid)
             {
-                // Default
                 _language = English;
             }
 
@@ -184,7 +180,6 @@ namespace RpaExplorer
             }
             else
             {
-                // Default
                 _python = string.Empty;
             }
 
@@ -212,7 +207,6 @@ namespace RpaExplorer
             }
             else
             {
-                // Default
                 _unrpyc = string.Empty;
             }
 
@@ -240,7 +234,6 @@ namespace RpaExplorer
             }
             else
             {
-                // Default
                 _unrpyc = string.Empty;
             }
 

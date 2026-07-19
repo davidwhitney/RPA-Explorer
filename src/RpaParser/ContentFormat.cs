@@ -33,7 +33,6 @@ namespace RpaParser
     /// </summary>
     public abstract class ContentFormat
     {
-        /// <summary>Name shown to the user.</summary>
         public abstract string DisplayName { get; }
 
         /// <summary>Lower case extensions this format claims, including the leading dot.</summary>
