@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -9,70 +10,35 @@ namespace RpaParser.Tests;
 
 public class RpaParserVersionTests
 {
-    [Theory]
-    [InlineData(Parser.Version.Rpa1)]
-    [InlineData(Parser.Version.Rpa2)]
-    [InlineData(Parser.Version.Rpa3)]
-    [InlineData(Parser.Version.Rpa32)]
-    public void CheckSupportedVersion_SupportedVersion_ReturnsSameVersion(double version)
+    private static TheoryData<ArchiveFormat> Formats(params ArchiveFormat[] formats)
     {
-        var parser = new Parser();
-
-        var result = parser.CheckSupportedVersion(version);
-
-        result.ShouldBe(version);
+        var data = new TheoryData<ArchiveFormat>();
+        foreach (var format in formats)
+        {
+            data.Add(format);
+        }
+        return data;
     }
 
-    [Theory]
-    [InlineData(Parser.Version.Unknown)]
-    [InlineData(0)]
-    [InlineData(4)]
-    [InlineData(2.5)]
-    public void CheckSupportedVersion_UnsupportedVersion_Throws(double version)
-    {
-        var parser = new Parser();
+    public static TheoryData<ArchiveFormat> AllFormats => Formats(ArchiveFormat.All.ToArray());
 
-        var ex = Should.Throw<Exception>(() => parser.CheckSupportedVersion(version));
-        ex.Message.ShouldContain("not supported");
-    }
+    public static TheoryData<ArchiveFormat> EmbeddedIndexFormats =>
+        Formats(ArchiveFormat.All.Where(f => !f.HasSeparateIndexFile).ToArray());
 
     [Fact]
-    public void CheckVersion_VersionsMatch_ReturnsTrue()
+    public void Format_NewParser_IsNotYetKnown()
     {
         var parser = new Parser();
 
-        var result = Parser.CheckVersion(Parser.Version.Rpa3, Parser.Version.Rpa3);
-
-        result.ShouldBeTrue();
-    }
-
-    [Fact]
-    public void CheckVersion_VersionsDiffer_ReturnsFalse()
-    {
-        var parser = new Parser();
-
-        var result = Parser.CheckVersion(Parser.Version.Rpa3, Parser.Version.Rpa2);
-
-        result.ShouldBeFalse();
-    }
-
-    [Fact]
-    public void ArchiveVersion_NewParser_DefaultsToUnknown()
-    {
-        var parser = new Parser();
-
-        parser.ArchiveVersion.ShouldBe(Parser.Version.Unknown);
+        parser.Format.ShouldBeNull();
         parser.Index.ShouldBeEmpty();
         parser.OptionsConfirmed.ShouldBeFalse();
         parser.Padding.ShouldBe(0);
     }
 
     [Theory]
-    [InlineData(Parser.Version.Rpa1)]
-    [InlineData(Parser.Version.Rpa2)]
-    [InlineData(Parser.Version.Rpa3)]
-    [InlineData(Parser.Version.Rpa32)]
-    public void LoadArchive_ArchiveOfEachVersion_DetectsVersionAndContents(double version)
+    [MemberData(nameof(AllFormats))]
+    public void LoadArchive_ArchiveOfEachVersion_DetectsVersionAndContents(ArchiveFormat format)
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new()
@@ -81,9 +47,9 @@ public class RpaParserVersionTests
             ["images/logo.bin"] = new byte[] { 1, 2, 3, 4, 5 }
         };
 
-        var parser = workspace.LoadArchive(version, entries);
+        var parser = workspace.LoadArchive(format, entries);
 
-        parser.ArchiveVersion.ShouldBe(version);
+        parser.Format.ShouldBeSameAs(format);
         parser.Index.Count.ShouldBe(2);
         parser.Index.Keys.ShouldContain("script.rpy");
         parser.Index.Keys.ShouldContain("images/logo.bin");
@@ -97,7 +63,7 @@ public class RpaParserVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
 
         // version 1 keeps its index in a separate .rpi file
-        var parser = workspace.LoadArchive(Parser.Version.Rpa1, entries);
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa1, entries);
 
         parser.IndexInfo.ShouldNotBeNull();
         parser.IndexInfo.Exists.ShouldBeTrue();
@@ -105,14 +71,13 @@ public class RpaParserVersionTests
     }
 
     [Theory]
-    [InlineData(Parser.Version.Rpa2)]
-    [InlineData(Parser.Version.Rpa3)]
-    public void LoadArchive_VersionWithEmbeddedIndex_HasNoSeparateIndexFile(double version)
+    [MemberData(nameof(EmbeddedIndexFormats))]
+    public void LoadArchive_VersionWithEmbeddedIndex_HasNoSeparateIndexFile(ArchiveFormat format)
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
 
-        var parser = workspace.LoadArchive(version, entries);
+        var parser = workspace.LoadArchive(format, entries);
 
         parser.IndexInfo.ShouldBeNull();
     }
@@ -122,14 +87,14 @@ public class RpaParserVersionTests
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
-        var archivePath = workspace.CreateArchive(Parser.Version.Rpa1, entries);
+        var archivePath = workspace.CreateArchive(ArchiveFormat.Rpa1, entries);
         var indexPath = Path.ChangeExtension(archivePath, ".rpi");
         var parser = new Parser();
 
         // pointing at the .rpi must locate the matching .rpa
         parser.LoadArchive(indexPath);
 
-        parser.ArchiveVersion.ShouldBe(Parser.Version.Rpa1);
+        parser.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
         parser.Index.Keys.ShouldContain("a.txt");
     }
 
@@ -140,7 +105,7 @@ public class RpaParserVersionTests
         var payload = Encoding.UTF8.GetBytes("obfuscated payload");
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = payload };
         var archivePath = workspace.CreateArchive(
-            Parser.Version.Rpa3, entries, "keyed.rpa", obfuscationKey: 0x1234ABCD);
+            ArchiveFormat.Rpa3, entries, "keyed.rpa", obfuscationKey: 0x1234ABCD);
         var parser = new Parser();
 
         parser.LoadArchive(archivePath);
@@ -156,7 +121,7 @@ public class RpaParserVersionTests
         var payload = Encoding.UTF8.GetBytes("padded payload");
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = payload };
         var archivePath = workspace.CreateArchive(
-            Parser.Version.Rpa3, entries, "padded.rpa", padding: 32);
+            ArchiveFormat.Rpa3, entries, "padded.rpa", padding: 32);
         var parser = new Parser();
 
         parser.LoadArchive(archivePath);
@@ -198,7 +163,7 @@ public class RpaParserVersionTests
     {
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
-        var archivePath = workspace.CreateArchive(Parser.Version.Rpa1, entries);
+        var archivePath = workspace.CreateArchive(ArchiveFormat.Rpa1, entries);
         File.Delete(Path.ChangeExtension(archivePath, ".rpi"));
         var parser = new Parser();
 

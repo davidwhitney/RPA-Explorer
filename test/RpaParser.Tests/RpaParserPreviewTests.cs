@@ -10,7 +10,7 @@ public class RpaParserPreviewTests
 {
     private static Parser ArchiveContaining(TempWorkspace workspace, string entryName, byte[] content) =>
         workspace.LoadArchive(
-            Parser.Version.Rpa3,
+            ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { [entryName] = content });
 
     [Theory]
@@ -24,10 +24,10 @@ public class RpaParserPreviewTests
         byte[] content = { 0x89, 0x50, 0x4E, 0x47 };
         var parser = ArchiveContaining(workspace, entryName, content);
 
-        KeyValuePair<string, object> preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.GetPreview(entryName);
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Image);
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.Format.ShouldBeOfType<ImageContent>();
+        preview.AsBytes().ShouldBe(content);
     }
 
     [Theory]
@@ -40,10 +40,10 @@ public class RpaParserPreviewTests
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, entryName, Encoding.UTF8.GetBytes("hello world"));
 
-        KeyValuePair<string, object> preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.GetPreview(entryName);
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Text);
-        preview.Value.ShouldBeOfType<string>().ShouldBe("hello world");
+        preview.Format.ShouldBeOfType<TextContent>();
+        preview.AsText().ShouldBe("hello world");
     }
 
     [Theory]
@@ -56,10 +56,10 @@ public class RpaParserPreviewTests
         byte[] content = { 1, 2, 3 };
         var parser = ArchiveContaining(workspace, entryName, content);
 
-        KeyValuePair<string, object> preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.GetPreview(entryName);
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Audio);
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.Format.ShouldBeOfType<AudioContent>();
+        preview.AsBytes().ShouldBe(content);
     }
 
     [Theory]
@@ -72,10 +72,10 @@ public class RpaParserPreviewTests
         byte[] content = { 4, 5, 6 };
         var parser = ArchiveContaining(workspace, entryName, content);
 
-        KeyValuePair<string, object> preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.GetPreview(entryName);
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Video);
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.Format.ShouldBeOfType<VideoContent>();
+        preview.AsBytes().ShouldBe(content);
     }
 
     [Fact]
@@ -85,10 +85,10 @@ public class RpaParserPreviewTests
         byte[] content = { 0xDE, 0xAD };
         var parser = ArchiveContaining(workspace, "blob.dat", content);
 
-        KeyValuePair<string, object> preview = parser.GetPreview("blob.dat");
+        PreviewResult preview = parser.GetPreview("blob.dat");
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Unknown);
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.Format.ShouldBeOfType<UnknownContent>();
+        preview.AsBytes().ShouldBe(content);
     }
 
     [Fact]
@@ -97,10 +97,10 @@ public class RpaParserPreviewTests
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes("a"));
 
-        KeyValuePair<string, object> preview = parser.GetPreview("absent.txt");
+        PreviewResult preview = parser.GetPreview("absent.txt");
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Unknown);
-        preview.Value.ShouldBeNull();
+        preview.Format.ShouldBeOfType<UnknownContent>();
+        preview.Content.ShouldBeNull();
     }
 
     [Fact]
@@ -110,10 +110,10 @@ public class RpaParserPreviewTests
         var content = Encoding.UTF8.GetBytes("raw please");
         var parser = ArchiveContaining(workspace, "a.txt", content);
 
-        KeyValuePair<string, object> preview = parser.GetPreview("a.txt", true);
+        PreviewResult preview = parser.GetPreview("a.txt", true);
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Text);
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.Format.ShouldBeOfType<TextContent>();
+        preview.AsBytes().ShouldBe(content);
     }
 
     [Fact]
@@ -123,10 +123,10 @@ public class RpaParserPreviewTests
         var content = Encoding.UTF8.GetBytes("raw accessor");
         var parser = ArchiveContaining(workspace, "a.txt", content);
 
-        KeyValuePair<string, byte[]> preview = parser.GetPreviewRaw("a.txt");
+        PreviewResult preview = parser.GetPreviewRaw("a.txt");
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Text);
-        preview.Value.ShouldBe(content);
+        preview.Format.ShouldBeOfType<TextContent>();
+        preview.Content.ShouldBe(content);
     }
 
     [Theory]
@@ -139,7 +139,7 @@ public class RpaParserPreviewTests
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
 
-        var text = (string) parser.GetPreview("a.txt").Value;
+        var text = parser.GetPreview("a.txt").AsText();
 
         // Every separator that survives must be the platform's own.
         text.Replace(Environment.NewLine, string.Empty).ShouldNotContain("\r");

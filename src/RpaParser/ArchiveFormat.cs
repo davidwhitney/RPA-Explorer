@@ -24,6 +24,12 @@ namespace RpaParser
         /// <summary>True when index offsets and lengths are XORed with the obfuscation key.</summary>
         public abstract bool UsesObfuscation { get; }
 
+        /// <summary>True when random padding may be inserted between stored files.</summary>
+        public virtual bool SupportsPadding => true;
+
+        /// <summary>Name shown to the user.</summary>
+        public abstract string DisplayName { get; }
+
         /// <summary>
         /// Bytes reserved before the first file. File data starts immediately after the
         /// header, so this is exactly the length <see cref="BuildHeader"/> produces.
@@ -42,14 +48,13 @@ namespace RpaParser
         /// </summary>
         public virtual long ReadObfuscationKey(string[] headerFields) => 0;
 
+        public static ArchiveFormat Rpa1 { get; } = new Rpa1Format();
+        public static ArchiveFormat Rpa2 { get; } = new Rpa2Format();
+        public static ArchiveFormat Rpa3 { get; } = new Rpa3Format();
+        public static ArchiveFormat Rpa32 { get; } = new Rpa32Format();
+
         /// <summary>Every known format, most specific first.</summary>
-        public static IReadOnlyList<ArchiveFormat> All { get; } =
-        [
-            new Rpa32Format(),
-            new Rpa3Format(),
-            new Rpa2Format(),
-            new Rpa1Format()
-        ];
+        public static IReadOnlyList<ArchiveFormat> All { get; } = [Rpa32, Rpa3, Rpa2, Rpa1];
 
         /// <summary>
         /// The format matching the archive, or null when nothing recognises it.
@@ -61,7 +66,7 @@ namespace RpaParser
         public static ArchiveFormat ForVersion(double version) =>
             All.FirstOrDefault(format => format.Version == version);
 
-        public override string ToString() => $"RPA {Version}";
+        public override string ToString() => DisplayName;
 
         // Offsets are written as 16 hex digits and keys as 8, which is what fixes the
         // header lengths below.
@@ -75,9 +80,13 @@ namespace RpaParser
     /// </summary>
     public sealed class Rpa1Format : ArchiveFormat
     {
-        public override double Version => Parser.Version.Rpa1;
+        public override double Version => 1;
+        public override string DisplayName => "RPA 1.0";
         public override bool HasSeparateIndexFile => true;
         public override bool UsesObfuscation => false;
+
+        // Version 1 writes the files back to back with no header to offset them.
+        public override bool SupportsPadding => false;
         public override int HeaderLength => 0;
 
         public override bool Matches(string firstLine, bool indexPairExists) => indexPairExists;
@@ -92,7 +101,8 @@ namespace RpaParser
     {
         private const string Magic = "RPA-2.0 ";
 
-        public override double Version => Parser.Version.Rpa2;
+        public override double Version => 2;
+        public override string DisplayName => "RPA 2.0";
         public override bool HasSeparateIndexFile => false;
         public override bool UsesObfuscation => false;
         public override int HeaderLength => Magic.Length + 16 + 1;
@@ -112,7 +122,8 @@ namespace RpaParser
         /// <summary>Header fields from this index onwards are XORed together to form the key.</summary>
         private const int KeyFieldIndex = 2;
 
-        public override double Version => Parser.Version.Rpa3;
+        public override double Version => 3;
+        public override string DisplayName => "RPA 3.0";
         public override bool HasSeparateIndexFile => false;
         public override bool UsesObfuscation => true;
         public override int HeaderLength => Magic.Length + 16 + 1 + 8 + 1;
@@ -147,7 +158,8 @@ namespace RpaParser
         private const string Magic = "RPA-3.2 ";
         private const int KeyFieldIndex = 3;
 
-        public override double Version => Parser.Version.Rpa32;
+        public override double Version => 3.2;
+        public override string DisplayName => "RPA 3.2";
         public override bool HasSeparateIndexFile => false;
         public override bool UsesObfuscation => true;
         public override int HeaderLength => Magic.Length + 16 + 1 + 8 + 1 + 8 + 1;

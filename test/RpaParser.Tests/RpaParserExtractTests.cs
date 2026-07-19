@@ -19,7 +19,7 @@ public class RpaParserExtractTests
     public void ExtractData_FileStoredInArchive_ReturnsOriginalBytes()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var result = parser.ExtractData("images/nested/pic.bin");
 
@@ -30,7 +30,7 @@ public class RpaParserExtractTests
     public void ExtractData_FileNotInIndex_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var ex = Should.Throw<Exception>(() => parser.ExtractData("nope.txt"));
 
@@ -62,7 +62,7 @@ public class RpaParserExtractTests
         using var workspace = new TempWorkspace();
         var payload = Encoding.UTF8.GetBytes("segment payload");
         var parser = workspace.LoadArchive(
-            Parser.Version.Rpa3, new Dictionary<string, byte[]> { ["a.txt"] = payload });
+            ArchiveFormat.Rpa3, new Dictionary<string, byte[]> { ["a.txt"] = payload });
 
         var result = parser.ExtractData("a.txt");
 
@@ -74,7 +74,7 @@ public class RpaParserExtractTests
     public void Extract_ExportPathGiven_WritesFileUnderThatPath()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
         var exportDir = workspace.Path_("export");
         Directory.CreateDirectory(exportDir);
 
@@ -89,7 +89,7 @@ public class RpaParserExtractTests
     public void Extract_NestedEntry_CreatesIntermediateDirectories()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
         var exportDir = workspace.Path_("export-nested");
         Directory.CreateDirectory(exportDir);
 
@@ -103,7 +103,7 @@ public class RpaParserExtractTests
     public void Extract_EmptyExportPath_WritesNextToArchive()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var written = parser.Extract("readme.txt", string.Empty);
 
@@ -115,7 +115,7 @@ public class RpaParserExtractTests
     public void Extract_WhitespaceExportPath_WritesNextToArchive()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var written = parser.Extract("readme.txt", "   ");
 
@@ -127,7 +127,7 @@ public class RpaParserExtractTests
     public void Extract_ExportPathDoesNotExist_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var ex = Should.Throw<Exception>(
             () => parser.Extract("readme.txt", workspace.Path_("no-such-dir")));
@@ -139,7 +139,7 @@ public class RpaParserExtractTests
     public void Extract_FileNotInIndex_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         Should.Throw<Exception>(() => parser.Extract("missing.txt", string.Empty));
     }

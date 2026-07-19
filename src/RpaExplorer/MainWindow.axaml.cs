@@ -443,9 +443,9 @@ namespace RpaExplorer
                     selectedSize = _indexPathSize[selectedPath];
                 }
 
-                if (!Parser.CheckVersion(_rpaParser.ArchiveVersion, Parser.Version.Unknown))
+                if (_rpaParser.Format != null)
                 {
-                    info += GetText("Archive_version") + _rpaParser.ArchiveVersion + Environment.NewLine;
+                    info += GetText("Archive_version") + _rpaParser.Format + Environment.NewLine;
                     info += GetText("Archive_file_location") + _rpaParser.ArchiveInfo.FullName + Environment.NewLine;
                     info += GetText("Archive_file_size") + FormatSize(_rpaParser.ArchiveInfo.Length) + Environment.NewLine;
                     if (_rpaParser.IndexInfo != null)
@@ -539,7 +539,7 @@ namespace RpaExplorer
             string failureMessage = null;
             try
             {
-                KeyValuePair<string, object> data = default;
+                PreviewResult data = null;
                 try
                 {
                     data = _rpaParser.GetPreview(path);
@@ -562,7 +562,7 @@ namespace RpaExplorer
                             }
                             catch (Exception retryEx)
                             {
-                                data = new KeyValuePair<string, object>(Parser.PreviewTypes.Text,
+                                data = new PreviewResult(ContentFormat.Text,
                                     string.Format(GetText("Preview_failed_reason_hint"), retryEx.Message));
                                 retried = true;
                             }
@@ -570,7 +570,7 @@ namespace RpaExplorer
 
                         if (!retried)
                         {
-                            data = new KeyValuePair<string, object>(Parser.PreviewTypes.Text,
+                            data = new PreviewResult(ContentFormat.Text,
                                 string.Format(GetText("Preview_failed_reason_hint"), ex.Message));
                         }
                     }
@@ -580,30 +580,30 @@ namespace RpaExplorer
                     }
                 }
 
-                if (data.Key == Parser.PreviewTypes.Image)
+                if (data.Format is ImageContent)
                 {
-                    PreviewImage.Source = Images.DecodeToBitmap((byte[]) data.Value);
+                    PreviewImage.Source = Images.DecodeToBitmap(data.AsBytes());
                     Tabs.SelectedItem = TabImage;
                     unsupported = false;
                 }
-                else if (data.Key == Parser.PreviewTypes.Text)
+                else if (data.Format is TextContent)
                 {
                     _searchStartIndex = 0;
-                    PreviewText.Text = (string) data.Value;
+                    PreviewText.Text = data.AsText();
                     Tabs.SelectedItem = TabText;
                     unsupported = false;
                 }
-                else if (data.Key == Parser.PreviewTypes.Audio || data.Key == Parser.PreviewTypes.Video)
+                else if (data.Format is AudioContent or VideoContent)
                 {
                     // Prompts the user to install VLC when it is missing; the placeholder tab
                     // then explains what to do, so no second error dialog is raised here.
                     if (await EnsureMediaAvailable())
                     {
-                        _memoryStreamVlc = new MemoryStream((byte[]) data.Value);
+                        _memoryStreamVlc = new MemoryStream(data.AsBytes());
                         _streamMediaInputVlc = new StreamMediaInput(_memoryStreamVlc);
                         _mediaVlc = new Media(_libVlc, _streamMediaInputVlc);
                         SetMediaTimeLabel(_mediaVlc.Duration, 0);
-                        AudioArt.IsVisible = data.Key == Parser.PreviewTypes.Audio;
+                        AudioArt.IsVisible = data.Format is AudioContent;
                         PlayPauseButton.Content = GetText("Pause");
 
                         // The media tab must be visible *before* playback starts: a TabControl

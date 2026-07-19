@@ -21,7 +21,7 @@ public class ParserPathResolutionTests
     /// <summary>Builds a version 1 pair and renames both halves to the given base name.</summary>
     private static (string Archive, string Index) BuildPair(TempWorkspace workspace, string archiveName, string indexName)
     {
-        string created = workspace.CreateArchive(Parser.Version.Rpa1, Entries(), "source.rpa");
+        string created = workspace.CreateArchive(ArchiveFormat.Rpa1, Entries(), "source.rpa");
         string createdIndex = Path.ChangeExtension(created, ".rpi");
 
         string archive = workspace.Path_(archiveName);
@@ -79,7 +79,7 @@ public class ParserPathResolutionTests
 
         parser.LoadArchive(archive);
 
-        parser.ArchiveVersion.ShouldBe(Parser.Version.Rpa1);
+        parser.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
         parser.Index.Keys.ShouldContain("a.txt");
     }
 }

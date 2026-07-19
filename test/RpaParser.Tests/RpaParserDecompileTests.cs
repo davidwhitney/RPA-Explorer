@@ -103,16 +103,16 @@ public class RpaParserDecompileTests
 
         using var workspace = new TempWorkspace();
         var parser = workspace.LoadArchive(
-            Parser.Version.Rpa3,
+            ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { ["code.rpyc"] = Encoding.UTF8.GetBytes("compiled") });
         parser.PythonLocation = WriteStubInterpreter(workspace, "python-stub",
             "out=\"${3%.rpyc}.rpy\"\nprintf 'label decompiled:\\n' > \"$out\"\n");
         parser.UnrpycLocation = workspace.WriteFile("unrpyc.py", "# stand-in");
 
-        KeyValuePair<string, object> preview = parser.GetPreview("code.rpyc");
+        PreviewResult preview = parser.GetPreview("code.rpyc");
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Text);
-        preview.Value.ShouldBeOfType<string>().ShouldContain("label decompiled:");
+        preview.Format.ShouldBeOfType<TextContent>();
+        preview.AsText().ShouldContain("label decompiled:");
     }
 
     [Fact]
@@ -126,17 +126,17 @@ public class RpaParserDecompileTests
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("compiled");
         var parser = workspace.LoadArchive(
-            Parser.Version.Rpa3,
+            ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { ["code.rpyc"] = content });
         // Produces an empty .rpy, so there is nothing to show as text.
         parser.PythonLocation = WriteStubInterpreter(workspace, "python-stub",
             "out=\"${3%.rpyc}.rpy\"\n: > \"$out\"\n");
         parser.UnrpycLocation = workspace.WriteFile("unrpyc.py", "# stand-in");
 
-        KeyValuePair<string, object> preview = parser.GetPreview("code.rpyc");
+        PreviewResult preview = parser.GetPreview("code.rpyc");
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Unknown);
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.Format.ShouldBeOfType<UnknownContent>();
+        preview.AsBytes().ShouldBe(content);
     }
 
     [Fact]
@@ -150,14 +150,14 @@ public class RpaParserDecompileTests
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("compiled");
         var parser = workspace.LoadArchive(
-            Parser.Version.Rpa3,
+            ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { ["code.rpyc"] = content });
         parser.PythonLocation = WriteStubInterpreter(workspace, "python-stub",
             "out=\"${3%.rpyc}.rpy\"\nprintf 'label x:\\n' > \"$out\"\n");
         parser.UnrpycLocation = workspace.WriteFile("unrpyc.py", "# stand-in");
 
-        KeyValuePair<string, object> preview = parser.GetPreview("code.rpyc", true);
+        PreviewResult preview = parser.GetPreview("code.rpyc", true);
 
-        preview.Value.ShouldBeOfType<byte[]>().ShouldBe(content);
+        preview.AsBytes().ShouldBe(content);
     }
 }

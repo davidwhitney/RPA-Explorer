@@ -22,15 +22,14 @@ namespace RpaExplorer
 
             LoadTexts();
 
-            VersionCombo.Items.Add(Parser.Version.Rpa32);
-            VersionCombo.Items.Add(Parser.Version.Rpa3);
-            VersionCombo.Items.Add(Parser.Version.Rpa2);
-            VersionCombo.Items.Add(Parser.Version.Rpa1);
+            // The dialog offers the formats themselves, so there is no parallel list of
+            // version numbers to keep in step.
+            foreach (var format in ArchiveFormat.All)
+            {
+                VersionCombo.Items.Add(format);
+            }
 
-            VersionCombo.SelectedItem =
-                Parser.CheckVersion(_rpaParser.ArchiveVersion, Parser.Version.Unknown)
-                    ? Parser.Version.Rpa3
-                    : _rpaParser.ArchiveVersion;
+            VersionCombo.SelectedItem = _rpaParser.Format ?? ArchiveFormat.Rpa3;
 
             PaddingBox.Text = _rpaParser.Padding.ToString();
             KeyBox.Text = _rpaParser.ObfuscationKey.ToString();
@@ -54,7 +53,7 @@ namespace RpaExplorer
         {
             try
             {
-                _rpaParser.ArchiveVersion = _rpaParser.CheckSupportedVersion((double) VersionCombo.SelectedItem);
+                _rpaParser.Format = (ArchiveFormat) VersionCombo.SelectedItem;
                 _rpaParser.Padding = Convert.ToInt32(PaddingBox.Text);
                 _rpaParser.ObfuscationKey = Convert.ToInt64(KeyBox.Text);
                 _rpaParser.OptionsConfirmed = true;
@@ -73,27 +72,15 @@ namespace RpaExplorer
                 return;
             }
 
-            switch ((double) VersionCombo.SelectedItem)
-            {
-                case Parser.Version.Rpa1:
-                    PaddingBox.IsEnabled = false;
-                    KeyBox.IsEnabled = false;
-                    PaddingBox.Text = "0";
-                    KeyBox.Text = "0";
-                    break;
-                case Parser.Version.Rpa2:
-                    PaddingBox.IsEnabled = true;
-                    KeyBox.IsEnabled = false;
-                    PaddingBox.Text = _rpaParser.Padding.ToString();
-                    KeyBox.Text = "0";
-                    break;
-                default:
-                    PaddingBox.IsEnabled = true;
-                    KeyBox.IsEnabled = true;
-                    PaddingBox.Text = _rpaParser.Padding.ToString();
-                    KeyBox.Text = _rpaParser.ObfuscationKey.ToString();
-                    break;
-            }
+            // Offer each option only where the chosen format actually supports it, rather
+            // than enumerating the versions that happen to.
+            var format = (ArchiveFormat) VersionCombo.SelectedItem;
+
+            PaddingBox.IsEnabled = format.SupportsPadding;
+            KeyBox.IsEnabled = format.UsesObfuscation;
+
+            PaddingBox.Text = format.SupportsPadding ? _rpaParser.Padding.ToString() : "0";
+            KeyBox.Text = format.UsesObfuscation ? _rpaParser.ObfuscationKey.ToString() : "0";
         }
     }
 }

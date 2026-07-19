@@ -105,8 +105,8 @@ public class ContentFormatTests
 
         var preview = new ImageContent().CreatePreview(data, new Parser());
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Image);
-        preview.Value.ShouldBe(data);
+        preview.Format.ShouldBeOfType<ImageContent>();
+        preview.Content.ShouldBe(data);
     }
 
     [Fact]
@@ -116,14 +116,17 @@ public class ContentFormatTests
 
         var preview = new TextContent().CreatePreview(data, new Parser());
 
-        preview.Key.ShouldBe(Parser.PreviewTypes.Text);
-        preview.Value.ShouldBeOfType<string>()
+        preview.Format.ShouldBeOfType<TextContent>();
+        preview.AsText()
             .ShouldBe("one" + System.Environment.NewLine + "two");
     }
 
     [Fact]
-    public void PreviewType_CompiledScript_ReportsTextBecauseItDecompilesToSource()
+    public void DisplayName_EveryFormat_IsPresentedToTheUser()
     {
-        new CompiledScriptContent().PreviewType.ShouldBe(Parser.PreviewTypes.Text);
+        foreach (var format in ContentFormat.All)
+        {
+            format.DisplayName.ShouldNotBeNullOrWhiteSpace();
+        }
     }
 }

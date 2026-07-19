@@ -15,14 +15,6 @@ namespace RpaParser
     
     public class Parser
     {
-        public static class Version
-        {
-            public const double Unknown = -1;
-            public const double Rpa1 = 1;
-            public const double Rpa2 = 2;
-            public const double Rpa3 = 3;
-            public const double Rpa32 = 3.2;
-        }
         
         private static class ArchiveMagic
         {
@@ -40,17 +32,11 @@ namespace RpaParser
 
         public FileInfo ArchiveInfo;
         public FileInfo IndexInfo;
-        private ArchiveFormat _format;
-
-        /// <summary>Detected (or chosen) format. Null until an archive is loaded or a version picked.</summary>
-        public ArchiveFormat Format => _format;
-
-        /// <summary>Numeric view of <see cref="Format"/>, kept for the settings UI and callers.</summary>
-        public double ArchiveVersion
-        {
-            get => _format?.Version ?? Version.Unknown;
-            set => _format = ArchiveFormat.ForVersion(value);
-        }
+        /// <summary>
+        /// The archive format: detected when loading, chosen by the caller when saving.
+        /// Null until one or the other has happened.
+        /// </summary>
+        public ArchiveFormat Format { get; set; }
         public int Padding = 0;
         public long ObfuscationKey = 0xDEADBEEF;
         public bool OptionsConfirmed = false;
@@ -82,14 +68,6 @@ namespace RpaParser
             public long Length;
         }
 
-        public static class PreviewTypes
-        {
-            public const string Unknown = "unknown";
-            public const string Image = "image";
-            public const string Text = "text";
-            public const string Video = "video";
-            public const string Audio = "audio";
-        }
         
         
         public void LoadArchive(string filePath)
@@ -98,9 +76,9 @@ namespace RpaParser
             GetIndexAndArchive();
             ArchiveInfo = GetArchiveInfo();
             _firstLine = GetFirstLine();
-            _format = DetectFormat();
+            Format = DetectFormat();
 
-            if (_format.HasSeparateIndexFile)
+            if (Format.HasSeparateIndexFile)
             {
                 IndexInfo = GetIndexInfo();
             }
@@ -108,13 +86,11 @@ namespace RpaParser
             {
                 _metadata = GetMetadata();
                 _offset = GetOffset();
-                ObfuscationKey = _format.ReadObfuscationKey(_metadata);
+                ObfuscationKey = Format.ReadObfuscationKey(_metadata);
             }
 
             Index = GetIndexes();
         }
-
-        public static bool CheckVersion(double version, double check) => version - check == 0;
 
         /// <summary>
         /// A version 1 archive is a .rpa/.rpi pair, so given either half the other is derived.
@@ -152,16 +128,6 @@ namespace RpaParser
             }
 
             return path[..^replacement.Length] + new string(swapped);
-        }
-
-        public double CheckSupportedVersion(double version)
-        {
-            if (ArchiveFormat.ForVersion(version) == null)
-            {
-                throw new Exception("Specified version is not supported.");
-            }
-
-            return version;
         }
 
         private FileInfo GetArchiveInfo()
@@ -228,11 +194,11 @@ namespace RpaParser
             var indexList = new SortedDictionary<string,ArchiveIndex>();
             object unpickledIndexes;
 
-            var filePath = _format.HasSeparateIndexFile ? _indexPath : _archivePath;
+            var filePath = Format.HasSeparateIndexFile ? _indexPath : _archivePath;
             
             using (var reader = new BinaryReader(File.OpenRead(filePath), Encoding.UTF8))
             {
-                if (!_format.HasSeparateIndexFile)
+                if (!Format.HasSeparateIndexFile)
                 {
                     reader.BaseStream.Seek(_offset, SeekOrigin.Begin);
                 }
@@ -321,7 +287,7 @@ namespace RpaParser
                 foreach (var kvpI in kvp.Value.Tuples)
                 {
                     // Deobfuscate index data
-                    if (_format.UsesObfuscation)
+                    if (Format.UsesObfuscation)
                     {
                         kvpI.Value.Offset ^= ObfuscationKey;
                         kvpI.Value.Length ^= ObfuscationKey;
@@ -445,26 +411,20 @@ namespace RpaParser
             return decompiled;
         }
 
-        public KeyValuePair<string, byte[]> GetPreviewRaw(string fileName)
-        {
-            var data = GetPreview(fileName, true);
-            return new KeyValuePair<string, byte[]>(data.Key, (byte[]) data.Value);
-        }
+        public PreviewResult GetPreviewRaw(string fileName) => GetPreview(fileName, true);
 
-        public KeyValuePair<string, object> GetPreview(string fileName, bool returnRaw = false)
+        public PreviewResult GetPreview(string fileName, bool returnRaw = false)
         {
             if (!Index.ContainsKey(fileName))
             {
-                return new KeyValuePair<string, object>(PreviewTypes.Unknown, null);
+                return new PreviewResult(ContentFormat.Unknown, null);
             }
 
             var bytes = ExtractData(fileName);
             var preview = ContentFormat.Detect(fileName).CreatePreview(bytes, this);
 
             // The caller may want the bytes regardless of how the format presents them.
-            return returnRaw
-                ? new KeyValuePair<string, object>(preview.Key, bytes)
-                : preview;
+            return returnRaw ? new PreviewResult(preview.Format, bytes) : preview;
         }
 
         internal static string NormalizeNewLines(string text)
@@ -598,7 +558,7 @@ namespace RpaParser
 
                 using (Stream stream = File.Open(tmpPath + ".rpa", FileMode.Truncate))
                 {
-                    var format = _format
+                    var format = Format
                                  ?? throw new Exception("Specified version is not supported.");
 
                     // File data starts immediately after the header.

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -9,6 +10,18 @@ namespace RpaParser.Tests;
 
 public class RpaParserSaveTests
 {
+    private static TheoryData<ArchiveFormat> Formats(params ArchiveFormat[] formats)
+    {
+        var data = new TheoryData<ArchiveFormat>();
+        foreach (var format in formats)
+        {
+            data.Add(format);
+        }
+        return data;
+    }
+
+    public static TheoryData<ArchiveFormat> AllFormats => Formats(ArchiveFormat.All.ToArray());
+
     private static Dictionary<string, byte[]> SampleEntries() => new()
     {
         ["a.txt"] = Encoding.UTF8.GetBytes("first"),
@@ -21,7 +34,7 @@ public class RpaParserSaveTests
         using var workspace = new TempWorkspace();
         var requested = workspace.Path_("no-extension");
 
-        var saved = workspace.CreateArchive(Parser.Version.Rpa3, SampleEntries(), "no-extension");
+        var saved = workspace.CreateArchive(ArchiveFormat.Rpa3, SampleEntries(), "no-extension");
 
         saved.ShouldBe(requested + ".rpa");
         File.Exists(saved).ShouldBeTrue();
@@ -32,7 +45,7 @@ public class RpaParserSaveTests
     {
         using var workspace = new TempWorkspace();
 
-        var saved = workspace.CreateArchive(Parser.Version.Rpa3, SampleEntries(), "given.rpi");
+        var saved = workspace.CreateArchive(ArchiveFormat.Rpa3, SampleEntries(), "given.rpi");
 
         saved.ShouldEndWith(".rpa");
         File.Exists(saved).ShouldBeTrue();
@@ -43,23 +56,20 @@ public class RpaParserSaveTests
     {
         using var workspace = new TempWorkspace();
 
-        var saved = workspace.CreateArchive(Parser.Version.Rpa1, SampleEntries(), "v1.rpa");
+        var saved = workspace.CreateArchive(ArchiveFormat.Rpa1, SampleEntries(), "v1.rpa");
 
         File.Exists(saved).ShouldBeTrue();
         File.Exists(Path.ChangeExtension(saved, ".rpi")).ShouldBeTrue();
     }
 
     [Theory]
-    [InlineData(Parser.Version.Rpa1)]
-    [InlineData(Parser.Version.Rpa2)]
-    [InlineData(Parser.Version.Rpa3)]
-    [InlineData(Parser.Version.Rpa32)]
-    public void SaveArchive_EachVersion_ProducesArchiveThatReloadsIdentically(double version)
+    [MemberData(nameof(AllFormats))]
+    public void SaveArchive_EachVersion_ProducesArchiveThatReloadsIdentically(ArchiveFormat format)
     {
         using var workspace = new TempWorkspace();
         var entries = SampleEntries();
 
-        var reloaded = workspace.LoadArchive(version, entries, $"roundtrip-{version}.rpa");
+        var reloaded = workspace.LoadArchive(format, entries, $"roundtrip-{format.Version}.rpa");
 
         reloaded.Index.Count.ShouldBe(entries.Count);
         foreach (var entry in entries)
@@ -72,7 +82,7 @@ public class RpaParserSaveTests
     public void SaveArchive_ReSavingLoadedArchive_PreservesContents()
     {
         using var workspace = new TempWorkspace();
-        var first = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var first = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         var resaved = first.SaveArchive(workspace.Path_("resaved.rpa"));
         var second = new Parser();
@@ -83,10 +93,10 @@ public class RpaParserSaveTests
     }
 
     [Fact]
-    public void SaveArchive_UnsupportedVersion_Throws()
+    public void SaveArchive_NoFormatChosen_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Parser { ArchiveVersion = Parser.Version.Unknown };
+        var parser = new Parser();  // no format chosen
         parser.Index.Add("a.txt", new Parser.ArchiveIndex
         {
             InArchive = false,
@@ -102,7 +112,7 @@ public class RpaParserSaveTests
     public void SaveArchive_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Parser { ArchiveVersion = Parser.Version.Rpa3 };
+        var parser = new Parser { Format = ArchiveFormat.Rpa3 };
         parser.Index.Add("ghost.txt", new Parser.ArchiveIndex
         {
             InArchive = false,
@@ -122,9 +132,9 @@ public class RpaParserSaveTests
     {
         using var workspace = new TempWorkspace();
 
-        var plain = workspace.CreateArchive(Parser.Version.Rpa3, SampleEntries(), "plain.rpa");
+        var plain = workspace.CreateArchive(ArchiveFormat.Rpa3, SampleEntries(), "plain.rpa");
         var padded = workspace.CreateArchive(
-            Parser.Version.Rpa3, SampleEntries(), "padded.rpa", padding: 64);
+            ArchiveFormat.Rpa3, SampleEntries(), "padded.rpa", padding: 64);
 
         new FileInfo(padded).Length.ShouldBeGreaterThan(new FileInfo(plain).Length);
     }
@@ -133,7 +143,7 @@ public class RpaParserSaveTests
     public void DeepCopyIndex_ModifyingCopy_LeavesOriginalUnchanged()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         SortedDictionary<string, Parser.ArchiveIndex> copy = parser.DeepCopyIndex(parser.Index);
         copy["a.txt"].TreePath = "changed.txt";
@@ -147,7 +157,7 @@ public class RpaParserSaveTests
     public void DeepCopyIndex_CopiedEntry_CarriesAllFieldsAndSegments()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(Parser.Version.Rpa3, SampleEntries());
+        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
         SortedDictionary<string, Parser.ArchiveIndex> copy = parser.DeepCopyIndex(parser.Index);
 

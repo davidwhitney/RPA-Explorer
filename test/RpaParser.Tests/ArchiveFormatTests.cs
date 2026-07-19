@@ -7,65 +7,80 @@ namespace RpaParser.Tests;
 
 public class ArchiveFormatTests
 {
+    private static TheoryData<ArchiveFormat> Formats(params ArchiveFormat[] formats)
+    {
+        var data = new TheoryData<ArchiveFormat>();
+        foreach (var format in formats)
+        {
+            data.Add(format);
+        }
+        return data;
+    }
+
+    public static TheoryData<ArchiveFormat> AllFormats => Formats(ArchiveFormat.All.ToArray());
+
+    public static TheoryData<ArchiveFormat> FormatsWithHeaders =>
+        Formats(ArchiveFormat.All.Where(f => !f.HasSeparateIndexFile).ToArray());
+
+    public static TheoryData<ArchiveFormat> ObfuscatedFormats =>
+        Formats(ArchiveFormat.All.Where(f => f.UsesObfuscation).ToArray());
+
+    public static TheoryData<ArchiveFormat> PlainFormats =>
+        Formats(ArchiveFormat.All.Where(f => !f.UsesObfuscation).ToArray());
+
+    public static TheoryData<string, ArchiveFormat> KnownHeaders => new()
+    {
+        { "RPA-2.0 0000000000000019", ArchiveFormat.Rpa2 },
+        { "RPA-3.0 0000000000000022 deadbeef", ArchiveFormat.Rpa3 },
+        { "RPA-3.2 0000000000000022 00000000 deadbeef", ArchiveFormat.Rpa32 }
+    };
+
     [Theory]
-    [InlineData("RPA-2.0 0000000000000019", Parser.Version.Rpa2)]
-    [InlineData("RPA-3.0 0000000000000022 deadbeef", Parser.Version.Rpa3)]
-    [InlineData("RPA-3.2 0000000000000022 00000000 deadbeef", Parser.Version.Rpa32)]
-    public void Detect_HeaderWithKnownMagic_ReturnsMatchingFormat(string firstLine, double expected)
+    [MemberData(nameof(KnownHeaders))]
+    public void Detect_HeaderWithKnownMagic_ReturnsMatchingFormat(string firstLine, ArchiveFormat expected)
     {
         ArchiveFormat format = ArchiveFormat.Detect(firstLine, indexPairExists: false);
 
-        format.ShouldNotBeNull();
-        format.Version.ShouldBe(expected);
+        format.ShouldBeSameAs(expected);
     }
 
     [Fact]
     public void Detect_NoMagicButIndexPairPresent_ReturnsVersion1()
     {
-        ArchiveFormat format = ArchiveFormat.Detect("anything at all", indexPairExists: true);
-
-        format.ShouldBeOfType<Rpa1Format>();
+        ArchiveFormat.Detect("anything at all", indexPairExists: true).ShouldBeOfType<Rpa1Format>();
     }
 
     [Fact]
     public void Detect_NoMagicAndNoIndexPair_ReturnsNull()
     {
-        ArchiveFormat format = ArchiveFormat.Detect("not an archive", indexPairExists: false);
-
-        format.ShouldBeNull();
+        ArchiveFormat.Detect("not an archive", indexPairExists: false).ShouldBeNull();
     }
 
     [Fact]
     public void Detect_NullFirstLine_DoesNotThrow()
     {
-        ArchiveFormat format = ArchiveFormat.Detect(null, indexPairExists: false);
-
-        format.ShouldBeNull();
+        ArchiveFormat.Detect(null, indexPairExists: false).ShouldBeNull();
     }
 
     [Fact]
     public void Detect_Version32Header_IsNotMistakenForVersion3()
     {
-        // The 3.2 format is offered the header first; both share the "RPA-3" prefix.
-        ArchiveFormat format = ArchiveFormat.Detect("RPA-3.2 0000000000000022 00000000 deadbeef", false);
-
-        format.ShouldBeOfType<Rpa32Format>();
+        // Both share the "RPA-3" prefix, so 3.2 is offered the header first.
+        ArchiveFormat.Detect("RPA-3.2 0000000000000022 00000000 deadbeef", false)
+            .ShouldBeOfType<Rpa32Format>();
     }
 
     [Theory]
-    [InlineData(Parser.Version.Rpa1)]
-    [InlineData(Parser.Version.Rpa2)]
-    [InlineData(Parser.Version.Rpa3)]
-    [InlineData(Parser.Version.Rpa32)]
-    public void ForVersion_SupportedVersion_ReturnsFormat(double version)
+    [MemberData(nameof(AllFormats))]
+    public void ForVersion_SupportedVersion_ReturnsThatFormat(ArchiveFormat format)
     {
-        ArchiveFormat.ForVersion(version).Version.ShouldBe(version);
+        ArchiveFormat.ForVersion(format.Version).ShouldBeSameAs(format);
     }
 
     [Theory]
-    [InlineData(Parser.Version.Unknown)]
-    [InlineData(4)]
+    [InlineData(-1)]
     [InlineData(0)]
+    [InlineData(4)]
     public void ForVersion_UnsupportedVersion_ReturnsNull(double version)
     {
         ArchiveFormat.ForVersion(version).ShouldBeNull();
@@ -76,13 +91,9 @@ public class ArchiveFormatTests
     /// first file. Getting this wrong is exactly what corrupted 3.2 archives.
     /// </summary>
     [Theory]
-    [InlineData(Parser.Version.Rpa2)]
-    [InlineData(Parser.Version.Rpa3)]
-    [InlineData(Parser.Version.Rpa32)]
-    public void BuildHeader_AnyOffsetAndKey_ProducesExactlyHeaderLengthBytes(double version)
+    [MemberData(nameof(FormatsWithHeaders))]
+    public void BuildHeader_AnyOffsetAndKey_ProducesExactlyHeaderLengthBytes(ArchiveFormat format)
     {
-        ArchiveFormat format = ArchiveFormat.ForVersion(version);
-
         foreach (long offset in new long[] { 0, 34, 4096, 0x7FFFFFFF })
         {
             string header = format.BuildHeader(offset, 0xDEADBEEF);
@@ -93,11 +104,9 @@ public class ArchiveFormatTests
 
     /// <summary>The key has to come back out of the header the format wrote.</summary>
     [Theory]
-    [InlineData(Parser.Version.Rpa3)]
-    [InlineData(Parser.Version.Rpa32)]
-    public void ReadObfuscationKey_HeaderItWrote_RecoversTheKey(double version)
+    [MemberData(nameof(ObfuscatedFormats))]
+    public void ReadObfuscationKey_HeaderItWrote_RecoversTheKey(ArchiveFormat format)
     {
-        ArchiveFormat format = ArchiveFormat.ForVersion(version);
         const long key = 0xDEADBEEF;
 
         string header = format.BuildHeader(4096, key);
@@ -107,14 +116,10 @@ public class ArchiveFormatTests
     }
 
     [Theory]
-    [InlineData(Parser.Version.Rpa1)]
-    [InlineData(Parser.Version.Rpa2)]
-    public void ReadObfuscationKey_FormatWithoutObfuscation_ReturnsZero(double version)
+    [MemberData(nameof(PlainFormats))]
+    public void ReadObfuscationKey_FormatWithoutObfuscation_ReturnsZero(ArchiveFormat format)
     {
-        ArchiveFormat format = ArchiveFormat.ForVersion(version);
-
         format.ReadObfuscationKey(["RPA-2.0", "0000000000000019"]).ShouldBe(0);
-        format.UsesObfuscation.ShouldBeFalse();
     }
 
     [Fact]
@@ -126,10 +131,25 @@ public class ArchiveFormatTests
     }
 
     [Fact]
+    public void SupportsPadding_Version1_IsFalseBecauseItHasNoHeaderToOffsetFrom()
+    {
+        ArchiveFormat.Rpa1.SupportsPadding.ShouldBeFalse();
+        ArchiveFormat.All.Where(f => f != ArchiveFormat.Rpa1)
+            .ShouldAllBe(f => f.SupportsPadding);
+    }
+
+    [Fact]
     public void BuildHeader_Version1_ThrowsBecauseItHasNoHeader()
     {
-        Should.Throw<System.InvalidOperationException>(
-            () => ArchiveFormat.ForVersion(Parser.Version.Rpa1).BuildHeader(0, 0));
+        Should.Throw<System.InvalidOperationException>(() => ArchiveFormat.Rpa1.BuildHeader(0, 0));
+    }
+
+    [Theory]
+    [MemberData(nameof(AllFormats))]
+    public void DisplayName_EveryFormat_IsPresentedToTheUser(ArchiveFormat format)
+    {
+        format.DisplayName.ShouldNotBeNullOrWhiteSpace();
+        format.ToString().ShouldBe(format.DisplayName);
     }
 
     [Fact]

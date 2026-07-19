@@ -38,13 +38,13 @@ public sealed class TempWorkspace : IDisposable
     /// the path the entry should have inside the archive. Returns the archive path.
     /// </summary>
     public string CreateArchive(
-        double version,
+        ArchiveFormat format,
         IDictionary<string, byte[]> entries,
         string archiveName = "test.rpa",
         int padding = 0,
         long? obfuscationKey = null)
     {
-        var parser = new Parser { ArchiveVersion = version, Padding = padding };
+        var parser = new Parser { Format = format, Padding = padding };
         if (obfuscationKey.HasValue)
         {
             parser.ObfuscationKey = obfuscationKey.Value;
@@ -74,9 +74,9 @@ public sealed class TempWorkspace : IDisposable
     }
 
     /// <summary>Loads an archive created by <see cref="CreateArchive"/>.</summary>
-    public Parser LoadArchive(double version, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
+    public Parser LoadArchive(ArchiveFormat format, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
     {
-        var path = CreateArchive(version, entries, archiveName);
+        var path = CreateArchive(format, entries, archiveName);
         var parser = new Parser();
         parser.LoadArchive(path);
         return parser;
