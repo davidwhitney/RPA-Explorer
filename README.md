@@ -13,6 +13,10 @@ Graphical explorer for RenPy Archives. This tool brings ability to extract, crea
 
 ---
 
+![RPA Explorer](docs/screenshot.png)
+
+---
+
 ## Running it
 
 Pre-built, self-contained binaries for macOS, Windows and Linux are attached to each
@@ -33,20 +37,20 @@ run `xattr -dr com.apple.quarantine "RPA Explorer.app"`.
 Everything core — browsing, extracting, creating and saving archives, image and text preview —
 works with no additional software at all. The two optional previews configure themselves:
 
-**🎬 VLC is found for you.** Audio and video preview needs VLC on macOS and Linux. The app locates
+**VLC is found for you.** Audio and video preview needs VLC on macOS and Linux. The app locates
 an existing installation (`/Applications/VLC.app`, `~/Applications`, or the standard Linux plugin
 directories) and wires up its libraries and codec plugins itself. If VLC is missing you get a
 prompt with a download link — and the Homebrew one-liner when `brew` is detected — instead of a
 dead end. Detection re-runs when you open a media file, so installing VLC while the app is running
 just works, with no restart. On Windows the native libraries are bundled outright.
 
-**🐍 Python is found for you, pyenv included.** Compiled script preview needs a Python interpreter.
+**Python is found for you, pyenv included.** Compiled script preview needs a Python interpreter.
 The app searches `PATH`, [pyenv](https://github.com/pyenv/pyenv) (`$PYENV_ROOT`/`~/.pyenv` shims
 first, then `versions/*/bin` newest-first) and the usual system locations, preferring Python 3.
 The pyenv support matters because an app launched from Finder or the Dock does not inherit your
 shell `PATH`, so pyenv would otherwise be invisible even though `python3` works in your terminal.
 
-**📦 unrpyc downloads itself.** Rather than making you find and install it,
+**unrpyc downloads itself.** Rather than making you find and install it,
 **Options → Download unrpyc** fetches a pinned release of
 [unrpyc](https://github.com/CensoredUsername/unrpyc) and selects it. You are also offered the
 download inline the first time you open a `.rpyc`, and the preview is retried automatically once
@@ -125,15 +129,6 @@ release — see [`.github/workflows/build.yml`](.github/workflows/build.yml).
 ## TODO
 
 See [TODO.md](TODO.md).
-
----
-
-#### Images preview:
-![1](https://user-images.githubusercontent.com/47400898/154856556-1da3d011-5631-4100-972c-f6e844967242.png)
-#### Video preview:
-![2](https://user-images.githubusercontent.com/47400898/154856560-71837ed7-899c-43bb-ab0d-3a10dd7844e8.png)
-#### Text files preview:
-![3](https://user-images.githubusercontent.com/47400898/154856564-1a588bdd-3412-491d-a070-078e17c42d19.png)
 
 ---
 

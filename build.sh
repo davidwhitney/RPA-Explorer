@@ -147,6 +147,23 @@ for rid in $RIDS; do
             ( cd "$pack_dir" && zip -qry "$DIST/$name.zip" . )
             ;;
         win-*)
+            # VideoLAN.LibVLC.Windows ships win-x86 and win-x64 natives side by side
+            # (~200MB combined). A process can only ever load one of them, so drop the
+            # architecture this build cannot use. There is no arm64 native build, and an
+            # arm64 process cannot load x64 DLLs, so the arm64 download carries none -
+            # run the x64 build under emulation if you need media preview on Windows ARM.
+            case "$rid" in
+                win-x86) keep_arch="win-x86" ;;
+                win-x64) keep_arch="win-x64" ;;
+                *)       keep_arch="" ;;
+            esac
+            if [[ -d "$publish_dir/libvlc" ]]; then
+                for archdir in "$publish_dir"/libvlc/*; do
+                    [[ -d "$archdir" ]] || continue
+                    [[ "$(basename "$archdir")" == "$keep_arch" ]] || rm -rf "$archdir"
+                done
+                rmdir "$publish_dir/libvlc" 2>/dev/null || true
+            fi
             cp -R "$publish_dir/." "$pack_dir/"
             cp "$ROOT/README.md" "$ROOT/LICENSE" "$pack_dir/" 2>/dev/null || true
             ( cd "$pack_dir" && zip -qry "$DIST/$name.zip" . )
