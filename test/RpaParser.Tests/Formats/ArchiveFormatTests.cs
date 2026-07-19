@@ -5,7 +5,7 @@ using RpaParser;
 using RpaParser.Formats;
 using Shouldly;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Formats;
 
 public class ArchiveFormatTests
 {

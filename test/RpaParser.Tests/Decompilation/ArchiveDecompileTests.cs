@@ -7,9 +7,10 @@ using RpaParser.Content;
 using RpaParser.Decompilation;
 using RpaParser.Formats;
 using RpaParser.Previews;
+using RpaParser.Tests.Previews;
 using Shouldly;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Decompilation;
 
 /// <summary>
 /// Covers the decompilation path by standing in a stub interpreter, so the behaviour can be

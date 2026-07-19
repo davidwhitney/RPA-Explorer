@@ -3,7 +3,7 @@ using RpaParser;
 using RpaParser.Decompilation;
 using Shouldly;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Decompilation;
 
 public class PythonLocatorTests
 {

@@ -4,7 +4,7 @@ using RpaParser.Content;
 using RpaParser.Decompilation;
 using Shouldly;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Content;
 
 public class ContentFormatTests
 {

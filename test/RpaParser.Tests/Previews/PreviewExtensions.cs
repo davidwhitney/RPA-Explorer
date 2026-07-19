@@ -2,7 +2,7 @@ using RpaParser;
 using RpaParser.Decompilation;
 using RpaParser.Previews;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Previews;
 
 /// <summary>
 /// Previews are built by a factory that owns the decompiler settings, so tests get a

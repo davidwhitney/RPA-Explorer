@@ -1,7 +1,7 @@
 using RpaParser.Decompilation;
 using Shouldly;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Decompilation;
 
 /// <summary>
 /// Drives the interpreter search against a controlled environment, so the Windows paths,

@@ -8,7 +8,7 @@ using RpaParser.Formats;
 using RpaParser.Previews;
 using Shouldly;
 
-namespace RpaParser.Tests;
+namespace RpaParser.Tests.Previews;
 
 public class ArchivePreviewTests
 {
