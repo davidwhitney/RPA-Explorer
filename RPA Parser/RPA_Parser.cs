@@ -149,13 +149,17 @@ namespace RPA_Parser
             ".rpymc"
         };
         
-        // Cross-platform best-effort detection of a Python 2.7 interpreter.
+        // Cross-platform best-effort detection of a Python interpreter.
+        //
+        // Python 3 is preferred: current unrpyc releases require it, and Ren'Py 8 games
+        // (the common case today) produce Python 3 .rpyc files. Python 2.7 is still
+        // accepted as a fallback for legacy unrpyc with Ren'Py 7 and older archives.
         // The user can always override this via Options in the UI (stored in settings).
         private static string GetPythonPath(string requiredVersion = "", string maxVersion = "")
         {
             string[] candidateNames = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? new[] { "python2.7.exe", "python2.exe", "python.exe" }
-                : new[] { "python2.7", "python2", "python" };
+                ? new[] { "python3.exe", "python.exe", "python2.7.exe", "python2.exe" }
+                : new[] { "python3", "python", "python2.7", "python2" };
 
             List<string> searchDirs = new List<string>();
             string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? String.Empty;
@@ -507,7 +511,8 @@ namespace RPA_Parser
         }
         
         public string rpycInfoBanner =
-            "RPYC file contains compiled RenPy code. To preview code we need to use external script called unrpyc for decompilation and Python 2.7 environment to run this script.";
+            "RPYC file contains compiled RenPy code. To preview code we need to use an external script called unrpyc for decompilation, plus a Python interpreter to run it. " +
+            "Use Python 3 with current unrpyc for Ren'Py 8 games, or Python 2.7 with legacy unrpyc for Ren'Py 7 and older.";
 
         public string ParseRPYC(byte[] file)
         {

@@ -75,7 +75,7 @@ namespace RPA_Explorer
             ["Python_interpreter"] = "Python interpreter",
             ["Locate_Python_Interpreter"] = "Locate Python interpreter",
             ["Locate_unrpyc"] = "Define unrpyc location",
-            ["Locate_python"] = "Define Python 2.7 location",
+            ["Locate_python"] = "Define Python location",
             ["Preview_failed"] = "Preview load failed",
             ["Preview_failed_reason"] = "Loading preview failed with following error: {0}",
             ["Preview_failed_reason_hint"] = "Loading preview failed with error: {0} Use 'Options' to define external locations for this preview.",

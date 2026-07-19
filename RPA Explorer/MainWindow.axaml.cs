@@ -486,10 +486,16 @@ namespace RPA_Explorer
                     _streamMediaInputVlc = new StreamMediaInput(_memoryStreamVlc);
                     _mediaVlc = new Media(_libVlc, _streamMediaInputVlc);
                     SetMediaTimeLabel(_mediaVlc.Duration, 0);
-                    _mediaPlayer.Play(_mediaVlc);
                     AudioArt.IsVisible = data.Key == RpaParser.PreviewTypes.Audio;
                     PlayPauseButton.Content = GetText("Pause");
+
+                    // The media tab must be visible *before* playback starts: a TabControl
+                    // does not realise the content of an unselected tab, so the VideoView's
+                    // native surface would not exist yet and libvlc would fail with
+                    // "No drawable-nsobject found / video output creation failed".
                     Tabs.SelectedItem = TabMedia;
+                    await WaitForVideoSurfaceAsync();
+                    _mediaPlayer.Play(_mediaVlc);
                     unsupported = false;
                 }
             }
@@ -505,6 +511,18 @@ namespace RPA_Explorer
                 Tabs.SelectedItem = TabNone;
                 UsageLabel.Text = failureMessage ?? GetText("Preview_is_not_supported");
             }
+        }
+
+        // Gives the TabControl a chance to realise the media tab (and with it the native
+        // video surface) and re-attaches the player to the freshly created surface. The
+        // VideoView is destroyed and recreated whenever the tab is switched away and back,
+        // so the association has to be refreshed before every playback.
+        private async Task WaitForVideoSurfaceAsync()
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+            VideoView.MediaPlayer = null;
+            VideoView.MediaPlayer = _mediaPlayer;
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         }
 
         // ----- Media controls -----
