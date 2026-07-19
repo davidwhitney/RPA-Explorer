@@ -12,6 +12,9 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using LibVLCSharp.Shared;
 using RpaParser;
+using RpaParser.Content;
+using RpaParser.Decompilation;
+using RpaParser.Previews;
 
 namespace RpaExplorer
 {
@@ -1095,11 +1098,7 @@ namespace RpaExplorer
             if (File.Exists(path) && !_cancelAdd)
             {
                 var index = ArchiveEntry.FromFilename(path, originalPath);
-
-                if (_fileListBackup.ContainsKey(index.TreePath))
-                {
-                    _fileListBackup.Remove(index.TreePath);
-                }
+                _fileListBackup.Remove(index.TreePath);
                 _fileListBackup.Add(index.TreePath, index);
             }
         }

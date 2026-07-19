@@ -1,5 +1,7 @@
 using System.Linq;
 using RpaParser;
+using RpaParser.Content;
+using RpaParser.Decompilation;
 using Shouldly;
 
 namespace RpaParser.Tests;

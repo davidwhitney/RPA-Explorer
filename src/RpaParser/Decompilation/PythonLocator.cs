@@ -5,17 +5,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
-namespace RpaParser
+namespace RpaParser.Decompilation
 {
     // Best-effort detection of a Python interpreter for running unrpyc.
-    //
-    // Python 3 is preferred: current unrpyc releases require it and Ren'Py 8 games produce
-    // Python 3 .rpyc files. Python 2.7 remains a fallback for legacy unrpyc with Ren'Py 7
-    // and older archives. The user can always override the result via Options in the UI.
-    //
-    // pyenv is included as a search location: a GUI application launched from Finder/Dock
-    // does not inherit the shell PATH, so pyenv's shims are otherwise invisible even though
-    // "python3" works fine in the user's terminal.
     public static class PythonLocator
     {
         /// <summary>
@@ -82,7 +74,7 @@ namespace RpaParser
 
         private static readonly Lazy<string> CachedPath = new(() => Detect(SystemProbe.Instance));
 
-        // Detected interpreter, or an empty string when none was found. Computed once.
+        // Detected interpreter or an empty string when none was found. Computed once.
         public static string Detected => CachedPath.Value;
 
         private static string[] ExecutableNames(IEnvironmentProbe probe) => probe.IsWindows

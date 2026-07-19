@@ -13,7 +13,6 @@ namespace RpaParser
 
         public long Length { get; init; }
 
-        /// <summary>The runs making up this file, in order. Empty for a staged file.</summary>
         public IReadOnlyList<ArchiveSegment> Segments { get; private init; } = [];
 
         public static ArchiveEntry FromIndex(string treePath, IReadOnlyList<ArchiveSegment> segments) => new()

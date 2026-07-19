@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RpaParser;
+using RpaParser.Formats;
 using Shouldly;
 
 namespace RpaParser.Tests;

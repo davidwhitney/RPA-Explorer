@@ -5,12 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Razorvine.Pickle;
+using RpaParser.Formats;
 
 namespace RpaParser
 {
-    /// <summary>Where a file ended up when an archive was written.</summary>
-    public sealed record StoredFile(string TreePath, long Offset, long Length);
-
     /// <summary>
     /// The table of files in an archive, keyed by their path inside it.
     ///

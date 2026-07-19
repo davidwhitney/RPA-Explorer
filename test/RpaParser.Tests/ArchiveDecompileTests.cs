@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using RpaParser;
+using RpaParser.Content;
+using RpaParser.Decompilation;
+using RpaParser.Formats;
+using RpaParser.Previews;
 using Shouldly;
 
 namespace RpaParser.Tests;

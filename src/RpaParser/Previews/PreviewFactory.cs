@@ -1,25 +1,17 @@
-namespace RpaParser
+using RpaParser.Content;
+using RpaParser.Decompilation;
+
+namespace RpaParser.Previews
 {
-    /// <summary>
-    /// Builds previews from raw bytes.
-    ///
-    /// Kept apart from <see cref="Archive"/> so the archive stays a description of what is
-    /// stored: producing a preview needs a decompiler for compiled scripts, which is a
-    /// property of the machine rather than of the archive.
-    /// </summary>
     public sealed class PreviewFactory(Decompiler decompiler)
     {
-        public Decompiler Decompiler { get; } = decompiler;
+        private Decompiler Decompiler { get; } = decompiler;
 
         public PreviewFactory(DecompilerOptions options) : this(new Decompiler(options))
         {
         }
 
-        /// <summary>
-        /// Presents <paramref name="data"/> according to the format claiming
-        /// <paramref name="fileName"/>.
-        /// </summary>
-        public PreviewResult Create(string fileName, byte[] data) =>
+        private PreviewResult Create(string fileName, byte[] data) =>
             ContentFormat.Detect(fileName).CreatePreview(data, Decompiler);
 
         public PreviewResult Create(Archive archive, string fileName) =>
@@ -27,7 +19,6 @@ namespace RpaParser
                 ? Create(fileName, archive.Read(fileName))
                 : PreviewResult.Missing;
 
-        /// <summary>The bytes as stored, tagged with the format that claims them.</summary>
         public PreviewResult CreateRaw(Archive archive, string fileName)
         {
             if (!archive.Index.ContainsKey(fileName))
