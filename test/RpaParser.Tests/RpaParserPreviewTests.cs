@@ -8,7 +8,7 @@ namespace RpaParser.Tests;
 
 public class RpaParserPreviewTests
 {
-    private static Parser ArchiveContaining(TempWorkspace workspace, string entryName, byte[] content) =>
+    private static Archive ArchiveContaining(TempWorkspace workspace, string entryName, byte[] content) =>
         workspace.LoadArchive(
             ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { [entryName] = content });
@@ -24,7 +24,7 @@ public class RpaParserPreviewTests
         byte[] content = { 0x89, 0x50, 0x4E, 0x47 };
         var parser = ArchiveContaining(workspace, entryName, content);
 
-        PreviewResult preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.Preview(entryName);
 
         preview.Format.ShouldBeOfType<ImageContent>();
         preview.AsBytes().ShouldBe(content);
@@ -40,7 +40,7 @@ public class RpaParserPreviewTests
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, entryName, Encoding.UTF8.GetBytes("hello world"));
 
-        PreviewResult preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.Preview(entryName);
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsText().ShouldBe("hello world");
@@ -56,7 +56,7 @@ public class RpaParserPreviewTests
         byte[] content = { 1, 2, 3 };
         var parser = ArchiveContaining(workspace, entryName, content);
 
-        PreviewResult preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.Preview(entryName);
 
         preview.Format.ShouldBeOfType<AudioContent>();
         preview.AsBytes().ShouldBe(content);
@@ -72,7 +72,7 @@ public class RpaParserPreviewTests
         byte[] content = { 4, 5, 6 };
         var parser = ArchiveContaining(workspace, entryName, content);
 
-        PreviewResult preview = parser.GetPreview(entryName);
+        PreviewResult preview = parser.Preview(entryName);
 
         preview.Format.ShouldBeOfType<VideoContent>();
         preview.AsBytes().ShouldBe(content);
@@ -85,7 +85,7 @@ public class RpaParserPreviewTests
         byte[] content = { 0xDE, 0xAD };
         var parser = ArchiveContaining(workspace, "blob.dat", content);
 
-        PreviewResult preview = parser.GetPreview("blob.dat");
+        PreviewResult preview = parser.Preview("blob.dat");
 
         preview.Format.ShouldBeOfType<UnknownContent>();
         preview.AsBytes().ShouldBe(content);
@@ -97,7 +97,7 @@ public class RpaParserPreviewTests
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes("a"));
 
-        PreviewResult preview = parser.GetPreview("absent.txt");
+        PreviewResult preview = parser.Preview("absent.txt");
 
         preview.Format.ShouldBeOfType<UnknownContent>();
         preview.Content.ShouldBeNull();
@@ -110,7 +110,7 @@ public class RpaParserPreviewTests
         var content = Encoding.UTF8.GetBytes("raw please");
         var parser = ArchiveContaining(workspace, "a.txt", content);
 
-        PreviewResult preview = parser.GetPreview("a.txt", true);
+        PreviewResult preview = parser.PreviewRaw("a.txt");
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsBytes().ShouldBe(content);
@@ -123,7 +123,7 @@ public class RpaParserPreviewTests
         var content = Encoding.UTF8.GetBytes("raw accessor");
         var parser = ArchiveContaining(workspace, "a.txt", content);
 
-        PreviewResult preview = parser.GetPreviewRaw("a.txt");
+        PreviewResult preview = parser.PreviewRaw("a.txt");
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.Content.ShouldBe(content);
@@ -139,7 +139,7 @@ public class RpaParserPreviewTests
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
 
-        var text = parser.GetPreview("a.txt").AsText();
+        var text = parser.Preview("a.txt").AsText();
 
         // Every separator that survives must be the platform's own.
         text.Replace(Environment.NewLine, string.Empty).ShouldNotContain("\r");
@@ -151,11 +151,11 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
-        parser.PythonLocation = string.Empty;
+        var options = new DecompilerOptions { PythonPath = string.Empty };
 
-        var ex = Should.Throw<Exception>(() => parser.GetPreview("code.rpyc"));
+        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
 
-        ex.Message.ShouldContain(parser.RpycInfoBanner);
+        ex.Message.ShouldContain(Decompiler.InfoBanner);
         ex.Message.ShouldContain("Python environment is not defined");
     }
 
@@ -164,9 +164,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
-        parser.PythonLocation = workspace.Path_("no-such-python");
+        var options = new DecompilerOptions { PythonPath = workspace.Path_("no-such-python") };
 
-        var ex = Should.Throw<Exception>(() => parser.GetPreview("code.rpyc"));
+        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain("cannot be found");
     }
@@ -176,10 +176,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
-        parser.PythonLocation = workspace.WriteFile("python", "#!/bin/sh\n");
-        parser.UnrpycLocation = string.Empty;
+        var options = new DecompilerOptions { PythonPath = workspace.WriteFile("python", "#!/bin/sh\n"), UnrpycPath = string.Empty };
 
-        var ex = Should.Throw<Exception>(() => parser.GetPreview("code.rpyc"));
+        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain("unrpyc script is not defined");
     }
@@ -189,10 +188,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
-        parser.PythonLocation = workspace.WriteFile("python", "#!/bin/sh\n");
-        parser.UnrpycLocation = workspace.Path_("no-such-unrpyc.py");
+        var options = new DecompilerOptions { PythonPath = workspace.WriteFile("python", "#!/bin/sh\n"), UnrpycPath = workspace.Path_("no-such-unrpyc.py") };
 
-        var ex = Should.Throw<Exception>(() => parser.GetPreview("code.rpyc"));
+        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain("cannot be found");
     }
@@ -201,14 +199,14 @@ public class RpaParserPreviewTests
     public void ParseRpyc_DecompilerFails_ThrowsReportingTheFailure()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Parser
+        var decompiler = new Decompiler(new DecompilerOptions
         {
             // An interpreter that exists but produces no output file.
-            PythonLocation = "/usr/bin/true",
-            UnrpycLocation = workspace.WriteFile("unrpyc.py", "print('nothing')")
-        };
+            PythonPath = "/usr/bin/true",
+            UnrpycPath = workspace.WriteFile("unrpyc.py", "print('nothing')")
+        });
 
-        var ex = Should.Throw<Exception>(() => parser.ParseRpyc(new byte[] { 1, 2, 3 }));
+        var ex = Should.Throw<Exception>(() => decompiler.Decompile(new byte[] { 1, 2, 3 }));
 
         ex.Message.ShouldContain("Decompilation failed");
     }

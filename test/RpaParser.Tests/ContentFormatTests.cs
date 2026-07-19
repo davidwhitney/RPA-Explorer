@@ -6,6 +6,9 @@ namespace RpaParser.Tests;
 
 public class ContentFormatTests
 {
+    // The formats under test here never reach for the decompiler.
+    private static readonly Decompiler NoDecompiler = new(new DecompilerOptions());
+
     [Theory]
     [InlineData("art.png")]
     [InlineData("art.jpg")]
@@ -103,7 +106,7 @@ public class ContentFormatTests
     {
         byte[] data = [1, 2, 3, 4];
 
-        var preview = new ImageContent().CreatePreview(data, new Parser());
+        var preview = new ImageContent().CreatePreview(data, NoDecompiler);
 
         preview.Format.ShouldBeOfType<ImageContent>();
         preview.Content.ShouldBe(data);
@@ -114,7 +117,7 @@ public class ContentFormatTests
     {
         byte[] data = System.Text.Encoding.UTF8.GetBytes("one\r\ntwo");
 
-        var preview = new TextContent().CreatePreview(data, new Parser());
+        var preview = new TextContent().CreatePreview(data, NoDecompiler);
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsText()

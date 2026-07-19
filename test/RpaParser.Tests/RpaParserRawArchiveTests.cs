@@ -63,9 +63,7 @@ public class RpaParserRawArchiveTests
         var prefix = Encoding.UTF8.GetBytes("PRE");
         var path = WriteRpa3(workspace, "bytes-prefix.rpa", payload,
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length + prefix.Length, prefix, key));
-        var parser = new Parser();
-
-        parser.LoadArchive(path);
+        var parser = Archive.Load(path);
 
         Encoding.UTF8.GetString(parser.ExtractData("a.txt")).ShouldBe("PREBODY");
     }
@@ -77,9 +75,7 @@ public class RpaParserRawArchiveTests
         var payload = Encoding.UTF8.GetBytes("BODY");
         var path = WriteRpa3(workspace, "string-prefix.rpa", payload,
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length + 3, "PRE", key));
-        var parser = new Parser();
-
-        parser.LoadArchive(path);
+        var parser = Archive.Load(path);
 
         Encoding.UTF8.GetString(parser.ExtractData("a.txt")).ShouldBe("PREBODY");
     }
@@ -95,9 +91,7 @@ public class RpaParserRawArchiveTests
             object[] segment = { dataOffset ^ key, (long) payload.Length ^ key };
             return new Hashtable { { "a.txt", new ArrayList { segment } } };
         });
-        var parser = new Parser();
-
-        parser.LoadArchive(path);
+        var parser = Archive.Load(path);
 
         Encoding.UTF8.GetString(parser.ExtractData("a.txt")).ShouldBe("BODY");
     }
@@ -113,9 +107,7 @@ public class RpaParserRawArchiveTests
             index.Add("discarded.txt", null);
             return index;
         });
-        var parser = new Parser();
-
-        parser.LoadArchive(path);
+        var parser = Archive.Load(path);
 
         parser.Index.ShouldContainKey("a.txt");
         parser.Index.ShouldNotContainKey("discarded.txt");
@@ -132,12 +124,10 @@ public class RpaParserRawArchiveTests
             object[] second = { (long) (dataOffset + 5) ^ key, 5L ^ key, string.Empty };
             return new Hashtable { { "a.txt", new ArrayList { first, second } } };
         });
-        var parser = new Parser();
-
-        parser.LoadArchive(path);
+        var parser = Archive.Load(path);
 
         Encoding.UTF8.GetString(parser.ExtractData("a.txt")).ShouldBe("HELLOWORLD");
-        parser.Index["a.txt"].Tuples.Count.ShouldBe(2);
+        parser.Index["a.txt"].Segments.Count.ShouldBe(2);
         parser.Index["a.txt"].Length.ShouldBe(10);
     }
 
@@ -150,9 +140,8 @@ public class RpaParserRawArchiveTests
         var path = WriteRpa3(workspace, "bad-offset.rpa", payload,
             (dataOffset, key) => SingleEntry("a.txt", dataOffset, payload.Length, string.Empty, key),
             headerOffsetOverride: 100_000);
-        var parser = new Parser();
 
-        Should.Throw<Exception>(() => parser.LoadArchive(path));
+        Should.Throw<Exception>(() => Archive.Load(path));
     }
 
     [Fact]
@@ -167,8 +156,7 @@ public class RpaParserRawArchiveTests
             stream.Write(headerBytes, 0, headerBytes.Length);
             stream.Write(new byte[] { 1, 2, 3, 4, 5, 6 }, 0, 6);
         }
-        var parser = new Parser();
 
-        Should.Throw<Exception>(() => parser.LoadArchive(path));
+        Should.Throw<Exception>(() => Archive.Load(path));
     }
 }

@@ -47,7 +47,7 @@ namespace RpaParser
         /// but a format may hand back another - a compiled script that cannot be decompiled
         /// is presented as unknown.
         /// </summary>
-        public abstract PreviewResult CreatePreview(byte[] data, Parser parser);
+        public abstract PreviewResult CreatePreview(byte[] data, Decompiler decompiler);
 
         public static ContentFormat Image { get; } = new ImageContent();
         public static ContentFormat Text { get; } = new TextContent();
@@ -87,7 +87,7 @@ namespace RpaParser
         public override IReadOnlyList<string> Extensions { get; } =
             [".jpeg", ".jpg", ".bmp", ".tiff", ".png", ".webp", ".exif", ".ico", ".gif"];
 
-        public override PreviewResult CreatePreview(byte[] data, Parser parser) => new(this, data);
+        public override PreviewResult CreatePreview(byte[] data, Decompiler decompiler) => new(this, data);
     }
 
     public sealed class TextContent : ContentFormat
@@ -97,8 +97,8 @@ namespace RpaParser
         public override IReadOnlyList<string> Extensions { get; } =
             [".py", ".rpy~", ".rpy", ".txt", ".log", ".nfo", ".htm", ".html", ".xml", ".json", ".yaml", ".csv"];
 
-        public override PreviewResult CreatePreview(byte[] data, Parser parser) =>
-            new(this, Parser.NormalizeNewLines(Encoding.UTF8.GetString(data, 0, data.Length)));
+        public override PreviewResult CreatePreview(byte[] data, Decompiler decompiler) =>
+            new(this, LineEndings.Normalize(Encoding.UTF8.GetString(data, 0, data.Length)));
     }
 
     /// <summary>
@@ -112,9 +112,9 @@ namespace RpaParser
         public override IReadOnlyList<string> Extensions { get; } =
             [".rpyc~", ".rpyc", ".rpymc~", ".rpymc"];
 
-        public override PreviewResult CreatePreview(byte[] data, Parser parser)
+        public override PreviewResult CreatePreview(byte[] data, Decompiler decompiler)
         {
-            var decompiled = parser.ParseRpyc(data);
+            var decompiled = decompiler.Decompile(data);
 
             return decompiled == string.Empty
                 ? new PreviewResult(Unknown, data)
@@ -129,7 +129,7 @@ namespace RpaParser
         public override IReadOnlyList<string> Extensions { get; } =
             [".aac", ".ac3", ".flac", ".mp3", ".wma", ".wav", ".ogg", ".cpc"];
 
-        public override PreviewResult CreatePreview(byte[] data, Parser parser) => new(this, data);
+        public override PreviewResult CreatePreview(byte[] data, Decompiler decompiler) => new(this, data);
     }
 
     public sealed class VideoContent : ContentFormat
@@ -139,7 +139,7 @@ namespace RpaParser
         public override IReadOnlyList<string> Extensions { get; } =
             [".3gp", ".flv", ".mov", ".mp4", ".ogv", ".swf", ".mpg", ".mpeg", ".avi", ".mkv", ".wmv", ".webm"];
 
-        public override PreviewResult CreatePreview(byte[] data, Parser parser) => new(this, data);
+        public override PreviewResult CreatePreview(byte[] data, Decompiler decompiler) => new(this, data);
     }
 
     /// <summary>Anything unrecognised: offered to the caller as raw bytes.</summary>
@@ -151,6 +151,6 @@ namespace RpaParser
 
         public override bool Matches(string extension) => false;
 
-        public override PreviewResult CreatePreview(byte[] data, Parser parser) => new(this, data);
+        public override PreviewResult CreatePreview(byte[] data, Decompiler decompiler) => new(this, data);
     }
 }

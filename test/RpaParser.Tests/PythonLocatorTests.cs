@@ -44,18 +44,18 @@ public class PythonLocatorTests
     }
 
     [Fact]
-    public void PythonLocation_NewParser_MatchesDetectedInterpreter()
+    public void PythonPath_NewOptions_MatchesDetectedInterpreter()
     {
-        var parser = new Parser();
+        var options = new DecompilerOptions();
 
-        parser.PythonLocation.ShouldBe(PythonLocator.Detected);
+        options.PythonPath.ShouldBe(PythonLocator.Detected);
     }
 
     [Fact]
-    public void UnrpycLocation_NewParser_IsEmptyUntilConfigured()
+    public void UnrpycPath_NewOptions_IsEmptyUntilConfigured()
     {
-        var parser = new Parser();
+        var options = new DecompilerOptions();
 
-        parser.UnrpycLocation.ShouldBe(string.Empty);
+        options.UnrpycPath.ShouldBe(string.Empty);
     }
 }

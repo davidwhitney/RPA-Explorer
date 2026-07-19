@@ -17,8 +17,13 @@ namespace RpaExplorer
 {
     public partial class MainWindow : Window
     {
-        private Parser _rpaParser;
-        private Parser _rpaParserBak;
+        private Archive _archive;
+        private Archive _archiveBackup;
+
+        // Where the external decompiler lives is a machine setting, so it sits alongside
+        // the archive rather than inside it.
+        private readonly DecompilerOptions _decompilerOptions = new();
+        private PreviewFactory Previews => new(_decompilerOptions);
 
         private bool _archiveChanged;
         private bool _archiveLoaded;
@@ -26,7 +31,7 @@ namespace RpaExplorer
         private bool _forceClose;
         private volatile bool _operationEnabled = true;
 
-        private SortedDictionary<string, Parser.ArchiveIndex> _fileListBackup = new();
+        private SortedDictionary<string, ArchiveEntry> _fileListBackup = new();
         private readonly Dictionary<string, long> _indexPathSize = new();
         private FileNode _root;
         private int _searchStartIndex;
@@ -272,9 +277,9 @@ namespace RpaExplorer
                 var script = await UnrpycInstaller.EnsureAsync(progress);
 
                 _settings.SetUnrpyc(script);
-                if (_rpaParser != null)
+                if (_archive != null)
                 {
-                    _rpaParser.UnrpycLocation = script;
+                    _decompilerOptions.UnrpycPath = script;
                 }
 
                 StatusText.Text = GetText("Ready");
@@ -327,7 +332,7 @@ namespace RpaExplorer
             _root = new FileNode { Name = "/", FullPath = string.Empty, IsFolder = true, InArchive = true };
             Dictionary<string, FileNode> nodeByPath = new() { [string.Empty] = _root };
 
-            foreach (var kvp in _rpaParser.Index)
+            foreach (var kvp in _archive.Index)
             {
                 var parts = kvp.Key.Split('/');
                 var build = string.Empty;
@@ -357,7 +362,7 @@ namespace RpaExplorer
             }
 
             // Folder size accumulation (matches the original behaviour).
-            foreach (var kvp in _rpaParser.Index)
+            foreach (var kvp in _archive.Index)
             {
                 var length = kvp.Value.Length;
                 var parts = kvp.Key.Split('/');
@@ -420,13 +425,13 @@ namespace RpaExplorer
         {
             var info = string.Empty;
 
-            if (_archiveLoaded && _rpaParser != null)
+            if (_archiveLoaded && _archive != null)
             {
                 var selectedPath = (Tree.SelectedItem as FileNode)?.FullPath ?? string.Empty;
 
                 long selectedSize = -1;
                 var unsavedCount = 0;
-                foreach (var kvp in _rpaParser.Index)
+                foreach (var kvp in _archive.Index)
                 {
                     if (!kvp.Value.InArchive)
                     {
@@ -443,19 +448,19 @@ namespace RpaExplorer
                     selectedSize = _indexPathSize[selectedPath];
                 }
 
-                if (_rpaParser.Format != null)
+                if (_archive.Format != null)
                 {
-                    info += GetText("Archive_version") + _rpaParser.Format + Environment.NewLine;
-                    info += GetText("Archive_file_location") + _rpaParser.ArchiveInfo.FullName + Environment.NewLine;
-                    info += GetText("Archive_file_size") + FormatSize(_rpaParser.ArchiveInfo.Length) + Environment.NewLine;
-                    if (_rpaParser.IndexInfo != null)
+                    info += GetText("Archive_version") + _archive.Format + Environment.NewLine;
+                    info += GetText("Archive_file_location") + _archive.ArchiveInfo.FullName + Environment.NewLine;
+                    info += GetText("Archive_file_size") + FormatSize(_archive.ArchiveInfo.Length) + Environment.NewLine;
+                    if (_archive.IndexInfo != null)
                     {
-                        info += GetText("Index_file_location") + _rpaParser.IndexInfo.FullName + Environment.NewLine;
-                        info += GetText("Index_file_size") + FormatSize(_rpaParser.IndexInfo.Length) + Environment.NewLine;
+                        info += GetText("Index_file_location") + _archive.IndexInfo.FullName + Environment.NewLine;
+                        info += GetText("Index_file_size") + FormatSize(_archive.IndexInfo.Length) + Environment.NewLine;
                     }
                 }
 
-                info += GetText("Files_count") + _rpaParser.Index.Count + Environment.NewLine;
+                info += GetText("Files_count") + _archive.Index.Count + Environment.NewLine;
                 info += GetText("Unsaved_files_count") + unsavedCount + Environment.NewLine;
 
                 if (selectedSize != -1)
@@ -528,7 +533,7 @@ namespace RpaExplorer
             }
 
             var path = selected.FullPath;
-            if (selected.IsFolder || _rpaParser == null || !_rpaParser.Index.ContainsKey(path))
+            if (selected.IsFolder || _archive == null || !_archive.Index.ContainsKey(path))
             {
                 Tabs.SelectedItem = TabNone;
                 UsageLabel.Text = GetText("Preview_is_not_supported");
@@ -542,22 +547,22 @@ namespace RpaExplorer
                 PreviewResult data = null;
                 try
                 {
-                    data = _rpaParser.GetPreview(path);
+                    data = Previews.Create(_archive, path);
                 }
                 catch (Exception ex)
                 {
                     if (ContentFormat.Detect(path) is CompiledScriptContent
-                        && ex.Message.StartsWith(_rpaParser.RpycInfoBanner))
+                        && ex.Message.StartsWith(Decompiler.InfoBanner))
                     {
                         // unrpyc simply has not been obtained yet: offer to fetch it and
                         // retry, rather than making the user go and install it by hand.
                         var retried = false;
-                        if (string.IsNullOrEmpty(_rpaParser.UnrpycLocation)
+                        if (string.IsNullOrEmpty(_decompilerOptions.UnrpycPath)
                             && await DownloadUnrpyc(true))
                         {
                             try
                             {
-                                data = _rpaParser.GetPreview(path);
+                                data = Previews.Create(_archive, path);
                                 retried = true;
                             }
                             catch (Exception retryEx)
@@ -764,7 +769,7 @@ namespace RpaExplorer
             }
             foreach (var node in _root.All())
             {
-                if (node.IsChecked == true && !node.IsFolder && _rpaParser.Index.ContainsKey(node.FullPath))
+                if (node.IsChecked == true && !node.IsFolder && _archive.Index.ContainsKey(node.FullPath))
                 {
                     list.Add(node.FullPath);
                 }
@@ -777,9 +782,9 @@ namespace RpaExplorer
             var changed = false;
             foreach (var node in _root.All())
             {
-                if (node.IsChecked == true && !node.IsFolder && _rpaParser.Index.ContainsKey(node.FullPath))
+                if (node.IsChecked == true && !node.IsFolder && _archive.Index.ContainsKey(node.FullPath))
                 {
-                    _rpaParser.Index.Remove(node.FullPath);
+                    _archive.Index.Remove(node.FullPath);
                     changed = true;
                 }
             }
@@ -800,7 +805,7 @@ namespace RpaExplorer
                 return;
             }
 
-            _rpaParser = new Parser();
+            _archive = Archive.Create(null);
             GenerateTreeView();
 
             Tabs.SelectedItem = TabNone;
@@ -869,19 +874,19 @@ namespace RpaExplorer
 
             try
             {
-                _rpaParser = new Parser();
+                _archive = Archive.Create(null);
 
                 // An explicitly configured interpreter always wins. Auto-detection is
                 // deliberately not written back to the settings file: persisting a guess
                 // makes it sticky and stops improved detection from ever taking effect.
                 if (!string.IsNullOrEmpty(_settings.GetPython()))
                 {
-                    _rpaParser.PythonLocation = _settings.GetPython();
+                    _decompilerOptions.PythonPath = _settings.GetPython();
                 }
 
                 if (!string.IsNullOrEmpty(_settings.GetUnrpyc()))
                 {
-                    _rpaParser.UnrpycLocation = _settings.GetUnrpyc();
+                    _decompilerOptions.UnrpycPath = _settings.GetUnrpyc();
                 }
                 else
                 {
@@ -889,11 +894,11 @@ namespace RpaExplorer
                     var downloaded = UnrpycInstaller.FindExisting();
                     if (downloaded != null)
                     {
-                        _rpaParser.UnrpycLocation = downloaded;
+                        _decompilerOptions.UnrpycPath = downloaded;
                     }
                 }
 
-                _rpaParser.LoadArchive(chosen);
+                _archive = Archive.Load(chosen);
             }
             catch (Exception ex)
             {
@@ -920,7 +925,7 @@ namespace RpaExplorer
 
         private async Task SaveArchive()
         {
-            if (_rpaParser.Index.Count == 0)
+            if (_archive.Index.Count == 0)
             {
                 await MessageBox.ShowInfo(this, GetText("Empty_archive_save"), GetText("Empty_archive"));
                 return;
@@ -928,11 +933,11 @@ namespace RpaExplorer
 
             StatusText.Text = GetText("Saving_archive");
 
-            _rpaParser.OptionsConfirmed = false;
-            var options = new ArchiveSaveWindow(_rpaParser);
+            _archive.OptionsConfirmed = false;
+            var options = new ArchiveSaveWindow(_archive);
             await options.ShowDialog<bool>(this);
 
-            if (!_rpaParser.OptionsConfirmed)
+            if (!_archive.OptionsConfirmed)
             {
                 StatusText.Text = GetText("Ready");
                 return;
@@ -946,7 +951,7 @@ namespace RpaExplorer
                 [
                     new FilePickerFileType(GetText("RPA_RPI_files")) { Patterns = ["*.rpa", "*.rpi"] }
                 ],
-                SuggestedStartLocation = await StartLocation(_rpaParser.ArchiveInfo?.DirectoryName)
+                SuggestedStartLocation = await StartLocation(_archive.ArchiveInfo?.DirectoryName)
             });
 
             if (save == null)
@@ -962,15 +967,15 @@ namespace RpaExplorer
                 return;
             }
 
-            _rpaParserBak = _rpaParser;
+            _archiveBackup = _archive;
             try
             {
-                var saveName = _rpaParser.SaveArchive(target);
+                var saveName = _archive.Save(target);
                 await LoadArchive(saveName, true);
             }
             catch (Exception ex)
             {
-                _rpaParser = _rpaParserBak;
+                _archive = _archiveBackup;
                 await MessageBox.ShowError(this,
                     string.Format(GetText("Save_failed_reason"), ex.Message), GetText("Save_failed"));
             }
@@ -991,7 +996,7 @@ namespace RpaExplorer
             {
                 Title = GetText("Export_checked"),
                 AllowMultiple = false,
-                SuggestedStartLocation = await StartLocation(_rpaParser.ArchiveInfo?.DirectoryName)
+                SuggestedStartLocation = await StartLocation(_archive.ArchiveInfo?.DirectoryName)
             });
 
             if (folders.Count == 0)
@@ -1032,7 +1037,7 @@ namespace RpaExplorer
                     StatusText.Text = GetText("Exporting_file") + file;
                 });
 
-                _rpaParser.Extract(file, destination);
+                _archive.Extract(file, destination);
 
                 if (!_operationEnabled)
                 {
@@ -1058,7 +1063,7 @@ namespace RpaExplorer
         private void AddFilesToArchive(string[] pathList)
         {
             _fileListBackup.Clear();
-            _fileListBackup = _rpaParser.DeepCopyIndex(_rpaParser.Index);
+            _fileListBackup = _archive.CopyIndex(_archive.Index);
             _cancelAdd = false;
 
             foreach (var path in pathList)
@@ -1077,7 +1082,7 @@ namespace RpaExplorer
 
             if (!_cancelAdd)
             {
-                _rpaParser.Index = _rpaParser.DeepCopyIndex(_fileListBackup);
+                _archive.Index = _archive.CopyIndex(_fileListBackup);
             }
 
             _fileListBackup.Clear();
@@ -1103,7 +1108,7 @@ namespace RpaExplorer
 
             if (File.Exists(path) && !_cancelAdd)
             {
-                var index = new Parser.ArchiveIndex
+                var index = new ArchiveEntry
                 {
                     InArchive = false,
                     FullPath = path.Replace('\\', '/')
@@ -1189,9 +1194,9 @@ namespace RpaExplorer
             if (!string.IsNullOrEmpty(chosen))
             {
                 _settings.SetUnrpyc(chosen);
-                if (_rpaParser != null)
+                if (_archive != null)
                 {
-                    _rpaParser.UnrpycLocation = chosen;
+                    _decompilerOptions.UnrpycPath = chosen;
                 }
             }
         }
@@ -1218,9 +1223,9 @@ namespace RpaExplorer
             if (!string.IsNullOrEmpty(chosen))
             {
                 _settings.SetPython(chosen);
-                if (_rpaParser != null)
+                if (_archive != null)
                 {
-                    _rpaParser.PythonLocation = chosen;
+                    _decompilerOptions.PythonPath = chosen;
                 }
             }
         }

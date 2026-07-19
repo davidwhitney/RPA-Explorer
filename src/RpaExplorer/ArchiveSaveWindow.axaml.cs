@@ -8,7 +8,7 @@ namespace RpaExplorer
 {
     public partial class ArchiveSaveWindow : Window
     {
-        private readonly Parser _rpaParser;
+        private readonly Archive _archive;
 
         // Parameterless ctor for the XAML designer/loader.
         public ArchiveSaveWindow()
@@ -16,9 +16,9 @@ namespace RpaExplorer
             InitializeComponent();
         }
 
-        public ArchiveSaveWindow(Parser rpaParser) : this()
+        public ArchiveSaveWindow(Archive archive) : this()
         {
-            _rpaParser = rpaParser;
+            _archive = archive;
 
             LoadTexts();
 
@@ -29,10 +29,10 @@ namespace RpaExplorer
                 VersionCombo.Items.Add(format);
             }
 
-            VersionCombo.SelectedItem = _rpaParser.Format ?? ArchiveFormat.Rpa3;
+            VersionCombo.SelectedItem = _archive.Format ?? ArchiveFormat.Rpa3;
 
-            PaddingBox.Text = _rpaParser.Padding.ToString();
-            KeyBox.Text = _rpaParser.ObfuscationKey.ToString();
+            PaddingBox.Text = _archive.Padding.ToString();
+            KeyBox.Text = _archive.ObfuscationKey.ToString();
 
             VersionCombo.SelectionChanged += VersionCombo_SelectionChanged;
             ContinueButton.Click += ContinueButton_Click;
@@ -53,10 +53,10 @@ namespace RpaExplorer
         {
             try
             {
-                _rpaParser.Format = (ArchiveFormat) VersionCombo.SelectedItem;
-                _rpaParser.Padding = Convert.ToInt32(PaddingBox.Text);
-                _rpaParser.ObfuscationKey = Convert.ToInt64(KeyBox.Text);
-                _rpaParser.OptionsConfirmed = true;
+                _archive.Format = (ArchiveFormat) VersionCombo.SelectedItem;
+                _archive.Padding = Convert.ToInt32(PaddingBox.Text);
+                _archive.ObfuscationKey = Convert.ToInt64(KeyBox.Text);
+                _archive.OptionsConfirmed = true;
                 Close(true);
             }
             catch (Exception ex)
@@ -79,8 +79,8 @@ namespace RpaExplorer
             PaddingBox.IsEnabled = format.SupportsPadding;
             KeyBox.IsEnabled = format.UsesObfuscation;
 
-            PaddingBox.Text = format.SupportsPadding ? _rpaParser.Padding.ToString() : "0";
-            KeyBox.Text = format.UsesObfuscation ? _rpaParser.ObfuscationKey.ToString() : "0";
+            PaddingBox.Text = format.SupportsPadding ? _archive.Padding.ToString() : "0";
+            KeyBox.Text = format.UsesObfuscation ? _archive.ObfuscationKey.ToString() : "0";
         }
     }
 }

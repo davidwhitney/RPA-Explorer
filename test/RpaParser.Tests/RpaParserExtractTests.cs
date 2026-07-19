@@ -42,8 +42,8 @@ public class RpaParserExtractTests
     {
         using var workspace = new TempWorkspace();
         var onDisk = workspace.WriteFile("pending/new.txt", "not yet archived");
-        var parser = new Parser();
-        parser.Index.Add("new.txt", new Parser.ArchiveIndex
+        var parser = new Archive();
+        parser.Index.Add("new.txt", new ArchiveEntry
         {
             InArchive = false,
             FullPath = onDisk.Replace('\\', '/'),
@@ -67,7 +67,7 @@ public class RpaParserExtractTests
         var result = parser.ExtractData("a.txt");
 
         result.ShouldBe(payload);
-        parser.Index["a.txt"].Tuples.Count.ShouldBeGreaterThan(0);
+        parser.Index["a.txt"].Segments.Count.ShouldBeGreaterThan(0);
     }
 
     [Fact]

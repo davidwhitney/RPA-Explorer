@@ -44,7 +44,7 @@ public sealed class TempWorkspace : IDisposable
         int padding = 0,
         long? obfuscationKey = null)
     {
-        var parser = new Parser { Format = format, Padding = padding };
+        var parser = new Archive { Format = format, Padding = padding };
         if (obfuscationKey.HasValue)
         {
             parser.ObfuscationKey = obfuscationKey.Value;
@@ -60,7 +60,7 @@ public sealed class TempWorkspace : IDisposable
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(onDisk)!);
             File.WriteAllBytes(onDisk, entry.Value);
 
-            parser.Index.Add(entry.Key, new Parser.ArchiveIndex
+            parser.Index.Add(entry.Key, new ArchiveEntry
             {
                 InArchive = false,
                 FullPath = onDisk.Replace('\\', '/'),
@@ -70,15 +70,14 @@ public sealed class TempWorkspace : IDisposable
             });
         }
 
-        return parser.SaveArchive(Path_(archiveName));
+        return parser.Save(Path_(archiveName));
     }
 
     /// <summary>Loads an archive created by <see cref="CreateArchive"/>.</summary>
-    public Parser LoadArchive(ArchiveFormat format, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
+    public Archive LoadArchive(ArchiveFormat format, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
     {
         var path = CreateArchive(format, entries, archiveName);
-        var parser = new Parser();
-        parser.LoadArchive(path);
+        var parser = Archive.Load(path);
         return parser;
     }
 

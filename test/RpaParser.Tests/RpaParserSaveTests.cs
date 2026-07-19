@@ -84,9 +84,8 @@ public class RpaParserSaveTests
         using var workspace = new TempWorkspace();
         var first = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        var resaved = first.SaveArchive(workspace.Path_("resaved.rpa"));
-        var second = new Parser();
-        second.LoadArchive(resaved);
+        var resaved = first.Save(workspace.Path_("resaved.rpa"));
+        var second = Archive.Load(resaved);
 
         second.Index.Count.ShouldBe(2);
         Encoding.UTF8.GetString(second.ExtractData("dir/b.txt")).ShouldBe("second");
@@ -96,8 +95,8 @@ public class RpaParserSaveTests
     public void SaveArchive_NoFormatChosen_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Parser();  // no format chosen
-        parser.Index.Add("a.txt", new Parser.ArchiveIndex
+        var parser = new Archive();  // no format chosen
+        parser.Index.Add("a.txt", new ArchiveEntry
         {
             InArchive = false,
             FullPath = workspace.WriteFile("a.txt", "x").Replace('\\', '/'),
@@ -105,15 +104,15 @@ public class RpaParserSaveTests
             Length = 1
         });
 
-        Should.Throw<Exception>(() => parser.SaveArchive(workspace.Path_("bad.rpa")));
+        Should.Throw<Exception>(() => parser.Save(workspace.Path_("bad.rpa")));
     }
 
     [Fact]
     public void SaveArchive_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Parser { Format = ArchiveFormat.Rpa3 };
-        parser.Index.Add("ghost.txt", new Parser.ArchiveIndex
+        var parser = new Archive { Format = ArchiveFormat.Rpa3 };
+        parser.Index.Add("ghost.txt", new ArchiveEntry
         {
             InArchive = false,
             FullPath = workspace.Path_("ghost.txt").Replace('\\', '/'),
@@ -122,7 +121,7 @@ public class RpaParserSaveTests
         });
         var target = workspace.Path_("partial.rpa");
 
-        Should.Throw<Exception>(() => parser.SaveArchive(target));
+        Should.Throw<Exception>(() => parser.Save(target));
 
         File.Exists(target).ShouldBeFalse();
     }
@@ -145,7 +144,7 @@ public class RpaParserSaveTests
         using var workspace = new TempWorkspace();
         var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, Parser.ArchiveIndex> copy = parser.DeepCopyIndex(parser.Index);
+        SortedDictionary<string, ArchiveEntry> copy = parser.CopyIndex(parser.Index);
         copy["a.txt"].TreePath = "changed.txt";
         copy.Remove("dir/b.txt");
 
@@ -159,7 +158,7 @@ public class RpaParserSaveTests
         using var workspace = new TempWorkspace();
         var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, Parser.ArchiveIndex> copy = parser.DeepCopyIndex(parser.Index);
+        SortedDictionary<string, ArchiveEntry> copy = parser.CopyIndex(parser.Index);
 
         var original = parser.Index["a.txt"];
         var copied = copy["a.txt"];
@@ -168,18 +167,18 @@ public class RpaParserSaveTests
         copied.ParentPath.ShouldBe(original.ParentPath);
         copied.InArchive.ShouldBe(original.InArchive);
         copied.Length.ShouldBe(original.Length);
-        copied.Tuples.Count.ShouldBe(original.Tuples.Count);
-        copied.Tuples[0].Offset.ShouldBe(original.Tuples[0].Offset);
-        copied.Tuples[0].Length.ShouldBe(original.Tuples[0].Length);
+        copied.Segments.Count.ShouldBe(original.Segments.Count);
+        copied.Segments[0].Offset.ShouldBe(original.Segments[0].Offset);
+        copied.Segments[0].Length.ShouldBe(original.Segments[0].Length);
     }
 
     [Fact]
     public void DeepCopyIndex_EmptyIndex_ReturnsEmptyCopy()
     {
-        var parser = new Parser();
+        var parser = new Archive();
 
-        SortedDictionary<string, Parser.ArchiveIndex> copy =
-            parser.DeepCopyIndex(new SortedDictionary<string, Parser.ArchiveIndex>());
+        SortedDictionary<string, ArchiveEntry> copy =
+            parser.CopyIndex(new SortedDictionary<string, ArchiveEntry>());
 
         copy.ShouldBeEmpty();
     }
