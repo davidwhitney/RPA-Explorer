@@ -7,11 +7,11 @@ using Shouldly;
 namespace RpaParser.Tests;
 
 /// <summary>
-/// Version 1 archives are a .rpa/.rpi pair, and the parser derives one half from the other.
+/// Version 1 archives are a .rpa/.rpi pair, and the archive derives one half from the other.
 /// The derived path has to keep the casing it was given: on a case sensitive filesystem
 /// (any Linux user) "GAME.RPI" sits beside "GAME.RPA", not "GAME.rpa".
 /// </summary>
-public class ParserPathResolutionTests
+public class ArchivePathResolutionTests
 {
     private static Dictionary<string, byte[]> Entries() => new()
     {
@@ -24,54 +24,54 @@ public class ParserPathResolutionTests
         string created = workspace.CreateArchive(ArchiveFormat.Rpa1, Entries(), "source.rpa");
         string createdIndex = Path.ChangeExtension(created, ".rpi");
 
-        string archive = workspace.Path_(archiveName);
-        string index = workspace.Path_(indexName);
-        File.Move(created, archive);
-        File.Move(createdIndex, index);
-        return (archive, index);
+        string archivePath = workspace.Path_(archiveName);
+        string indexPath = workspace.Path_(indexName);
+        File.Move(created, archivePath);
+        File.Move(createdIndex, indexPath);
+        return (archivePath, indexPath);
     }
 
     [Fact]
     public void LoadArchive_UppercaseIndexPath_DerivesArchivePathWithMatchingCase()
     {
         using TempWorkspace workspace = new TempWorkspace();
-        (string archive, string index) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
-        Archive parser = Archive.Load(index);
+        (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
+        Archive archive = Archive.Load(indexPath);
 
         // Lower casing the extension here is what breaks on a case sensitive filesystem.
-        Path.GetFileName(parser.ArchiveInfo.FullName).ShouldBe("GAME.RPA");
-        parser.Index.Keys.ShouldContain("a.txt");
+        Path.GetFileName(archive.ArchiveInfo.FullName).ShouldBe("GAME.RPA");
+        archive.Index.Keys.ShouldContain("a.txt");
     }
 
     [Fact]
     public void LoadArchive_UppercaseArchivePath_DerivesIndexPathWithMatchingCase()
     {
         using TempWorkspace workspace = new TempWorkspace();
-        (string archive, string index) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
-        Archive parser = Archive.Load(archive);
+        (string archivePath, string indexPath) = BuildPair(workspace, "GAME.RPA", "GAME.RPI");
+        Archive archive = Archive.Load(archivePath);
 
-        Path.GetFileName(parser.IndexInfo.FullName).ShouldBe("GAME.RPI");
+        Path.GetFileName(archive.IndexInfo.FullName).ShouldBe("GAME.RPI");
     }
 
     [Fact]
     public void LoadArchive_LowercaseIndexPath_StillResolvesLowercaseArchive()
     {
         using TempWorkspace workspace = new TempWorkspace();
-        (string archive, string index) = BuildPair(workspace, "game.rpa", "game.rpi");
-        Archive parser = Archive.Load(index);
+        (string archivePath, string indexPath) = BuildPair(workspace, "game.rpa", "game.rpi");
+        Archive archive = Archive.Load(indexPath);
 
-        Path.GetFileName(parser.ArchiveInfo.FullName).ShouldBe("game.rpa");
-        Path.GetFileName(parser.IndexInfo.FullName).ShouldBe("game.rpi");
+        Path.GetFileName(archive.ArchiveInfo.FullName).ShouldBe("game.rpa");
+        Path.GetFileName(archive.IndexInfo.FullName).ShouldBe("game.rpi");
     }
 
     [Fact]
     public void LoadArchive_MixedCaseExtension_ResolvesTheArchive()
     {
         using TempWorkspace workspace = new TempWorkspace();
-        (string archive, string index) = BuildPair(workspace, "Game.Rpa", "Game.Rpi");
-        Archive parser = Archive.Load(archive);
+        (string archivePath, string indexPath) = BuildPair(workspace, "Game.Rpa", "Game.Rpi");
+        Archive archive = Archive.Load(archivePath);
 
-        parser.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
-        parser.Index.Keys.ShouldContain("a.txt");
+        archive.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
+        archive.Index.Keys.ShouldContain("a.txt");
     }
 }

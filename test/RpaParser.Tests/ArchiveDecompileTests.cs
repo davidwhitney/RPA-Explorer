@@ -11,7 +11,7 @@ namespace RpaParser.Tests;
 /// Covers the decompilation path by standing in a stub interpreter, so the behaviour can be
 /// verified without a real Python installation or a copy of unrpyc.
 /// </summary>
-public class RpaParserDecompileTests
+public class ArchiveDecompileTests
 {
     /// <summary>
     /// Writes an executable stand-in for the Python interpreter. ParseRpyc invokes it as
@@ -102,13 +102,13 @@ public class RpaParserDecompileTests
         }
 
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(
+        var archive = workspace.LoadArchive(
             ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { ["code.rpyc"] = Encoding.UTF8.GetBytes("compiled") });
         var options = new DecompilerOptions { PythonPath = WriteStubInterpreter(workspace, "python-stub",
             "out=\"${3%.rpyc}.rpy\"\nprintf 'label decompiled:\\n' > \"$out\"\n"), UnrpycPath = workspace.WriteFile("unrpyc.py", "# stand-in") };
 
-        PreviewResult preview = parser.Preview("code.rpyc", options);
+        PreviewResult preview = archive.Preview("code.rpyc", options);
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsText().ShouldContain("label decompiled:");
@@ -124,14 +124,14 @@ public class RpaParserDecompileTests
 
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("compiled");
-        var parser = workspace.LoadArchive(
+        var archive = workspace.LoadArchive(
             ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { ["code.rpyc"] = content });
         // Produces an empty .rpy, so there is nothing to show as text.
         var options = new DecompilerOptions { PythonPath = WriteStubInterpreter(workspace, "python-stub",
             "out=\"${3%.rpyc}.rpy\"\n: > \"$out\"\n"), UnrpycPath = workspace.WriteFile("unrpyc.py", "# stand-in") };
 
-        PreviewResult preview = parser.Preview("code.rpyc", options);
+        PreviewResult preview = archive.Preview("code.rpyc", options);
 
         preview.Format.ShouldBeOfType<UnknownContent>();
         preview.AsBytes().ShouldBe(content);
@@ -147,13 +147,13 @@ public class RpaParserDecompileTests
 
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("compiled");
-        var parser = workspace.LoadArchive(
+        var archive = workspace.LoadArchive(
             ArchiveFormat.Rpa3,
             new Dictionary<string, byte[]> { ["code.rpyc"] = content });
         var options = new DecompilerOptions { PythonPath = WriteStubInterpreter(workspace, "python-stub",
             "out=\"${3%.rpyc}.rpy\"\nprintf 'label x:\\n' > \"$out\"\n"), UnrpycPath = workspace.WriteFile("unrpyc.py", "# stand-in") };
 
-        PreviewResult preview = parser.PreviewRaw("code.rpyc", options);
+        PreviewResult preview = archive.PreviewRaw("code.rpyc", options);
 
         preview.AsBytes().ShouldBe(content);
     }

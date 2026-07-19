@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace RpaParser.Tests;
 
-public class RpaParserVersionTests
+public class ArchiveVersionTests
 {
     private static TheoryData<ArchiveFormat> Formats(params ArchiveFormat[] formats)
     {
@@ -28,12 +28,12 @@ public class RpaParserVersionTests
     [Fact]
     public void Format_NewParser_IsNotYetKnown()
     {
-        var parser = new Archive();
+        var archive = new Archive();
 
-        parser.Format.ShouldBeNull();
-        parser.Index.ShouldBeEmpty();
-        parser.OptionsConfirmed.ShouldBeFalse();
-        parser.Padding.ShouldBe(0);
+        archive.Format.ShouldBeNull();
+        archive.Index.ShouldBeEmpty();
+        archive.OptionsConfirmed.ShouldBeFalse();
+        archive.Padding.ShouldBe(0);
     }
 
     [Theory]
@@ -47,13 +47,13 @@ public class RpaParserVersionTests
             ["images/logo.bin"] = new byte[] { 1, 2, 3, 4, 5 }
         };
 
-        var parser = workspace.LoadArchive(format, entries);
+        var archive = workspace.LoadArchive(format, entries);
 
-        parser.Format.ShouldBeSameAs(format);
-        parser.Index.Count.ShouldBe(2);
-        parser.Index.Keys.ShouldContain("script.rpy");
-        parser.Index.Keys.ShouldContain("images/logo.bin");
-        parser.ExtractData("images/logo.bin").ShouldBe(new byte[] { 1, 2, 3, 4, 5 });
+        archive.Format.ShouldBeSameAs(format);
+        archive.Index.Count.ShouldBe(2);
+        archive.Index.Keys.ShouldContain("script.rpy");
+        archive.Index.Keys.ShouldContain("images/logo.bin");
+        archive.ExtractData("images/logo.bin").ShouldBe(new byte[] { 1, 2, 3, 4, 5 });
     }
 
     [Fact]
@@ -63,11 +63,11 @@ public class RpaParserVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
 
         // version 1 keeps its index in a separate .rpi file
-        var parser = workspace.LoadArchive(ArchiveFormat.Rpa1, entries);
+        var archive = workspace.LoadArchive(ArchiveFormat.Rpa1, entries);
 
-        parser.IndexInfo.ShouldNotBeNull();
-        parser.IndexInfo.Exists.ShouldBeTrue();
-        parser.ArchiveInfo.ShouldNotBeNull();
+        archive.IndexInfo.ShouldNotBeNull();
+        archive.IndexInfo.Exists.ShouldBeTrue();
+        archive.ArchiveInfo.ShouldNotBeNull();
     }
 
     [Theory]
@@ -77,9 +77,9 @@ public class RpaParserVersionTests
         using var workspace = new TempWorkspace();
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
 
-        var parser = workspace.LoadArchive(format, entries);
+        var archive = workspace.LoadArchive(format, entries);
 
-        parser.IndexInfo.ShouldBeNull();
+        archive.IndexInfo.ShouldBeNull();
     }
 
     [Fact]
@@ -90,10 +90,10 @@ public class RpaParserVersionTests
         var archivePath = workspace.CreateArchive(ArchiveFormat.Rpa1, entries);
         var indexPath = Path.ChangeExtension(archivePath, ".rpi");
         // pointing at the .rpi must locate the matching .rpa
-        var parser = Archive.Load(indexPath);
+        var archive = Archive.Load(indexPath);
 
-        parser.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
-        parser.Index.Keys.ShouldContain("a.txt");
+        archive.Format.ShouldBeSameAs(ArchiveFormat.Rpa1);
+        archive.Index.Keys.ShouldContain("a.txt");
     }
 
     [Fact]
@@ -104,10 +104,10 @@ public class RpaParserVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = payload };
         var archivePath = workspace.CreateArchive(
             ArchiveFormat.Rpa3, entries, "keyed.rpa", obfuscationKey: 0x1234ABCD);
-        var parser = Archive.Load(archivePath);
+        var archive = Archive.Load(archivePath);
 
-        parser.ObfuscationKey.ShouldBe(0x1234ABCD);
-        parser.ExtractData("a.txt").ShouldBe(payload);
+        archive.ObfuscationKey.ShouldBe(0x1234ABCD);
+        archive.ExtractData("a.txt").ShouldBe(payload);
     }
 
     [Fact]
@@ -118,16 +118,16 @@ public class RpaParserVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = payload };
         var archivePath = workspace.CreateArchive(
             ArchiveFormat.Rpa3, entries, "padded.rpa", padding: 32);
-        var parser = Archive.Load(archivePath);
+        var archive = Archive.Load(archivePath);
 
-        parser.ExtractData("a.txt").ShouldBe(payload);
+        archive.ExtractData("a.txt").ShouldBe(payload);
     }
 
     [Fact]
     public void LoadArchive_FileDoesNotExist_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Archive();
+        var archive = new Archive();
 
         var ex = Should.Throw<Exception>(() => Archive.Load(workspace.Path_("missing.rpa")));
         ex.Message.ShouldContain("does not exist");
@@ -145,7 +145,7 @@ public class RpaParserVersionTests
     {
         using var workspace = new TempWorkspace();
         var path = workspace.WriteFile("not-an-archive.rpa", "just some text, no RPA header");
-        var parser = new Archive();
+        var archive = new Archive();
 
         var ex = Should.Throw<Exception>(() => Archive.Load(path));
         ex.Message.ShouldContain("not valid RenPy Archive");
@@ -158,7 +158,7 @@ public class RpaParserVersionTests
         Dictionary<string, byte[]> entries = new() { ["a.txt"] = Encoding.UTF8.GetBytes("a") };
         var archivePath = workspace.CreateArchive(ArchiveFormat.Rpa1, entries);
         File.Delete(Path.ChangeExtension(archivePath, ".rpi"));
-        var parser = new Archive();
+        var archive = new Archive();
 
         // without the .rpi the version can no longer be recognised
         Should.Throw<Exception>(() => Archive.Load(archivePath));

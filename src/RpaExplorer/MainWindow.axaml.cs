@@ -18,7 +18,6 @@ namespace RpaExplorer
     public partial class MainWindow : Window
     {
         private Archive _archive;
-        private Archive _archiveBackup;
 
         // Where the external decompiler lives is a machine setting, so it sits alongside
         // the archive rather than inside it.
@@ -805,7 +804,7 @@ namespace RpaExplorer
                 return;
             }
 
-            _archive = Archive.Create(null);
+            _archive = Archive.Create();
             GenerateTreeView();
 
             Tabs.SelectedItem = TabNone;
@@ -874,8 +873,6 @@ namespace RpaExplorer
 
             try
             {
-                _archive = Archive.Create(null);
-
                 // An explicitly configured interpreter always wins. Auto-detection is
                 // deliberately not written back to the settings file: persisting a guess
                 // makes it sticky and stops improved detection from ever taking effect.
@@ -967,7 +964,6 @@ namespace RpaExplorer
                 return;
             }
 
-            _archiveBackup = _archive;
             try
             {
                 var saveName = _archive.Save(target);
@@ -975,7 +971,8 @@ namespace RpaExplorer
             }
             catch (Exception ex)
             {
-                _archive = _archiveBackup;
+                // Saving does not touch the loaded archive and Archive.Load only assigns on
+                // success, so the archive in hand is still the one that was open.
                 await MessageBox.ShowError(this,
                     string.Format(GetText("Save_failed_reason"), ex.Message), GetText("Save_failed"));
             }

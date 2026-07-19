@@ -16,20 +16,15 @@ namespace RpaParser
     public sealed class Archive
     {
         
-        private static class ArchiveMagic
+        private static class FileExtension
         {
-            public const string Rpa1Rpa = ".rpa";
-            public const string Rpa1Rpi = ".rpi";
+            public const string Rpa = ".rpa";
+            public const string Rpi = ".rpi";
             public const string Rpa2 = "RPA-2.0 ";
             public const string Rpa3 = "RPA-3.0 ";
             public const string Rpa32 = "RPA-3.2 ";
         }
         
-        private static class RpcMagic
-        {
-            public const string Rpc2 = "RENPY RPC2";
-        }
-
         public FileInfo ArchiveInfo;
         public FileInfo IndexInfo;
         /// <summary>
@@ -89,16 +84,21 @@ namespace RpaParser
         /// <summary>Starts a new, empty archive in the given format.</summary>
         public static Archive Create(ArchiveFormat format) => new() { Format = format };
 
+        /// <summary>
+        /// Starts a new, empty archive whose format is chosen later, when it is saved.
+        /// </summary>
+        public static Archive Create() => new();
+
         private void GetIndexAndArchive()
         {
-            if (_archivePath.EndsWith(ArchiveMagic.Rpa1Rpa, StringComparison.OrdinalIgnoreCase))
+            if (_archivePath.EndsWith(FileExtension.Rpa, StringComparison.OrdinalIgnoreCase))
             {
-                _indexPath = SwapExtension(_archivePath, ArchiveMagic.Rpa1Rpi);
+                _indexPath = SwapExtension(_archivePath, FileExtension.Rpi);
             }
-            else if (_archivePath.EndsWith(ArchiveMagic.Rpa1Rpi, StringComparison.OrdinalIgnoreCase))
+            else if (_archivePath.EndsWith(FileExtension.Rpi, StringComparison.OrdinalIgnoreCase))
             {
                 _indexPath = _archivePath;
-                _archivePath = SwapExtension(_archivePath, ArchiveMagic.Rpa1Rpa);
+                _archivePath = SwapExtension(_archivePath, FileExtension.Rpa);
             }
         }
 

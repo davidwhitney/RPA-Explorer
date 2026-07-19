@@ -12,7 +12,7 @@ namespace RpaExplorer
     {
         public string Name { get; set; } = string.Empty;
 
-        // Archive tree path (uses '/'), i.e. the key into Parser.Index for files.
+        // Archive tree path (uses '/'), i.e. the key into Archive.Index for files.
         public string FullPath { get; set; } = string.Empty;
 
         public bool IsFolder { get; set; }

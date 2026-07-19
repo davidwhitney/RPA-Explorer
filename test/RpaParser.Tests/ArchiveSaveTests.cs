@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace RpaParser.Tests;
 
-public class RpaParserSaveTests
+public class ArchiveSaveTests
 {
     private static TheoryData<ArchiveFormat> Formats(params ArchiveFormat[] formats)
     {
@@ -95,8 +95,8 @@ public class RpaParserSaveTests
     public void SaveArchive_NoFormatChosen_Throws()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Archive();  // no format chosen
-        parser.Index.Add("a.txt", new ArchiveEntry
+        var archive = new Archive();  // no format chosen
+        archive.Index.Add("a.txt", new ArchiveEntry
         {
             InArchive = false,
             FullPath = workspace.WriteFile("a.txt", "x").Replace('\\', '/'),
@@ -104,15 +104,15 @@ public class RpaParserSaveTests
             Length = 1
         });
 
-        Should.Throw<Exception>(() => parser.Save(workspace.Path_("bad.rpa")));
+        Should.Throw<Exception>(() => archive.Save(workspace.Path_("bad.rpa")));
     }
 
     [Fact]
     public void SaveArchive_SourceFileMissing_ThrowsAndLeavesNoPartialArchive()
     {
         using var workspace = new TempWorkspace();
-        var parser = new Archive { Format = ArchiveFormat.Rpa3 };
-        parser.Index.Add("ghost.txt", new ArchiveEntry
+        var archive = new Archive { Format = ArchiveFormat.Rpa3 };
+        archive.Index.Add("ghost.txt", new ArchiveEntry
         {
             InArchive = false,
             FullPath = workspace.Path_("ghost.txt").Replace('\\', '/'),
@@ -121,7 +121,7 @@ public class RpaParserSaveTests
         });
         var target = workspace.Path_("partial.rpa");
 
-        Should.Throw<Exception>(() => parser.Save(target));
+        Should.Throw<Exception>(() => archive.Save(target));
 
         File.Exists(target).ShouldBeFalse();
     }
@@ -142,25 +142,25 @@ public class RpaParserSaveTests
     public void DeepCopyIndex_ModifyingCopy_LeavesOriginalUnchanged()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
+        var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, ArchiveEntry> copy = parser.CopyIndex(parser.Index);
+        SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
         copy["a.txt"].TreePath = "changed.txt";
         copy.Remove("dir/b.txt");
 
-        parser.Index["a.txt"].TreePath.ShouldBe("a.txt");
-        parser.Index.ShouldContainKey("dir/b.txt");
+        archive.Index["a.txt"].TreePath.ShouldBe("a.txt");
+        archive.Index.ShouldContainKey("dir/b.txt");
     }
 
     [Fact]
     public void DeepCopyIndex_CopiedEntry_CarriesAllFieldsAndSegments()
     {
         using var workspace = new TempWorkspace();
-        var parser = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
+        var archive = workspace.LoadArchive(ArchiveFormat.Rpa3, SampleEntries());
 
-        SortedDictionary<string, ArchiveEntry> copy = parser.CopyIndex(parser.Index);
+        SortedDictionary<string, ArchiveEntry> copy = archive.CopyIndex(archive.Index);
 
-        var original = parser.Index["a.txt"];
+        var original = archive.Index["a.txt"];
         var copied = copy["a.txt"];
         copied.TreePath.ShouldBe(original.TreePath);
         copied.FullPath.ShouldBe(original.FullPath);
@@ -175,10 +175,10 @@ public class RpaParserSaveTests
     [Fact]
     public void DeepCopyIndex_EmptyIndex_ReturnsEmptyCopy()
     {
-        var parser = new Archive();
+        var archive = new Archive();
 
         SortedDictionary<string, ArchiveEntry> copy =
-            parser.CopyIndex(new SortedDictionary<string, ArchiveEntry>());
+            archive.CopyIndex(new SortedDictionary<string, ArchiveEntry>());
 
         copy.ShouldBeEmpty();
     }

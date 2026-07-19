@@ -7,8 +7,8 @@ namespace RpaParser.Tests;
 
 /// <summary>
 /// An isolated temporary directory for a test, plus helpers for producing real RenPy
-/// archives. Tests build their fixtures through the parser itself rather than checking in
-/// binary files, so the archives always match the format the parser writes.
+/// archives. Tests build their fixtures through the archive itself rather than checking in
+/// binary files, so the archives always match the format the archive writes.
 /// </summary>
 public sealed class TempWorkspace : IDisposable
 {
@@ -44,10 +44,10 @@ public sealed class TempWorkspace : IDisposable
         int padding = 0,
         long? obfuscationKey = null)
     {
-        var parser = new Archive { Format = format, Padding = padding };
+        var archive = new Archive { Format = format, Padding = padding };
         if (obfuscationKey.HasValue)
         {
-            parser.ObfuscationKey = obfuscationKey.Value;
+            archive.ObfuscationKey = obfuscationKey.Value;
         }
 
         var sourceDir = Path_("src-" + Guid.NewGuid().ToString("N"));
@@ -60,7 +60,7 @@ public sealed class TempWorkspace : IDisposable
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(onDisk)!);
             File.WriteAllBytes(onDisk, entry.Value);
 
-            parser.Index.Add(entry.Key, new ArchiveEntry
+            archive.Index.Add(entry.Key, new ArchiveEntry
             {
                 InArchive = false,
                 FullPath = onDisk.Replace('\\', '/'),
@@ -70,15 +70,15 @@ public sealed class TempWorkspace : IDisposable
             });
         }
 
-        return parser.Save(Path_(archiveName));
+        return archive.Save(Path_(archiveName));
     }
 
     /// <summary>Loads an archive created by <see cref="CreateArchive"/>.</summary>
     public Archive LoadArchive(ArchiveFormat format, IDictionary<string, byte[]> entries, string archiveName = "test.rpa")
     {
         var path = CreateArchive(format, entries, archiveName);
-        var parser = Archive.Load(path);
-        return parser;
+        var archive = Archive.Load(path);
+        return archive;
     }
 
     public void Dispose()

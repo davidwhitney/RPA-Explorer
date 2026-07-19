@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace RpaParser.Tests;
 
-public class RpaParserPreviewTests
+public class ArchivePreviewTests
 {
     private static Archive ArchiveContaining(TempWorkspace workspace, string entryName, byte[] content) =>
         workspace.LoadArchive(
@@ -22,9 +22,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 0x89, 0x50, 0x4E, 0x47 };
-        var parser = ArchiveContaining(workspace, entryName, content);
+        var archive = ArchiveContaining(workspace, entryName, content);
 
-        PreviewResult preview = parser.Preview(entryName);
+        PreviewResult preview = archive.Preview(entryName);
 
         preview.Format.ShouldBeOfType<ImageContent>();
         preview.AsBytes().ShouldBe(content);
@@ -38,9 +38,9 @@ public class RpaParserPreviewTests
     public void GetPreview_TextExtension_ReturnsDecodedText(string entryName)
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, entryName, Encoding.UTF8.GetBytes("hello world"));
+        var archive = ArchiveContaining(workspace, entryName, Encoding.UTF8.GetBytes("hello world"));
 
-        PreviewResult preview = parser.Preview(entryName);
+        PreviewResult preview = archive.Preview(entryName);
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsText().ShouldBe("hello world");
@@ -54,9 +54,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 1, 2, 3 };
-        var parser = ArchiveContaining(workspace, entryName, content);
+        var archive = ArchiveContaining(workspace, entryName, content);
 
-        PreviewResult preview = parser.Preview(entryName);
+        PreviewResult preview = archive.Preview(entryName);
 
         preview.Format.ShouldBeOfType<AudioContent>();
         preview.AsBytes().ShouldBe(content);
@@ -70,9 +70,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 4, 5, 6 };
-        var parser = ArchiveContaining(workspace, entryName, content);
+        var archive = ArchiveContaining(workspace, entryName, content);
 
-        PreviewResult preview = parser.Preview(entryName);
+        PreviewResult preview = archive.Preview(entryName);
 
         preview.Format.ShouldBeOfType<VideoContent>();
         preview.AsBytes().ShouldBe(content);
@@ -83,9 +83,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         byte[] content = { 0xDE, 0xAD };
-        var parser = ArchiveContaining(workspace, "blob.dat", content);
+        var archive = ArchiveContaining(workspace, "blob.dat", content);
 
-        PreviewResult preview = parser.Preview("blob.dat");
+        PreviewResult preview = archive.Preview("blob.dat");
 
         preview.Format.ShouldBeOfType<UnknownContent>();
         preview.AsBytes().ShouldBe(content);
@@ -95,9 +95,9 @@ public class RpaParserPreviewTests
     public void GetPreview_FileNotInIndex_ReturnsUnknownWithNullValue()
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes("a"));
+        var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes("a"));
 
-        PreviewResult preview = parser.Preview("absent.txt");
+        PreviewResult preview = archive.Preview("absent.txt");
 
         preview.Format.ShouldBeOfType<UnknownContent>();
         preview.Content.ShouldBeNull();
@@ -108,9 +108,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("raw please");
-        var parser = ArchiveContaining(workspace, "a.txt", content);
+        var archive = ArchiveContaining(workspace, "a.txt", content);
 
-        PreviewResult preview = parser.PreviewRaw("a.txt");
+        PreviewResult preview = archive.PreviewRaw("a.txt");
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.AsBytes().ShouldBe(content);
@@ -121,9 +121,9 @@ public class RpaParserPreviewTests
     {
         using var workspace = new TempWorkspace();
         var content = Encoding.UTF8.GetBytes("raw accessor");
-        var parser = ArchiveContaining(workspace, "a.txt", content);
+        var archive = ArchiveContaining(workspace, "a.txt", content);
 
-        PreviewResult preview = parser.PreviewRaw("a.txt");
+        PreviewResult preview = archive.PreviewRaw("a.txt");
 
         preview.Format.ShouldBeOfType<TextContent>();
         preview.Content.ShouldBe(content);
@@ -137,9 +137,9 @@ public class RpaParserPreviewTests
     public void GetPreview_TextWithAnyLineEndingStyle_NormalisesToEnvironmentNewline(string raw)
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
+        var archive = ArchiveContaining(workspace, "a.txt", Encoding.UTF8.GetBytes(raw));
 
-        var text = parser.Preview("a.txt").AsText();
+        var text = archive.Preview("a.txt").AsText();
 
         // Every separator that survives must be the platform's own.
         text.Replace(Environment.NewLine, string.Empty).ShouldNotContain("\r");
@@ -150,10 +150,10 @@ public class RpaParserPreviewTests
     public void GetPreview_CompiledScriptWithoutPythonConfigured_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
+        var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
         var options = new DecompilerOptions { PythonPath = string.Empty };
 
-        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
+        var ex = Should.Throw<Exception>(() => archive.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain(Decompiler.InfoBanner);
         ex.Message.ShouldContain("Python environment is not defined");
@@ -163,10 +163,10 @@ public class RpaParserPreviewTests
     public void GetPreview_CompiledScriptWithMissingPython_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
+        var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
         var options = new DecompilerOptions { PythonPath = workspace.Path_("no-such-python") };
 
-        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
+        var ex = Should.Throw<Exception>(() => archive.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain("cannot be found");
     }
@@ -175,10 +175,10 @@ public class RpaParserPreviewTests
     public void GetPreview_CompiledScriptWithoutUnrpycConfigured_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
+        var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
         var options = new DecompilerOptions { PythonPath = workspace.WriteFile("python", "#!/bin/sh\n"), UnrpycPath = string.Empty };
 
-        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
+        var ex = Should.Throw<Exception>(() => archive.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain("unrpyc script is not defined");
     }
@@ -187,10 +187,10 @@ public class RpaParserPreviewTests
     public void GetPreview_CompiledScriptWithMissingUnrpyc_ThrowsWithGuidance()
     {
         using var workspace = new TempWorkspace();
-        var parser = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
+        var archive = ArchiveContaining(workspace, "code.rpyc", new byte[] { 1, 2, 3 });
         var options = new DecompilerOptions { PythonPath = workspace.WriteFile("python", "#!/bin/sh\n"), UnrpycPath = workspace.Path_("no-such-unrpyc.py") };
 
-        var ex = Should.Throw<Exception>(() => parser.Preview("code.rpyc", options));
+        var ex = Should.Throw<Exception>(() => archive.Preview("code.rpyc", options));
 
         ex.Message.ShouldContain("cannot be found");
     }
